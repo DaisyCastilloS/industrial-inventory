@@ -6,530 +6,327 @@
 [![Docker](https://img.shields.io/badge/Docker-Compose-blue.svg)](https://docs.docker.com/compose/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-> Sistema de inventario industrial robusto y escalable construido con Clean Architecture, TypeScript y PostgreSQL.
+> Sistema de inventario industrial robusto, auditable y escalable, construido con Clean Architecture, TypeScript y PostgreSQL.
+
+---
 
 ## 📋 Tabla de Contenidos
 
-- [🏗️ Arquitectura](#️-arquitectura)
-- [🛠️ Tecnologías](#️-tecnologías)
-- [🚀 Instalación](#-instalación)
-- [📖 Uso](#-uso)
+- [🏦 Descripción General](#-descripción-general)
+- [🏗️ Arquitectura y Estructura del Proyecto](#-arquitectura-y-estructura-del-proyecto)
+- [🛠️ Tecnologías](#-tecnologías)
+- [🚀 Instalación y Despliegue Rápido con Docker Compose](#-instalación-y-despliegue-rápido-con-docker-compose)
+- [📖 Uso y Comandos Principales](#-uso-y-comandos-principales)
+- [🗄️ Esquema y Datos de Ejemplo](#-esquema-y-datos-de-ejemplo)
+- [🔐 Autenticación y Roles](#-autenticación-y-roles)
 - [🔌 API Endpoints](#-api-endpoints)
-- [🔐 Autenticación](#-autenticación)
+- [🔎 Vistas y Triggers Clave](#-vistas-y-triggers-clave)
+- [📊 Logging y Auditoría](#-logging-y-auditoría)
 - [🧪 Testing](#-testing)
-- [📝 Commits](#-commits)
+- [📝 Commits y Estilo de Código](#-commits-y-estilo-de-código)
 - [🔒 Seguridad](#-seguridad)
-- [📊 Logging](#-logging)
 - [🐳 Docker Compose](#-docker-compose)
+- [📝 Troubleshooting](#-troubleshooting)
 - [🤝 Contribución](#-contribución)
-- [🛣️ Roadmap](#️-roadmap)
+- [🛣️ Roadmap](#-roadmap)
 - [🐛 Reportar Bugs](#-reportar-bugs)
 - [📄 Licencia](#-licencia)
 - [👥 Autores](#-autores)
 - [🙏 Agradecimientos](#-agradecimientos)
+- [📚 Documentación](#-documentación)
 
-## 🏗️ Arquitectura
+---
 
-Este proyecto sigue los principios de **Clean Architecture** con una estructura modular y escalable:
+## 🏦 Descripción General
+
+Este sistema permite gestionar el inventario de productos industriales, movimientos de stock, auditoría, usuarios, proveedores, ubicaciones y categorías. Incluye autenticación JWT, control de roles, alertas de stock crítico y documentación Swagger.
+
+---
+
+## 🏗️ Arquitectura y Estructura del Proyecto
 
 ```
 src/
 ├── 00-constants/          # Constantes del sistema
-├── 01-domain/            # Lógica de negocio (entidades, reglas)
+├── 01-domain/            # Entidades y lógica de negocio
 ├── 02-application/       # Casos de uso y DTOs
 ├── 03-infrastructure/    # Implementaciones técnicas (DB, servicios)
 └── 04-presentation/      # Controladores y servidor Express
 ```
 
-### Capas de la Arquitectura
-
-- **Domain Layer**: Entidades y reglas de negocio puras
-- **Application Layer**: Casos de uso y lógica de aplicación
-- **Infrastructure Layer**: Implementaciones técnicas (DB, servicios externos)
-- **Presentation Layer**: Controladores y manejo de HTTP
+---
 
 ## 🛠️ Tecnologías
 
-### Core
-- **Node.js** - Runtime de JavaScript
-- **TypeScript** - Tipado estático y mejor DX
-- **Express.js** - Framework web minimalista
-- **PostgreSQL** - Base de datos relacional robusta
-
-### Desarrollo
-- **ESLint** - Linting de código
-- **Prettier** - Formateo automático
-- **Husky** - Git hooks
-- **commitlint** - Validación de commits
-
-### Testing
-- **Jest** - Framework de testing
-- **Supertest** - Testing de APIs
-
-### Logging & Monitoreo
-- **Winston** - Sistema de logging estructurado
-- **Swagger/OpenAPI** - Documentación de API
-
-### DevOps
-- **Docker Compose** - Orquestación de contenedores
-- **pnpm** - Gestor de paquetes rápido
-
-## 🚀 Instalación
-
-### Prerrequisitos
-
-- Node.js 18+
-- pnpm 8.6.0+
-- Docker y Docker Compose
-- PostgreSQL (opcional, se incluye en Docker)
-
-### Setup Rápido
-
-```bash
-# 1. Clonar el repositorio
-git clone <repository-url>
-cd Industrial-Inventory
-
-# 2. Instalar dependencias
-pnpm install
-
-# 3. Configurar variables de entorno
-cp .env.example .env
-# Editar .env con tus configuraciones
-
-# 4. Levantar base de datos
-make up
-
-# 5. Inicializar base de datos
-make db-setup
-
-# 6. Ejecutar en desarrollo
-make dev
-```
-
-### Variables de Entorno
-
-Crea un archivo `.env` en la raíz del proyecto:
-
-```env
-# Database
-DB_HOST=localhost
-DB_PORT=5432
-DB_USER=postgres
-DB_PASSWORD=your_password
-DB_NAME=inventory_db
-
-# Server
-PORT=3000
-NODE_ENV=development
-
-# JWT
-JWT_SECRET=your_jwt_secret_key
-JWT_EXPIRES_IN=24h
-
-# Logging
-LOG_LEVEL=info
-```
-
-## 📖 Uso
-
-### Comandos Principales
-
-```bash
-# Desarrollo
-make dev              # Ejecutar en modo desarrollo
-make build            # Construir proyecto
-make lint             # Linting del código
-make format           # Formatear código
-
-# Base de datos
-make up               # Levantar servicios Docker
-make down             # Detener servicios
-make db-setup         # Configurar base de datos
-make db-reset         # Resetear base de datos
-
-# Testing
-make test             # Ejecutar tests
-make test-coverage    # Tests con coverage
-
-# Docker
-make deploy-build     # Construir imágenes
-make deploy-prod      # Desplegar en producción
-```
-
-### Scripts Disponibles
-
-```bash
-# Desarrollo
-pnpm dev              # Servidor de desarrollo
-pnpm build            # Compilar TypeScript
-pnpm start            # Ejecutar en producción
-
-# Base de datos
-pnpm db:init          # Inicializar DB
-pnpm db:up            # Levantar DB con Docker
-pnpm db:down          # Detener DB
-
-# Calidad de código
-pnpm lint             # ESLint
-pnpm lint-fix         # ESLint con auto-fix
-pnpm format           # Prettier
-```
-
-## 🔌 API Endpoints
-
-### Base URL
-```
-http://localhost:3000
-```
-
-### Productos
-
-| Método | Endpoint | Descripción | Autenticación |
-|--------|----------|-------------|---------------|
-| `GET` | `/products` | Listar todos los productos | ✅ |
-| `GET` | `/products/:id` | Obtener producto por ID | ✅ |
-| `POST` | `/products` | Crear nuevo producto | ✅ |
-| `PUT` | `/products/:id` | Actualizar producto | ✅ |
-| `DELETE` | `/products/:id` | Eliminar producto | ✅ |
-
-### Ejemplos de Uso
-
-#### Crear Producto
-```bash
-curl -X POST http://localhost:3000/products \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -d '{
-    "name": "Tornillo M8x20",
-    "description": "Tornillo métrico 8mm x 20mm",
-    "price": 0.50,
-    "quantity": 1000
-  }'
-```
-
-#### Obtener Productos
-```bash
-curl -X GET http://localhost:3000/products \
-  -H "Authorization: Bearer YOUR_TOKEN"
-```
-
-### Documentación Swagger
-
-Accede a la documentación interactiva en:
-```
-http://localhost:3000/docs
-```
-
-## 🔐 Autenticación
-
-El sistema utiliza **JWT (JSON Web Tokens)** para autenticación:
-
-### Headers Requeridos
-```http
-Authorization: Bearer <your_jwt_token>
-```
-
-### Roles de Usuario
-
-- **ADMIN**: Acceso completo al sistema
-- **USER**: Acceso de lectura y operaciones básicas
-- **VIEWER**: Solo acceso de lectura
-
-### Middleware de Autenticación
-
-```typescript
-// Ejemplo de uso en rutas
-app.use('/products', authMiddleware, roleMiddleware(['ADMIN', 'USER']));
-```
-
-## 🧪 Testing
-
-### Ejecutar Tests
-
-```bash
-# Todos los tests
-make test
-
-# Tests con coverage
-make test-coverage
-
-# Tests en modo watch
-make test-watch
-
-# Tests de integración
-make test-integration
-```
-
-### Estructura de Tests
-
-```
-src/
-├── __tests__/
-│   ├── 01-domain/
-│   ├── 02-application/
-│   ├── 03-infrastructure/
-│   └── 04-presentation/
-```
-
-### Ejemplo de Test
-
-```typescript
-describe('Product Entity', () => {
-  it('should create a product with valid data', () => {
-    const product = new Product(1, 'Test Product', 'Description', 10.99, 100);
-    expect(product.getName()).toBe('Test Product');
-    expect(product.getPrice()).toBe(10.99);
-  });
-});
-```
-
-## 📝 Commits
-
-Este proyecto usa **Conventional Commits** con Husky y commitlint:
-
-### Formato de Commits
-```
-type(scope): description
-
-[optional body]
-
-[optional footer]
-```
-
-### Tipos de Commits
-- `feat`: Nueva funcionalidad
-- `fix`: Corrección de bugs
-- `docs`: Documentación
-- `style`: Formato de código
-- `refactor`: Refactorización
-- `test`: Tests
-- `chore`: Tareas de mantenimiento
-
-### Scopes Disponibles
-- `auth`: Autenticación y autorización
-- `product`: Gestión de productos
-- `db`: Base de datos
-- `docker`: Configuración Docker
-- `api`: Endpoints de API
-- `middleware`: Middlewares
-- `logging`: Sistema de logging
-
-### Ejemplos
-
-```bash
-# Nueva funcionalidad
-git commit -m "feat(product): add product search functionality"
-
-# Corrección de bug
-git commit -m "fix(auth): resolve JWT token validation issue"
-
-# Documentación
-git commit -m "docs(api): update API documentation"
-
-# Refactorización
-git commit -m "refactor(db): optimize database queries"
-```
-
-## 🔒 Seguridad
-
-### Medidas Implementadas
-
-- **JWT Tokens**: Autenticación segura
-- **Role-based Access Control**: Control de acceso por roles
-- **Input Validation**: Validación con Zod
-- **SQL Injection Protection**: Uso de parámetros preparados
-- **CORS**: Configuración de CORS
-- **Rate Limiting**: Limitación de requests
-- **Helmet**: Headers de seguridad
-
-### Mejores Prácticas
-
-- Variables de entorno para configuraciones sensibles
-- Logging de eventos de seguridad
-- Validación estricta de inputs
-- Sanitización de datos
-- Auditoría de dependencias
-
-## 📊 Logging
-
-### Configuración Winston
-
-```typescript
-// Niveles de log
-error: 0,   // Errores críticos
-warn: 1,    // Advertencias
-info: 2,    // Información general
-debug: 3,   // Información de debug
-```
-
-### Formato de Logs
-
-```json
-{
-  "timestamp": "2024-01-15T10:30:00.000Z",
-  "level": "info",
-  "message": "Product created successfully",
-  "productId": 123,
-  "userId": "user-456"
-}
-```
-
-### Logs por Entorno
-
-- **Development**: Logs detallados en consola
-- **Production**: Logs estructurados en archivos
-- **Testing**: Logs mínimos
-
-## 🐳 Docker Compose
-
-### Servicios Incluidos
-
-```yaml
-services:
-  db:
-    image: postgres:latest
-    ports:
-      - "5432:5432"
-    environment:
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_NAME}
-```
-
-### Comandos Docker
-
-```bash
-# Levantar servicios
-make up
-
-# Ver logs
-make logs
-
-# Detener servicios
-make down
-
-# Reiniciar
-make restart
-
-# Limpiar
-make docker-clean
-```
-
-### Volúmenes
-
-- `postgres_data`: Persistencia de datos PostgreSQL
-- `./scripts/init.sql`: Script de inicialización
-
-## 🤝 Contribución
-
-### Guías de Contribución
-
-1. **Fork** el repositorio
-2. **Crea** una rama para tu feature (`git checkout -b feature/AmazingFeature`)
-3. **Commit** tus cambios (`git commit -m 'feat: add amazing feature'`)
-4. **Push** a la rama (`git push origin feature/AmazingFeature`)
-5. **Abre** un Pull Request
-
-### Estándares de Código
-
-- Usar TypeScript strict mode
-- Seguir ESLint y Prettier
-- Escribir tests para nuevas funcionalidades
-- Documentar APIs con Swagger
-- Usar Conventional Commits
-
-### Checklist de PR
-
-- [ ] Tests pasando
-- [ ] Linting sin errores
-- [ ] Documentación actualizada
-- [ ] Commits siguiendo convenciones
-- [ ] No breaking changes (o documentados)
-
-## 🛣️ Roadmap
-
-### Versión 1.1.0
-- [ ] Sistema de categorías de productos
-- [ ] Búsqueda avanzada con filtros
-- [ ] Exportación de datos (CSV, Excel)
-- [ ] Dashboard con métricas
-
-### Versión 1.2.0
-- [ ] Sistema de proveedores
-- [ ] Gestión de órdenes de compra
-- [ ] Notificaciones por email
-- [ ] API rate limiting
-
-### Versión 2.0.0
-- [ ] Microservicios
-- [ ] Event-driven architecture
-- [ ] Cache con Redis
-- [ ] Monitoreo con Prometheus
-
-## 🐛 Reportar Bugs
-
-### Antes de Reportar
-
-1. Verifica que el bug no esté ya reportado
-2. Revisa la documentación
-3. Prueba en la última versión
-
-### Información Requerida
-
-- **Versión**: Node.js, TypeScript, etc.
-- **Sistema Operativo**: Windows/macOS/Linux
-- **Pasos para reproducir**: Lista detallada
-- **Comportamiento esperado**: Qué debería pasar
-- **Comportamiento actual**: Qué está pasando
-- **Logs**: Errores relevantes
-
-### Plantilla de Bug Report
-
-```markdown
-## Descripción
-Descripción clara del problema
-
-## Pasos para Reproducir
-1. Ir a '...'
-2. Hacer clic en '...'
-3. Ver error
-
-## Comportamiento Esperado
-Descripción de lo que debería pasar
-
-## Comportamiento Actual
-Descripción de lo que está pasando
-
-## Información Adicional
-- OS: [e.g. macOS 12.0]
-- Node.js: [e.g. 18.0.0]
-- TypeScript: [e.g. 5.8.3]
-```
-
-## 📄 Licencia
-
-Este proyecto está bajo la Licencia MIT. Ver el archivo [LICENSE](LICENSE) para más detalles.
-
-## 👥 Autores
-
-- **Daisy Castillo Sepulveda** - *Desarrollo inicial* - [@DaisyCastilloS](https://github.com/DaisyCastilloS)
-
-## 🙏 Agradecimientos
-
-- Clean Architecture por Robert C. Martin
-- Comunidad de TypeScript
-- Contribuidores de las librerías utilizadas
-- Equipo de desarrollo y testing
+- TypeScript (ES2020, strict mode)
+- Node.js con Express.js
+- PostgreSQL con pg driver
+- Jest para testing (coverage 90%)
+- Winston para logging estructurado
+- Zod para validación de datos
+- bcrypt para encriptación
+- jsonwebtoken para autenticación
+- Swagger/OpenAPI para documentación
+- Husky + commitlint para Conventional Commits
+- ESLint + Prettier para calidad de código
+- Docker Compose para orquestación
+- pnpm como gestor de paquetes
 
 ---
 
-<div align="center">
+## 🚀 Instalación y Despliegue Rápido con Docker Compose
 
-**¿Te gustó el proyecto? ¡Dale una ⭐!**
+1. **Configura tu archivo `.env`:**
 
-[Reportar Bug](https://github.com/tu-usuario/Industrial-Inventory/issues) • 
-[Solicitar Feature](https://github.com/tu-usuario/Industrial-Inventory/issues) • 
-[Contribuir](https://github.com/tu-usuario/Industrial-Inventory/pulls)
+```env
+DB_USER=postgres
+DB_PASSWORD=postgres
+DB_NAME=inventory_db
+DB_PORT=5432
+```
 
-</div>
+2. **Levanta la base de datos y carga datos de ejemplo:**
+
+```bash
+docker compose up -d
+```
+
+Esto creará un contenedor PostgreSQL con el esquema, triggers, vistas y datos de ejemplo (usuarios, productos, ubicaciones, proveedores, etc).
+
+3. **Inicia el backend (en otra terminal):**
+
+```bash
+pnpm install
+pnpm run dev
+```
+
+---
+
+## 📖 Uso y Comandos Principales
+
+- Consultar productos, crear, actualizar, eliminar, consultar reportes y logs.
+- Ver ejemplos de uso en la sección de endpoints.
+
+---
+
+## 🗄️ Esquema y Datos de Ejemplo
+
+### Productos de ejemplo
+
+| SKU              | Nombre                          | Categoría     | Ubicación        | Proveedor                | Stock | Stock Crítico | Precio   |
+|------------------|---------------------------------|---------------|------------------|--------------------------|-------|---------------|----------|
+| SENS-PRES-001    | Sensor de Presión Industrial    | Sensores      | Bodega Central   | Industrial Supplies Co.  | 15    | 5             | 1250.00  |
+| TRANS-TEMP-002   | Transmisor de Temperatura RTD   | Transmisores  | Bodega Sur       | Mining Equipment Ltd.    | 25    | 3             | 890.00   |
+| VALV-CONT-003    | Válvula de Control Neumática    | Válvulas      | Bodega Central   | Industrial Supplies Co.  | 8     | 2             | 2100.00  |
+| SEG-CASCO-004    | Casco de Seguridad Industrial   | Equipos de Seguridad | Bodega Oeste | Safety Gear Pro         | 100   | 10            | 45.00    |
+| HERR-MULTI-005   | Multímetro Digital Profesional  | Herramientas  | Bodega Sur       | Tech Components Inc.     | 30    | 5             | 180.00   |
+
+### Ubicaciones
+
+- **Bodega Central** (Zona Norte, Estante A)
+- **Bodega Sur** (Zona Mina, Estante B)
+- **Bodega Oeste** (Zona Central, Estante C)
+- **Almacén Temporal** (Zona Este, Estante D)
+
+### Proveedores
+
+- **Industrial Supplies Co.** (Juan Pérez)
+- **Mining Equipment Ltd.** (María González)
+- **Safety Gear Pro** (Carlos Rodríguez)
+- **Tech Components Inc.** (Ana Silva)
+
+---
+
+## 🔐 Autenticación y Roles
+
+- **Roles soportados:** `ADMIN`, `USER`, `VIEWER`
+- **Registro:** `POST /auth/register`
+- **Login:** `POST /auth/login` (devuelve JWT)
+
+### Ejemplo de login
+
+```bash
+curl -X POST http://localhost:3000/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email": "admin@industrial.com", "password": "123456"}'
+```
+
+---
+
+## 🔌 API Endpoints
+
+| Método | Endpoint | Descripción | Rol mínimo |
+|--------|----------|-------------|------------|
+| `GET` | `/products` | Listar todos los productos | USER |
+| `GET` | `/products/:id` | Obtener producto por ID | USER |
+| `POST` | `/products` | Crear nuevo producto | USER |
+| `PUT` | `/products/:id` | Actualizar producto | USER |
+| `DELETE` | `/products/:id` | Eliminar producto | ADMIN |
+| `GET` | `/reports/critical-stock` | Productos en stock crítico | ADMIN |
+| `GET` | `/audit-logs` | Ver logs de auditoría | ADMIN |
+
+### Ejemplo: Consultar productos
+
+```bash
+curl -H "Authorization: Bearer <TOKEN>" http://localhost:3000/products
+```
+
+Respuesta:
+```json
+[
+  {
+    "id": 1,
+    "sku": "SENS-PRES-001",
+    "name": "Sensor de Presión Industrial",
+    "category": "Sensores",
+    "location": "Bodega Central",
+    "supplier": "Industrial Supplies Co.",
+    "quantity": 15,
+    "critical_stock": 5,
+    "price": 1250.00,
+    "stock_status": "NORMAL"
+  }
+]
+```
+
+### Ejemplo: Crear producto
+
+```bash
+curl -X POST http://localhost:3000/products \
+  -H "Authorization: Bearer <TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "sku": "COMP-RELE-006",
+    "name": "Relé de Potencia Industrial",
+    "description": "Relé electromecánico para control de motores",
+    "price": 320.00,
+    "quantity": 12,
+    "critical_stock": 3,
+    "category_id": 6,
+    "location_id": 1,
+    "supplier_id": 4
+  }'
+```
+
+---
+
+## 🔎 Vistas y Triggers Clave
+
+- **Auditoría automática:** Cada cambio en productos, categorías, ubicaciones y proveedores genera un registro en `audit_logs`.
+- **Stock crítico:** Si el stock de un producto cae por debajo de su `critical_stock`, se genera una alerta y se refleja en la vista `critical_stock_products`.
+- **Vistas útiles:**
+  - `products_full_info`: Productos con toda la información relacionada.
+  - `critical_stock_products`: Solo productos en stock crítico.
+  - `recent_movements`: Últimos movimientos de inventario.
+
+---
+
+## 📊 Logging y Auditoría
+
+- Logging estructurado con Winston
+- Auditoría automática vía triggers en la base de datos
+
+---
+
+## 🧪 Testing
+
+```bash
+pnpm run test
+```
+
+---
+
+## 📝 Commits y Estilo de Código
+
+- Conventional Commits
+- ESLint + Prettier
+- Husky + commitlint
+
+---
+
+## 🔒 Seguridad
+
+- JWT para autenticación
+- Helmet, CORS y rate limiting en Express
+
+---
+
+## 🐳 Docker Compose
+
+- Orquestación de base de datos y backend
+- Volúmenes persistentes para datos
+
+---
+
+## 📝 Troubleshooting
+
+- **¿No puedes conectarte a la base de datos?**
+  - Verifica que el contenedor `inventory-db` esté corriendo:  `docker ps`
+  - Revisa las variables de entorno en `.env` y en `docker-compose.yml`.
+- **¿El backend no arranca?**
+  - Asegúrate de que la base de datos esté lista antes de iniciar el backend.
+  - Verifica logs con `pnpm run dev` y `docker logs inventory-db`.
+- **¿No ves datos de ejemplo?**
+  - El script `init.sql` se ejecuta automáticamente al crear el contenedor. Si necesitas reiniciar, elimina el volumen de Docker:
+    ```bash
+    docker compose down -v
+    docker compose up -d
+    ```
+
+---
+
+## 🤝 Contribución
+
+¡Contribuciones bienvenidas! Abre un issue o pull request.
+
+---
+
+## 🛣️ Roadmap
+
+- Mejoras en reportes y dashboards
+- Integración con sistemas externos
+- Notificaciones automáticas
+
+---
+
+## 🐛 Reportar Bugs
+
+Abre un issue en GitHub con el mayor detalle posible.
+
+---
+
+## 📄 Licencia
+
+MIT
+
+---
+
+## 👥 Autores
+
+- [Daisy Castillo Sepulveda](https://github.com/DaisyCastilloS)
+
+---
+
+## 🙏 Agradecimientos
+
+- Comunidad Open Source
+- Usuarios y testers
+
+---
+
+## 📚 Documentación
+
+- Documentación Swagger: [http://localhost:3000/docs](http://localhost:3000/docs)
+- Consulta las vistas SQL (`products_full_info`, `critical_stock_products`, `recent_movements`) para reportes avanzados.
+
+---
+
+¿Dudas? Abre un issue o contactame.
+
+¿Quieres ejemplos más específicos de productos, ubicaciones o movimientos? ¡Dímelo!
+
+¿Listo para usar en producción? Solo necesitas Docker Compose y tu archivo `.env` configurado.
+
+---
+
+**¡Bienvenido a la gestión industrial moderna!**

@@ -24,51 +24,26 @@ module.exports = {
       2,
       'always',
       [
-        // DOMAIN LAYER
-        'entity',
-        'repository',
-        'domain',
-        
-        // APPLICATION LAYER
-        'usecase',
-        'dto',
-        'application',
-        
-        // INFRASTRUCTURE LAYER
-        'service',
-        'database',
-        'infrastructure',
-        
-        // PRESENTATION LAYER
-        'controller',
-        'middleware',
-        'presentation',
-        
-        // CROSS-CUTTING
         'auth',
-        'user',
-        'security',
+        'users',
+        'products',
+        'categories',
+        'locations',
+        'suppliers',
+        'movements',
         'audit',
         'validation',
-        
-        // TOOLS & CONFIG
-        'docs',
-        'ci',
-        'test',
-        'lint',
-        'format',
-        'deps',
-        'typescript',
-        'docker'
+        'security',
+        'api',
+        'database',
+        'infrastructure',
+        'domain',
+        'application'
       ]
     ],
-    'type-case': [2, 'always', 'lower-case'],
-    'type-empty': [2, 'never'],
     'subject-case': [2, 'always', 'lower-case'],
     'subject-empty': [2, 'never'],
     'subject-full-stop': [2, 'never', '.'],
-    'subject-max-length': [2, 'always', 72],
-    'body-max-line-length': [2, 'always', 100],
-    'footer-max-line-length': [2, 'always', 100]
+    'header-max-length': [2, 'always', 72]
   }
 }; 

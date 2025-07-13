@@ -279,4 +279,91 @@ export class ProductController {
       this.handleError(error, req, res, 'deleteProduct');
     }
   };
+
+  /**
+   * Obtiene productos en stock crítico
+   * @param req - Request de Express
+   * @param res - Response de Express
+   */
+  getCriticalStockProducts = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const criticalProducts = await this.productRepository.findCriticalStock();
+      
+      const response = buildSuccessResponse(
+        'Critical stock products retrieved successfully',
+        {
+          count: criticalProducts.length,
+          products: criticalProducts
+        }
+      );
+      
+      res.status(200).json(response);
+      
+      this.logger.info('✅ Critical stock products retrieved via API', {
+        count: criticalProducts.length,
+        userAgent: req.get('User-Agent')
+      });
+      
+    } catch (error) {
+      this.handleError(error, req, res, 'getCriticalStockProducts');
+    }
+  };
+
+  /**
+   * Obtiene estadísticas del inventario
+   * @param req - Request de Express
+   * @param res - Response de Express
+   */
+  getInventoryStats = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const stats = await this.productRepository.getInventoryStats();
+      
+      const response = buildSuccessResponse(
+        'Inventory statistics retrieved successfully',
+        stats
+      );
+      
+      res.status(200).json(response);
+      
+      this.logger.info('✅ Inventory stats retrieved via API', {
+        stats,
+        userAgent: req.get('User-Agent')
+      });
+      
+    } catch (error) {
+      this.handleError(error, req, res, 'getInventoryStats');
+    }
+  };
+
+  /**
+   * Obtiene el historial de auditoría de un producto
+   * @param req - Request de Express
+   * @param res - Response de Express
+   */
+  getAuditLogs = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const productId = this.validateProductId(req);
+      const auditTrail = await this.productRepository.getAuditTrail(productId);
+      
+      const response = buildSuccessResponse(
+        'Audit logs retrieved successfully',
+        {
+          productId,
+          count: auditTrail.length,
+          logs: auditTrail
+        }
+      );
+      
+      res.status(200).json(response);
+      
+      this.logger.info('✅ Audit logs retrieved via API', {
+        productId,
+        count: auditTrail.length,
+        userAgent: req.get('User-Agent')
+      });
+      
+    } catch (error) {
+      this.handleError(error, req, res, 'getAuditLogs');
+    }
+  };
 }
