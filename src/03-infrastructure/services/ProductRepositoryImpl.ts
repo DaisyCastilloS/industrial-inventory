@@ -5,11 +5,35 @@ import { ProductQueries } from "../db/sqlQueries/ProductQueries";
 
 export class ProductRepositoryImpl implements ProductRepository {
     async create(product: Product): Promise<void> {
-        await pool.query(ProductQueries.create, [product.getName(), product.getDescription(), product.getPrice(), product.getQuantity()]);
+        const result = await pool.query(ProductQueries.create, [
+            product.getName(), 
+            product.getDescription(), 
+            product.getPrice(), 
+            product.getQuantity(),
+            product.getCategoryId(),
+            product.getLocation(),
+            product.getCriticalStock(),
+            product.getIsActive()
+        ]);
+        
+        // Asignar el ID generado por la base de datos
+        if (result.rows.length > 0) {
+            product.setId(result.rows[0].id);
+        }
     }
 
     async update(product: Product): Promise<void> {
-        await pool.query(ProductQueries.update, [product.getName(), product.getDescription(), product.getPrice(), product.getQuantity(), product.getId()]);
+        await pool.query(ProductQueries.update, [
+            product.getName(), 
+            product.getDescription(), 
+            product.getPrice(), 
+            product.getQuantity(),
+            product.getCategoryId(),
+            product.getLocation(),
+            product.getCriticalStock(),
+            product.getIsActive(),
+            product.getId()
+        ]);
     }
 
     async delete(productId: number): Promise<void> {
@@ -19,12 +43,37 @@ export class ProductRepositoryImpl implements ProductRepository {
     async findById(productId: number): Promise<Product | null> {
         const result = await pool.query(ProductQueries.findById, [productId]);
         if (result.rows.length === 0) return null;
+        
         const row = result.rows[0];
-        return new Product(row.id, row.name, row.description, row.price, row.quantity);
+        return new Product(
+            row.id, 
+            row.name, 
+            row.description, 
+            row.price, 
+            row.quantity,
+            row.category_id,
+            row.location,
+            row.critical_stock,
+            row.is_active,
+            row.created_at,
+            row.updated_at
+        );
     }
 
     async findAll(): Promise<Product[]> {
         const result = await pool.query(ProductQueries.findAll);
-        return result.rows.map(row => new Product(row.id, row.name, row.description, row.price, row.quantity));
+        return result.rows.map(row => new Product(
+            row.id, 
+            row.name, 
+            row.description, 
+            row.price, 
+            row.quantity,
+            row.category_id,
+            row.location,
+            row.critical_stock,
+            row.is_active,
+            row.created_at,
+            row.updated_at
+        ));
     }
 }

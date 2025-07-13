@@ -1,5 +1,6 @@
--- Eliminar tabla si existe (para reinicios de desarrollo)
+-- Eliminar tablas si existen (para reinicios de desarrollo)
 DROP TABLE IF EXISTS products;
+DROP TABLE IF EXISTS users;
 
 -- Crear tabla products
 CREATE TABLE products (
@@ -8,6 +9,10 @@ CREATE TABLE products (
   description TEXT,
   price NUMERIC(10, 2) NOT NULL,
   quantity INTEGER NOT NULL,
+  category_id INTEGER NOT NULL,
+  location VARCHAR(200),
+  critical_stock INTEGER NOT NULL DEFAULT 0,
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW()
 );
@@ -26,3 +31,5 @@ CREATE TABLE users (
 -- Crear índices sugeridos
 CREATE INDEX idx_products_name ON products (name);
 CREATE INDEX idx_products_quantity ON products (quantity);
+CREATE INDEX idx_products_category_id ON products (category_id);
+CREATE INDEX idx_products_is_active ON products (is_active);
