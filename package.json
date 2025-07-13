@@ -1,0 +1,46 @@
+{
+    "name": "industrial-inventory-system",
+    "version": "1.0.0",
+    "description": "Sistema de Inventario Industrial con Node.js, TypeScript y PostgreSQL",
+    "main": "dist/index.js",
+    "scripts": {
+        "db:init": "pnpm exec ts-node ./scripts/run-sql.ts",
+        "start": "node dist/index.js",
+        "dev": "pnpm exec ts-node-dev --respawn --transpile-only src/04-presentation/expressServer/index.ts",
+        "build": "pnpm exec tsc",
+        "lint": "eslint --ignore-path .eslintignore --ext .js,.ts .",
+        "lint-fix": "eslint --fix --ignore-path .eslintignore --ext .js,.ts .",
+        "format": "prettier --write .",
+        "db:up": "docker-compose up -d",
+        "db:down": "docker-compose down -v"
+    },
+    "dependencies": {
+        "bcrypt": "^5.1.0",
+        "class-validator": "^0.14.0",
+        "dotenv": "^16.0.3",
+        "express": "^4.18.2",
+        "jsonwebtoken": "^9.0.0",
+        "pg": "^8.16.3",
+        "swagger-ui-express": "^4.6.3",
+        "winston": "^3.8.2",
+        "yamljs": "^0.3.0",
+        "zod": "^4.0.5"
+    },
+    "devDependencies": {
+        "@types/express": "^5.0.3",
+        "@types/node": "^24.0.13",
+        "@types/pg": "^8.15.4",
+        "@types/swagger-ui-express": "^4.1.8",
+        "@types/yamljs": "^0.2.34",
+        "@typescript-eslint/eslint-plugin": "^8.36.0",
+        "@typescript-eslint/parser": "^8.36.0",
+        "eslint": "^9.31.0",
+        "eslint-config-prettier": "^10.1.5",
+        "eslint-plugin-prettier": "^5.5.1",
+        "prettier": "^3.6.2",
+        "ts-node": "^10.9.2",
+        "ts-node-dev": "^2.0.0",
+        "typescript": "^5.8.3"
+    },
+    "packageManager": "pnpm@8.6.0"
+}

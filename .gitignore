@@ -1,0 +1,19 @@
+# Node.js
+node_modules
+.env
+logs/
+dist/
+
+# TypeScript
+*.tsbuildinfo
+
+# Docker
+postgres_data/
+
+# OS
+.DS_Store
+
+# Editor configs
+.vscode/
+.idea/
+*.swp
