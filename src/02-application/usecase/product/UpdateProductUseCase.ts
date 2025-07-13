@@ -25,6 +25,18 @@ export class UpdateProductUseCase {
         if (data.quantity !== undefined) {
             existingProduct.setQuantity(data.quantity);
         }
+        if (data.categoryId !== undefined) {
+            existingProduct.setCategoryId(data.categoryId);
+        }
+        if (data.location !== undefined) {
+            existingProduct.setLocation(data.location);
+        }
+        if (data.criticalStock !== undefined) {
+            existingProduct.setCriticalStock(data.criticalStock);
+        }
+        if (data.isActive !== undefined) {
+            existingProduct.setIsActive(data.isActive);
+        }
 
         await this.productRepo.update(existingProduct);
     }

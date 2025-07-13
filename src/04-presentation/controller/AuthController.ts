@@ -7,7 +7,7 @@ import { validateRegisterUserDTO } from '../../02-application/dto/auth/RegisterU
 import { validateLoginUserDTO } from '../../02-application/dto/auth/LoginUserDTO';
 import { EncryptionService } from '../../03-infrastructure/services/EncryptionService';
 import { JWTService } from '../../03-infrastructure/services/JWTService';
-import { buildCreatedResponse, buildSuccessResponse } from '../../03-infrastructure/utils/ResponseHelper';
+import { buildCreatedResponse, buildSuccessResponse } from '../utils/ResponseHelper';
 
 /**
  * Controlador de autenticación siguiendo Clean Architecture
@@ -96,11 +96,11 @@ export class AuthController {
             };
             
             const response = buildSuccessResponse(
+                'Login exitoso',
                 {
                     token,
                     user: userResponse
-                },
-                'Login exitoso'
+                }
             );
             
             res.status(200).json(response);
