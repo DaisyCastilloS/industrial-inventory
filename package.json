@@ -4,6 +4,9 @@
     "description": "Sistema de Inventario Industrial con Node.js, TypeScript y PostgreSQL",
     "main": "dist/index.js",
     "scripts": {
+        "test": "jest",
+        "test:watch": "jest --watch",
+        "test:coverage": "jest --coverage",
         "db:init": "pnpm exec ts-node ./scripts/run-sql.ts",
         "start": "node dist/index.js",
         "dev": "pnpm exec ts-node-dev --respawn --transpile-only src/04-presentation/expressServer/index.ts",
@@ -27,7 +30,10 @@
         "zod": "^4.0.5"
     },
     "devDependencies": {
+        "@types/bcrypt": "^5.0.2",
         "@types/express": "^5.0.3",
+        "@types/jest": "^30.0.0",
+        "@types/jsonwebtoken": "^9.0.10",
         "@types/node": "^24.0.13",
         "@types/pg": "^8.15.4",
         "@types/swagger-ui-express": "^4.1.8",
@@ -37,7 +43,9 @@
         "eslint": "^9.31.0",
         "eslint-config-prettier": "^10.1.5",
         "eslint-plugin-prettier": "^5.5.1",
+        "jest": "^30.0.4",
         "prettier": "^3.6.2",
+        "ts-jest": "^29.4.0",
         "ts-node": "^10.9.2",
         "ts-node-dev": "^2.0.0",
         "typescript": "^5.8.3"

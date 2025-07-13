@@ -1,116 +1,1326 @@
 openapi: 3.0.3
 info:
-  title: Industrial Inventory API
+  title: 🏭 Industrial Inventory API
   version: 1.0.0
-  description: API para gestión de inventario industrial.
+  description: |
+    ## Sistema de Inventario Industrial Minero
+    
+    API robusta y escalable para la gestión de inventario de instrumentos industriales mineros construida con Clean Architecture, TypeScript y PostgreSQL.
+    
+    ### Características Principales
+    - ✅ Gestión completa de instrumentos industriales (CRUD)
+    - 🔐 Autenticación JWT con roles y permisos
+    - 📊 Logging estructurado con Winston
+    - 🧪 Validación robusta con Zod
+    - 📚 Documentación interactiva completa
+    - 🏗️ Arquitectura limpia y escalable
+    
+    ### Tecnologías
+    - **Backend**: Node.js, TypeScript, Express
+    - **Base de Datos**: PostgreSQL
+    - **Autenticación**: JWT (JSON Web Tokens)
+    - **Validación**: Zod
+    - **Logging**: Winston
+    - **Documentación**: Swagger/OpenAPI
+    
+    ### Arquitectura
+    Este proyecto sigue los principios de Clean Architecture con 4 capas bien definidas:
+    - **Domain Layer**: Entidades y reglas de negocio
+    - **Application Layer**: Casos de uso y DTOs
+    - **Infrastructure Layer**: Implementaciones técnicas
+    - **Presentation Layer**: Controladores y HTTP
+    
+    ---
+    
+    **Desarrollado por**: Daisy Castillo Sepulveda
+    **Repositorio**: [GitHub](https://github.com/DaisyCastilloS/industrial-inventory)
+    
+  contact:
+    name: Daisy Castillo Sepulveda
+    url: https://github.com/DaisyCastilloS
+    email: daisy.castillo@example.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: https://github.com/DaisyCastilloS/industrial-inventory/blob/main/README.md
+
 servers:
   - url: http://localhost:3000
+    description: Servidor de desarrollo local
+  - url: https://api.industrial-inventory.com
+    description: Servidor de producción (ejemplo)
+
+tags:
+  - name: Health
+    description: Endpoints de estado y monitoreo del sistema
+  - name: Authentication
+    description: Endpoints para autenticación y autorización de usuarios
+  - name: Products
+    description: Gestión completa de instrumentos industriales mineros
 
 paths:
-  /products:
+  /:
     get:
-      summary: Listar todos los productos
+      summary: 🏠 Estado del servidor
+      description: |
+        Endpoint de bienvenida que confirma que la API está funcionando correctamente.
+        
+        ### Información Incluida
+        - Estado del servidor
+        - Versión de la API
+        - Entorno de ejecución
+        - Timestamp de respuesta
       tags:
-        - Products
+        - Health
       responses:
         '200':
-          description: Lista de productos
+          description: ✅ Servidor funcionando correctamente
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Product'
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Mensaje de confirmación del estado
+                    example: "✅ Industrial Inventory API running"
+                  timestamp:
+                    type: string
+                    format: date-time
+                    description: Timestamp de la respuesta
+                    example: "2024-01-15T10:30:00.000Z"
+                  version:
+                    type: string
+                    description: Versión actual de la API
+                    example: "1.0.0"
+                  environment:
+                    type: string
+                    description: Entorno de ejecución
+                    example: "development"
+                  status:
+                    type: string
+                    description: Estado del servidor
+                    example: "healthy"
+              example:
+                message: "✅ Industrial Inventory API running"
+                timestamp: "2024-01-15T10:30:00.000Z"
+                version: "1.0.0"
+                environment: "development"
+                status: "healthy"
 
+  /auth/login:
     post:
-      summary: Crear un producto
+      summary: 🔐 Iniciar sesión
+      description: |
+        Autentica un usuario y devuelve un token JWT para acceder a los endpoints protegidos.
+        
+        ### Proceso de Autenticación
+        1. Validación de credenciales
+        2. Verificación de usuario activo
+        3. Generación de token JWT
+        4. Retorno de información del usuario
+        
+        ### Seguridad
+        - Contraseñas encriptadas con bcrypt
+        - Tokens JWT con expiración configurable
+        - Validación de formato de email
       tags:
-        - Products
+        - Authentication
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Product'
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: Email del usuario registrado
+                  example: "admin@industrial.com"
+                password:
+                  type: string
+                  format: password
+                  description: Contraseña del usuario (mínimo 6 caracteres)
+                  minLength: 6
+                  example: "password123"
+            example:
+              email: "admin@industrial.com"
+              password: "password123"
       responses:
-        '201':
-          description: Producto creado
-          
-  /products/{id}:
-    get:
-      summary: Obtener un producto por ID
+        '200':
+          description: ✅ Login exitoso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+              example:
+                success: true
+                message: "Login exitoso"
+                data:
+                  token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiYWRtaW5AaW5kdXN0cmlhbC5jb20iLCJyb2xlIjoiQURNSU4iLCJpYXQiOjE3MDUzNzQwMDAsImV4cCI6MTcwNTQ2MDQwMH0.example"
+                  user:
+                    id: 1
+                    email: "admin@industrial.com"
+                    role: "ADMIN"
+                    name: "Administrador"
+                    isActive: true
+                timestamp: "2024-01-15T10:30:00.000Z"
+        '400':
+          description: ❌ Datos de entrada inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Email y contraseña son requeridos"
+                error: "VALIDATION_ERROR"
+                timestamp: "2024-01-15T10:30:00.000Z"
+        '401':
+          description: ❌ Credenciales inválidas
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Credenciales inválidas"
+                error: "INVALID_CREDENTIALS"
+                timestamp: "2024-01-15T10:30:00.000Z"
+        '500':
+          description: ❌ Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Error interno del servidor"
+                error: "INTERNAL_ERROR"
+                timestamp: "2024-01-15T10:30:00.000Z"
+
+  /auth/register:
+    post:
+      summary: "📝 Registro de usuario"
+      description: |
+        Registra un nuevo usuario en el sistema.
+        - El email debe ser único.
+        - La contraseña debe tener al menos 6 caracteres, una mayúscula, una minúscula y un número.
+        - El rol puede ser ADMIN, USER o VIEWER.
       tags:
-        - Products
-      parameters:
-      - name: id
-        in: path
+        - Authentication
+      requestBody:
         required: true
-        schema:
-          type: integer
-      responses:
-      '200':
-        description: Producto encontrado
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Product'
-      '404':
-        description: Producto no encontrado
+              type: object
+              required: [email, password, name]
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: "usuario@mineria.com"
+                password:
+                  type: string
+                  format: password
+                  example: "Password123"
+                name:
+                  type: string
+                  example: "Juan Pérez"
+                role:
+                  type: string
+                  enum: [ADMIN, USER, VIEWER]
+                  example: "USER"
+      responses:
+        '201':
+          description: "✅ Usuario registrado exitosamente"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Usuario registrado exitosamente"
+                  data:
+                    type: object
+                    properties:
+                      id: { type: integer, example: 1 }
+                      email: { type: string, example: "usuario@mineria.com" }
+                      name: { type: string, example: "Juan Pérez" }
+                      role: { type: string, example: "USER" }
+                      isActive: { type: boolean, example: true }
+                      createdAt: { type: string, format: date-time, example: "2024-01-15T10:30:00.000Z" }
+                      updatedAt: { type: string, format: date-time, example: "2024-01-15T10:30:00.000Z" }
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: "2024-01-15T10:30:00.000Z"
+        '400':
+          description: "❌ Datos de entrada inválidos"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: "❌ El email ya está registrado"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
-    put:
-      summary: Actualizar un producto
+  /products:
+    get:
+      summary: 📋 Listar instrumentos industriales mineros
+      description: |
+        Obtiene una lista paginada de todos los instrumentos industriales mineros en el inventario.
+        
+        ### Características
+        - **Paginación automática**: Control de páginas y límites
+        - **Filtrado avanzado**: Por categoría, ubicación, estado
+        - **Ordenamiento flexible**: Por nombre, precio, cantidad, fecha
+        - **Búsqueda inteligente**: En nombre y descripción
+        - **Respuesta optimizada**: Para grandes volúmenes de datos
+        
+        ### Parámetros de Consulta
+        - `page`: Número de página (default: 1)
+        - `limit`: Elementos por página (default: 20, max: 100)
+        - `sort`: Campo de ordenamiento
+        - `order`: Dirección del ordenamiento
+        - `search`: Término de búsqueda
+        
+        ### Permisos Requeridos
+        - **ADMIN**: Acceso completo con todos los filtros
+        - **USER**: Acceso de lectura con filtros básicos
+        - **VIEWER**: Solo lectura sin filtros avanzados
       tags:
         - Products
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: Número de página (comienza en 1)
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          example: 1
+        - name: limit
+          in: query
+          description: Número de instrumentos por página (máximo 100)
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          example: 20
+        - name: sort
+          in: query
+          description: Campo para ordenar los resultados
+          required: false
+          schema:
+            type: string
+            enum: [name, price, quantity, created_at, categoryId]
+            default: created_at
+          example: "name"
+        - name: order
+          in: query
+          description: Orden de clasificación (ascendente o descendente)
+          required: false
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+          example: "desc"
+        - name: search
+          in: query
+          description: Término de búsqueda en nombre y descripción
+          required: false
+          schema:
+            type: string
+            minLength: 2
+          example: "sensor"
+        - name: categoryId
+          in: query
+          description: Filtrar por ID de categoría
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+          example: 2
+        - name: isActive
+          in: query
+          description: Filtrar por estado activo/inactivo
+          required: false
+          schema:
+            type: boolean
+          example: true
+      responses:
+        '200':
+          description: ✅ Lista de instrumentos obtenida exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductListResponse'
+              example:
+                success: true
+                message: "Instrumentos obtenidos exitosamente"
+                data:
+                  products:
+                    - id: 1
+                      name: "Sensor de Presión Industrial"
+                      description: "Sensor de presión diferencial para monitoreo de fluidos en minería subterránea"
+                      price: 1250.00
+                      quantity: 15
+                      categoryId: 2
+                      location: "Bodega Central - Zona Norte"
+                      criticalStock: 5
+                      isActive: true
+                      created_at: "2024-01-15T10:30:00.000Z"
+                      updated_at: "2024-01-15T10:30:00.000Z"
+                    - id: 2
+                      name: "Transmisor de Temperatura RTD"
+                      description: "Transmisor de temperatura con sensor RTD Pt100 para control de procesos mineros"
+                      price: 890.00
+                      quantity: 25
+                      categoryId: 3
+                      location: "Bodega Sur - Zona Mina"
+                      criticalStock: 3
+                      isActive: true
+                      created_at: "2024-01-15T10:30:00.000Z"
+                      updated_at: "2024-01-15T10:30:00.000Z"
+                    - id: 3
+                      name: "Analizador de Gases Portátil"
+                      description: "Equipo portátil para análisis de gases en túneles de mina"
+                      price: 3500.00
+                      quantity: 5
+                      categoryId: 1
+                      location: "Bodega Oeste - Zona Central"
+                      criticalStock: 10
+                      isActive: true
+                      created_at: "2024-01-15T10:30:00.000Z"
+                      updated_at: "2024-01-15T10:30:00.000Z"
+                  pagination:
+                    page: 1
+                    limit: 20
+                    total: 3
+                    totalPages: 1
+                    hasNext: false
+                    hasPrev: false
+                timestamp: "2024-01-15T10:30:00.000Z"
+        '401':
+          description: ❌ No autorizado - Token requerido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Token de autenticación requerido"
+                error: "UNAUTHORIZED"
+                timestamp: "2024-01-15T10:30:00.000Z"
+        '403':
+          description: ❌ Acceso denegado - Permisos insuficientes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "No tienes permisos para acceder a este recurso"
+                error: "FORBIDDEN"
+                timestamp: "2024-01-15T10:30:00.000Z"
+        '500':
+          description: ❌ Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Error interno del servidor"
+                error: "INTERNAL_ERROR"
+                timestamp: "2024-01-15T10:30:00.000Z"
+
+    post:
+      summary: ➕ Crear nuevo instrumento industrial
+      description: |
+        Crea un nuevo instrumento industrial minero en el inventario.
+        
+        ### Validaciones de Entrada
+        - **Nombre**: Requerido, máximo 100 caracteres
+        - **Descripción**: Requerido, máximo 500 caracteres
+        - **Precio**: Requerido, mayor a 0, máximo 999,999.99
+        - **Cantidad**: Requerido, entero mayor o igual a 0, máximo 999,999
+        - **Categoría**: Requerido, ID de categoría válido
+        - **Ubicación**: Requerido, máximo 200 caracteres
+        - **Stock Crítico**: Requerido, entero mayor o igual a 0, máximo 999,999
+        - **Activo**: Requerido, booleano (default: true)
+        
+        ### Proceso de Creación
+        1. Validación de datos con Zod
+        2. Verificación de unicidad
+        3. Creación en base de datos
+        4. Retorno del instrumento creado
+        
+        ### Permisos Requeridos
+        - **ADMIN**: Crear cualquier instrumento
+        - **USER**: Crear instrumentos (limitado por categoría)
+      tags:
+        - Products
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProductRequest'
+            example:
+              name: "Sensor de Presión Industrial"
+              description: "Sensor de presión diferencial para monitoreo de fluidos en minería subterránea"
+              price: 1250.00
+              quantity: 15
+              categoryId: 2
+              location: "Bodega Central - Zona Norte"
+              criticalStock: 5
+              isActive: true
+      responses:
+        '201':
+          description: ✅ Instrumento creado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductResponse'
+              example:
+                success: true
+                message: "Instrumento creado exitosamente"
+                data:
+                  id: 1
+                  name: "Sensor de Presión Industrial"
+                  description: "Sensor de presión diferencial para monitoreo de fluidos en minería subterránea"
+                  price: 1250.00
+                  quantity: 15
+                  categoryId: 2
+                  location: "Bodega Central - Zona Norte"
+                  criticalStock: 5
+                  isActive: true
+                  created_at: "2024-01-15T10:30:00.000Z"
+                  updated_at: "2024-01-15T10:30:00.000Z"
+                timestamp: "2024-01-15T10:30:00.000Z"
+        '400':
+          description: ❌ Datos de entrada inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+              example:
+                success: false
+                message: "Datos de entrada inválidos"
+                error: "VALIDATION_ERROR"
+                details:
+                  - field: "name"
+                    message: "El nombre es requerido"
+                    value: ""
+                  - field: "price"
+                    message: "El precio debe ser mayor a 0"
+                    value: -1
+                  - field: "categoryId"
+                    message: "El ID de categoría debe ser un entero positivo"
+                    value: 0
+                timestamp: "2024-01-15T10:30:00.000Z"
+        '401':
+          description: ❌ No autorizado - Token requerido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Token de autenticación requerido"
+                error: "UNAUTHORIZED"
+                timestamp: "2024-01-15T10:30:00.000Z"
+        '403':
+          description: ❌ Acceso denegado - Permisos insuficientes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "No tienes permisos para crear instrumentos"
+                error: "FORBIDDEN"
+                timestamp: "2024-01-15T10:30:00.000Z"
+        '409':
+          description: ❌ Conflicto - Instrumento ya existe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Ya existe un instrumento con ese nombre"
+                error: "CONFLICT"
+                timestamp: "2024-01-15T10:30:00.000Z"
+        '500':
+          description: ❌ Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Error interno del servidor"
+                error: "INTERNAL_ERROR"
+                timestamp: "2024-01-15T10:30:00.000Z"
+
+  /products/{id}:
+    get:
+      summary: 🔍 Obtener instrumento por ID
+      description: |
+        Obtiene los detalles completos de un instrumento industrial específico por su ID.
+        
+        ### Información Incluida
+        - **Datos básicos**: Nombre, descripción, precio, cantidad
+        - **Metadatos**: Categoría, ubicación, stock crítico, estado
+        - **Timestamps**: Fecha de creación y última actualización
+        - **Estado actual**: Información del inventario en tiempo real
+        
+        ### Validaciones
+        - ID debe ser un entero positivo
+        - Instrumento debe existir en la base de datos
+        - Usuario debe tener permisos de lectura
+        
+        ### Permisos Requeridos
+        - **ADMIN**: Acceso completo a cualquier instrumento
+        - **USER**: Acceso de lectura a instrumentos de su categoría
+        - **VIEWER**: Solo lectura de instrumentos públicos
+      tags:
+        - Products
+      security:
+        - BearerAuth: []
       parameters:
         - name: id
           in: path
+          description: ID único del instrumento a consultar
           required: true
           schema:
-      type: integer
-      requestBody:
-      required: true
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Product'
+            type: integer
+            minimum: 1
+          example: 1
       responses:
         '200':
-      description: Producto actualizado
+          description: ✅ Instrumento encontrado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductResponse'
+              example:
+                success: true
+                message: "Instrumento encontrado exitosamente"
+                data:
+                  id: 1
+                  name: "Sensor de Presión Industrial"
+                  description: "Sensor de presión diferencial para monitoreo de fluidos en minería subterránea"
+                  price: 1250.00
+                  quantity: 15
+                  categoryId: 2
+                  location: "Bodega Central - Zona Norte"
+                  criticalStock: 5
+                  isActive: true
+                  created_at: "2024-01-15T10:30:00.000Z"
+                  updated_at: "2024-01-15T10:30:00.000Z"
+                timestamp: "2024-01-15T10:30:00.000Z"
+        '400':
+          description: ❌ ID inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "ID de instrumento inválido"
+                error: "VALIDATION_ERROR"
+                timestamp: "2024-01-15T10:30:00.000Z"
+        '401':
+          description: ❌ No autorizado - Token requerido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Token de autenticación requerido"
+                error: "UNAUTHORIZED"
+                timestamp: "2024-01-15T10:30:00.000Z"
+        '403':
+          description: ❌ Acceso denegado - Permisos insuficientes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "No tienes permisos para acceder a este instrumento"
+                error: "FORBIDDEN"
+                timestamp: "2024-01-15T10:30:00.000Z"
+        '404':
+          description: ❌ Instrumento no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Instrumento con ID 1 no encontrado"
+                error: "NOT_FOUND"
+                timestamp: "2024-01-15T10:30:00.000Z"
+        '500':
+          description: ❌ Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Error interno del servidor"
+                error: "INTERNAL_ERROR"
+                timestamp: "2024-01-15T10:30:00.000Z"
+
+    put:
+      summary: ✏️ Actualizar instrumento industrial
+      description: |
+        Actualiza los datos de un instrumento industrial existente.
+        
+        ### Características
+        - **Actualización parcial**: Solo se actualizan los campos enviados
+        - **Validación en tiempo real**: Cada campo se valida individualmente
+        - **Historial de cambios**: Se registra automáticamente la modificación
+        - **Verificación de permisos**: Según el rol del usuario
+        
+        ### Campos Actualizables
+        - `name`: Nombre del instrumento
+        - `description`: Descripción detallada
+        - `price`: Precio unitario
+        - `quantity`: Cantidad en inventario
+        - `categoryId`: ID de categoría
+        - `location`: Ubicación física
+        - `criticalStock`: Stock crítico
+        - `isActive`: Estado activo/inactivo
+        
+        ### Permisos Requeridos
+        - **ADMIN**: Actualizar cualquier instrumento
+        - **USER**: Actualizar instrumentos de su categoría (limitado)
+      tags:
+        - Products
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: ID único del instrumento a actualizar
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+          example: 2
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProductRequest'
+            example:
+              name: "Transmisor de Temperatura RTD Mejorado"
+              description: "Transmisor de temperatura con sensor RTD Pt100 para control de procesos mineros - Versión mejorada"
+              price: 950.00
+              quantity: 30
+              categoryId: 3
+              location: "Bodega Sur - Zona Mina - Estante A"
+              criticalStock: 5
+              isActive: true
+      responses:
+        '200':
+          description: ✅ Instrumento actualizado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductResponse'
+              example:
+                success: true
+                message: "Instrumento actualizado exitosamente"
+                data:
+                  id: 2
+                  name: "Transmisor de Temperatura RTD Mejorado"
+                  description: "Transmisor de temperatura con sensor RTD Pt100 para control de procesos mineros - Versión mejorada"
+                  price: 950.00
+                  quantity: 30
+                  categoryId: 3
+                  location: "Bodega Sur - Zona Mina - Estante A"
+                  criticalStock: 5
+                  isActive: true
+                  created_at: "2024-01-15T10:30:00.000Z"
+                  updated_at: "2024-01-15T11:45:00.000Z"
+                timestamp: "2024-01-15T11:45:00.000Z"
+        '400':
+          description: ❌ Datos de entrada inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+              example:
+                success: false
+                message: "Datos de entrada inválidos"
+                error: "VALIDATION_ERROR"
+                details:
+                  - field: "price"
+                    message: "El precio debe ser mayor a 0"
+                    value: -50
+                  - field: "quantity"
+                    message: "La cantidad debe ser un entero no negativo"
+                    value: -5
+                timestamp: "2024-01-15T11:45:00.000Z"
+        '401':
+          description: ❌ No autorizado - Token requerido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Token de autenticación requerido"
+                error: "UNAUTHORIZED"
+                timestamp: "2024-01-15T11:45:00.000Z"
+        '403':
+          description: ❌ Acceso denegado - Permisos insuficientes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "No tienes permisos para actualizar este instrumento"
+                error: "FORBIDDEN"
+                timestamp: "2024-01-15T11:45:00.000Z"
+        '404':
+          description: ❌ Instrumento no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Instrumento con ID 2 no encontrado"
+                error: "NOT_FOUND"
+                timestamp: "2024-01-15T11:45:00.000Z"
+        '500':
+          description: ❌ Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Error interno del servidor"
+                error: "INTERNAL_ERROR"
+                timestamp: "2024-01-15T11:45:00.000Z"
 
     delete:
-      summary: Eliminar un producto
+      summary: 🗑️ Eliminar instrumento industrial
+      description: |
+        Elimina permanentemente un instrumento industrial del inventario.
+        
+        ⚠️ **ADVERTENCIA**: Esta acción es irreversible y eliminará permanentemente el instrumento del sistema.
+        
+        ### Proceso de Eliminación
+        1. Verificación de existencia del instrumento
+        2. Validación de permisos del usuario
+        3. Eliminación lógica/física según configuración
+        4. Registro de la acción en logs
+        
+        ### Consideraciones
+        - Solo instrumentos inactivos pueden ser eliminados
+        - Se verifica que no haya dependencias activas
+        - Se mantiene un registro de auditoría
+        
+        ### Permisos Requeridos
+        - **ADMIN**: Eliminar cualquier instrumento
+        - **USER**: No puede eliminar instrumentos
       tags:
-       - Products
+        - Products
+      security:
+        - BearerAuth: []
       parameters:
-       - name: id
-         in: path
-         required: true
-         schema:
-      type: integer
+        - name: id
+          in: path
+          description: ID único del instrumento a eliminar
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+          example: 3
       responses:
-       '200':
-      description: Producto eliminado
-
+        '200':
+          description: ✅ Instrumento eliminado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteResponse'
+              example:
+                success: true
+                message: "Instrumento eliminado exitosamente"
+                data:
+                  id: 3
+                  deleted_at: "2024-01-15T12:00:00.000Z"
+                timestamp: "2024-01-15T12:00:00.000Z"
+        '400':
+          description: ❌ ID inválido o instrumento no puede ser eliminado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "El instrumento no puede ser eliminado porque está activo"
+                error: "VALIDATION_ERROR"
+                timestamp: "2024-01-15T12:00:00.000Z"
+        '401':
+          description: ❌ No autorizado - Token requerido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Token de autenticación requerido"
+                error: "UNAUTHORIZED"
+                timestamp: "2024-01-15T12:00:00.000Z"
+        '403':
+          description: ❌ Acceso denegado - Permisos insuficientes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "No tienes permisos para eliminar instrumentos"
+                error: "FORBIDDEN"
+                timestamp: "2024-01-15T12:00:00.000Z"
+        '404':
+          description: ❌ Instrumento no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Instrumento con ID 3 no encontrado"
+                error: "NOT_FOUND"
+                timestamp: "2024-01-15T12:00:00.000Z"
+        '500':
+          description: ❌ Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Error interno del servidor"
+                error: "INTERNAL_ERROR"
+                timestamp: "2024-01-15T12:00:00.000Z"
 
 components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        Token JWT obtenido al iniciar sesión.
+        
+        **Formato**: `Bearer <token>`
+        
+        **Ejemplo**: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...`
+        
+        **Duración**: 24 horas (configurable)
+
   schemas:
+    # Esquemas de Autenticación
+    AuthResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Login exitoso"
+        data:
+          type: object
+          properties:
+            token:
+              type: string
+              description: Token JWT para autenticación
+              example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+            user:
+              $ref: '#/components/schemas/User'
+        timestamp:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:30:00.000Z"
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        email:
+          type: string
+          format: email
+          example: "admin@industrial.com"
+        role:
+          type: string
+          enum: [ADMIN, USER, VIEWER]
+          example: "ADMIN"
+        name:
+          type: string
+          example: "Administrador"
+        created_at:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:30:00.000Z"
+
+    # Esquemas de Productos
     Product:
       type: object
       properties:
         id:
           type: integer
+          description: ID único del instrumento
+          example: 1
         name:
           type: string
+          description: Nombre del instrumento industrial minero
+          maxLength: 100
+          example: "Sensor de Presión Industrial"
         description:
           type: string
+          description: Descripción detallada del instrumento
+          maxLength: 500
+          example: "Sensor de presión diferencial para monitoreo de fluidos en minería subterránea"
         price:
           type: number
+          format: float
+          description: Precio unitario del instrumento
+          minimum: 0
+          maximum: 999999.99
+          example: 1250.00
         quantity:
           type: integer
+          description: Cantidad disponible en inventario
+          minimum: 0
+          maximum: 999999
+          example: 15
+        categoryId:
+          type: integer
+          description: ID de la categoría del instrumento
+          minimum: 1
+          example: 2
+        location:
+          type: string
+          description: Ubicación física o almacén del instrumento
+          maxLength: 200
+          example: "Bodega Central - Zona Norte"
+        criticalStock:
+          type: integer
+          description: Stock crítico para alertas
+          minimum: 0
+          maximum: 999999
+          example: 5
+        isActive:
+          type: boolean
+          description: ¿El instrumento está activo en inventario?
+          default: true
+          example: true
         created_at:
           type: string
           format: date-time
+          description: Fecha de creación
+          example: "2024-01-15T10:30:00.000Z"
         updated_at:
           type: string
           format: date-time
-      required: [name, price, quantity]
+          description: Fecha de última actualización
+          example: "2024-01-15T10:30:00.000Z"
+      required:
+        - id
+        - name
+        - description
+        - price
+        - quantity
+        - categoryId
+        - location
+        - criticalStock
+        - isActive
+
+    CreateProductRequest:
+      type: object
+      required:
+        - name
+        - description
+        - price
+        - quantity
+        - categoryId
+        - location
+        - criticalStock
+        - isActive
+      properties:
+        name:
+          type: string
+          description: Nombre del instrumento industrial minero
+          maxLength: 100
+          example: "Sensor de Presión Industrial"
+        description:
+          type: string
+          description: Descripción detallada del instrumento
+          maxLength: 500
+          example: "Sensor de presión diferencial para monitoreo de fluidos en minería subterránea"
+        price:
+          type: number
+          format: float
+          description: Precio unitario del instrumento
+          minimum: 0
+          maximum: 999999.99
+          example: 1250.00
+        quantity:
+          type: integer
+          description: Cantidad inicial en inventario
+          minimum: 0
+          maximum: 999999
+          example: 15
+        categoryId:
+          type: integer
+          description: ID de la categoría del instrumento
+          minimum: 1
+          example: 2
+        location:
+          type: string
+          description: Ubicación física o almacén del instrumento
+          maxLength: 200
+          example: "Bodega Central - Zona Norte"
+        criticalStock:
+          type: integer
+          description: Stock crítico para alertas
+          minimum: 0
+          maximum: 999999
+          example: 5
+        isActive:
+          type: boolean
+          description: ¿El instrumento está activo en inventario?
+          default: true
+          example: true
+
+    UpdateProductRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Nuevo nombre del instrumento
+          maxLength: 100
+          example: "Transmisor de Temperatura RTD"
+        description:
+          type: string
+          description: Nueva descripción del instrumento
+          maxLength: 500
+          example: "Transmisor de temperatura con sensor RTD Pt100 para control de procesos mineros"
+        price:
+          type: number
+          format: float
+          description: Nuevo precio unitario
+          minimum: 0
+          maximum: 999999.99
+          example: 890.00
+        quantity:
+          type: integer
+          description: Nueva cantidad en inventario
+          minimum: 0
+          maximum: 999999
+          example: 25
+        categoryId:
+          type: integer
+          description: Nuevo ID de la categoría
+          minimum: 1
+          example: 3
+        location:
+          type: string
+          description: Nueva ubicación física
+          maxLength: 200
+          example: "Bodega Sur - Zona Mina"
+        criticalStock:
+          type: integer
+          description: Nuevo stock crítico
+          minimum: 0
+          maximum: 999999
+          example: 3
+        isActive:
+          type: boolean
+          description: ¿El instrumento está activo?
+          example: false
+
+    # Esquemas de Respuesta
+    ProductResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Producto obtenido exitosamente"
+        data:
+          $ref: '#/components/schemas/Product'
+        timestamp:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:30:00.000Z"
+
+    ProductListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Productos obtenidos exitosamente"
+        data:
+          type: object
+          properties:
+            products:
+              type: array
+              items:
+                $ref: '#/components/schemas/Product'
+            pagination:
+              $ref: '#/components/schemas/Pagination'
+        timestamp:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:30:00.000Z"
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+          description: Página actual
+          example: 1
+        limit:
+          type: integer
+          description: Elementos por página
+          example: 20
+        total:
+          type: integer
+          description: Total de elementos
+          example: 100
+        totalPages:
+          type: integer
+          description: Total de páginas
+          example: 5
+        hasNext:
+          type: boolean
+          description: ¿Hay página siguiente?
+          example: true
+        hasPrev:
+          type: boolean
+          description: ¿Hay página anterior?
+          example: false
+
+    DeleteResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Producto eliminado exitosamente"
+        data:
+          type: object
+          properties:
+            id:
+              type: integer
+              description: ID del producto eliminado
+              example: 1
+            deleted_at:
+              type: string
+              format: date-time
+              description: Fecha de eliminación
+              example: "2024-01-15T12:00:00.000Z"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2024-01-15T12:00:00.000Z"
+
+    # Esquemas de Error
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          description: Mensaje de error descriptivo
+          example: "Producto no encontrado"
+        error:
+          type: string
+          description: Código de error
+          enum: [VALIDATION_ERROR, NOT_FOUND, UNAUTHORIZED, FORBIDDEN, INTERNAL_ERROR, INVALID_CREDENTIALS]
+          example: "NOT_FOUND"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:30:00.000Z"
+
+    ValidationErrorResponse:
+      allOf:
+        - $ref: '#/components/schemas/ErrorResponse'
+        - type: object
+          properties:
+            details:
+              type: array
+              description: Detalles de los errores de validación
+              items:
+                type: object
+                properties:
+                  field:
+                    type: string
+                    description: Campo con error
+                    example: "name"
+                  message:
+                    type: string
+                    description: Mensaje de error específico
+                    example: "El nombre es requerido"
+                  value:
+                    type: string
+                    description: Valor proporcionado (opcional)
+                    example: ""
+              example:
+                - field: "name"
+                  message: "El nombre es requerido"
+                  value: ""
+                - field: "price"
+                  message: "El precio debe ser mayor a 0"
+                  value: -1
