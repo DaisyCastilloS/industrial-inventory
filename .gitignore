@@ -4,6 +4,11 @@ node_modules
 logs/
 dist/
 
+dist/**/*.js
+dist/**/*.js.map
+src/**/*.js
+src/**/*.js.map
+
 # TypeScript
 *.tsbuildinfo
 
