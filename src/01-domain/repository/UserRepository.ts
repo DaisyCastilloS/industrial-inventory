@@ -1,14 +1,20 @@
 /**
  * @fileoverview Interfaz del repositorio de usuarios
- * @author Industrial Inventory System
+ * @author Daisy Castillo
  * @version 1.0.0
  */
 
 import { User, IUser } from '../entity/User';
 import { UserRole } from '../../00-constants/RoleTypes';
+import { AuditLog } from '../entity/AuditLog';
+
+// Tipos semánticos importados de la entidad User
+import type { UserEmail, UserName } from '../entity/User';
 
 /**
  * Interfaz del repositorio de usuarios
+ *
+ * Todos los métodos usan tipado semántico y retornan entidades de dominio.
  */
 export interface IUserRepository {
   /**
@@ -26,11 +32,11 @@ export interface IUserRepository {
   findById(id: number): Promise<User | null>;
 
   /**
-   * Busca un usuario por email
+   * Busca un usuario por email (tipado semántico)
    * @param email - Email del usuario
    * @returns Usuario encontrado o null
    */
-  findByEmail(email: string): Promise<User | null>;
+  findByEmail(email: UserEmail | string): Promise<User | null>;
 
   /**
    * Obtiene todos los usuarios
@@ -80,16 +86,16 @@ export interface IUserRepository {
   deactivate(id: number): Promise<User>;
 
   /**
-   * Verifica si existe un usuario con el email dado
+   * Verifica si existe un usuario con el email dado (tipado semántico)
    * @param email - Email a verificar
    * @returns true si existe
    */
-  existsByEmail(email: string): Promise<boolean>;
+  existsByEmail(email: UserEmail | string): Promise<boolean>;
 
   /**
    * Obtiene el historial de auditoría de un usuario
    * @param userId - ID del usuario
-   * @returns Lista de logs de auditoría
+   * @returns Lista de logs de auditoría del usuario
    */
-  getAuditTrail(userId: number): Promise<any[]>;
+  getAuditTrail(userId: number): Promise<AuditLog<IUser>[]>;
 } 

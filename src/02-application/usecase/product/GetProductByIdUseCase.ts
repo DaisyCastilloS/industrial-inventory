@@ -1,7 +1,7 @@
 /**
  * @fileoverview Caso de uso para obtener producto por ID
- * @author Industrial Inventory System
- * @version 1.0.0
+ * @author Daisy Castillo
+ * @version 1.0.1
  */
 
 import { IProductRepository } from '../../../01-domain/repository/ProductRepository';
@@ -19,10 +19,10 @@ export class GetProductByIdUseCase {
   ) {}
 
   /**
-   * Ejecuta el caso de uso
-   * @param id - ID del producto
-   * @returns Producto encontrado
-   * @throws {Error} Si el producto no existe
+   * Ejecuta el caso de uso para obtener un producto por su ID.
+   * @param id - ID numérico del producto a consultar
+   * @returns DTO de respuesta del producto encontrado
+   * @throws {Error} Si el producto no existe o el ID es inválido
    */
   async execute(id: number): Promise<ProductResponseDTO> {
     try {
@@ -89,9 +89,9 @@ export class GetProductByIdUseCase {
   }
 
   /**
-   * Ejecuta el caso de uso de forma segura
-   * @param id - ID del producto
-   * @returns Resultado de la operación
+   * Ejecuta el caso de uso de forma segura, capturando errores y retornando un resultado tipado.
+   * @param id - ID numérico del producto a consultar
+   * @returns Resultado de la operación (éxito o error)
    */
   async executeSafe(id: number): Promise<{ success: true; data: ProductResponseDTO } | { success: false; error: string }> {
     try {

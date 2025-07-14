@@ -1,7 +1,7 @@
 /**
  * @fileoverview Caso de uso para crear usuarios
- * @author Industrial Inventory System
- * @version 1.0.0
+ * @author Daisy Castillo
+ * @version 1.0.1
  */
 
 import { User, IUser } from '../../../01-domain/entity/User';
@@ -22,9 +22,9 @@ export class CreateUserUseCase {
   ) {}
 
   /**
-   * Ejecuta el caso de uso
-   * @param data - Datos del usuario a crear
-   * @returns Usuario creado
+   * Ejecuta el caso de uso para crear un usuario.
+   * @param data - Datos del usuario a crear (DTO)
+   * @returns DTO del usuario creado
    * @throws {Error} Si hay un error en la validación o creación
    */
   async execute(data: CreateUserDTO): Promise<UserResponseDTO> {
@@ -91,9 +91,9 @@ export class CreateUserUseCase {
   }
 
   /**
-   * Ejecuta el caso de uso de forma segura
-   * @param data - Datos del usuario a crear
-   * @returns Resultado de la operación
+   * Ejecuta el caso de uso de forma segura, capturando errores y retornando un resultado tipado.
+   * @param data - Datos del usuario a crear (DTO)
+   * @returns Resultado de la operación (éxito o error)
    */
   async executeSafe(data: CreateUserDTO): Promise<{ success: true; data: UserResponseDTO } | { success: false; error: string }> {
     try {

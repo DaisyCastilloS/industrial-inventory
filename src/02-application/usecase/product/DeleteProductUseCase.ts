@@ -1,7 +1,7 @@
 /**
  * @fileoverview Caso de uso para eliminar productos
- * @author Industrial Inventory System
- * @version 1.0.0
+ * @author Daisy Castillo
+ * @version 1.0.1
  */
 
 import { IProductRepository } from '../../../01-domain/repository/ProductRepository';
@@ -17,9 +17,9 @@ export class DeleteProductUseCase {
   ) {}
 
   /**
-   * Ejecuta el caso de uso
-   * @param id - ID del producto
-   * @throws {Error} Si hay un error en la eliminación
+   * Ejecuta el caso de uso para eliminar un producto.
+   * @param id - ID numérico del producto a eliminar
+   * @throws {Error} Si hay un error en la validación o eliminación
    */
   async execute(id: number): Promise<void> {
     try {
@@ -34,7 +34,7 @@ export class DeleteProductUseCase {
         throw new Error(`Producto con ID ${id} no encontrado`);
       }
 
-      // Verificar que no tenga stock (opcional, dependiendo de la lógica de negocio)
+      // Verificar que no tenga stock (regla de negocio)
       if (existingProduct.quantity > 0) {
         throw new Error('No se puede eliminar un producto que tiene stock disponible');
       }
@@ -71,9 +71,9 @@ export class DeleteProductUseCase {
   }
 
   /**
-   * Ejecuta el caso de uso de forma segura
-   * @param id - ID del producto
-   * @returns Resultado de la operación
+   * Ejecuta el caso de uso de forma segura, capturando errores y retornando un resultado tipado.
+   * @param id - ID numérico del producto a eliminar
+   * @returns Resultado de la operación (éxito o error)
    */
   async executeSafe(id: number): Promise<{ success: true } | { success: false; error: string }> {
     try {

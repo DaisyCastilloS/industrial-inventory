@@ -1,7 +1,7 @@
 /**
  * @fileoverview Caso de uso para actualizar usuarios
- * @author Industrial Inventory System
- * @version 1.0.0
+ * @author Daisy Castillo
+ * @version 1.0.1
  */
 
 import { IUserRepository } from '../../../01-domain/repository/UserRepository';
@@ -16,59 +16,35 @@ import { EncryptionInterface } from '../../interface/EncryptionInterface';
 export class UpdateUserUseCase {
   constructor(
     private userRepository: IUserRepository,
-    private logger: LoggerWrapperInterface,
-    private encryptionService: EncryptionInterface
+    private encryptionService: EncryptionInterface,
+    private logger: LoggerWrapperInterface
   ) {}
 
   /**
-   * Ejecuta el caso de uso
-   * @param id - ID del usuario
-   * @param data - Datos a actualizar
-   * @returns Usuario actualizado
+   * Ejecuta el caso de uso para actualizar un usuario.
+   * @param id - ID numérico del usuario a actualizar
+   * @param data - Datos a actualizar (DTO)
+   * @returns DTO del usuario actualizado
    * @throws {Error} Si hay un error en la validación o actualización
    */
   async execute(id: number, data: UpdateUserDTO): Promise<UserResponseDTO> {
     try {
-      // Validar ID
-      if (!id || id <= 0) {
-        throw new Error('ID de usuario inválido');
-      }
-
-      // Validar datos de entrada
+      this.validateId(id);
       const validatedData = validateUpdateUser(data);
-
-      // Verificar que el usuario existe
       const existingUser = await this.userRepository.findById(id);
       if (!existingUser) {
         throw new Error(`Usuario con ID ${id} no encontrado`);
       }
-
-      // Preparar datos de actualización
-      const updateData: Partial<UpdateUserDTO> = {};
-
-      // Si se está actualizando el email, verificar que no exista
+      // Validar email único si se actualiza
       if (validatedData.email && validatedData.email !== existingUser.email) {
         const userWithEmail = await this.userRepository.findByEmail(validatedData.email);
         if (userWithEmail) {
           throw new Error('Ya existe un usuario con este email');
         }
-        updateData.email = validatedData.email;
       }
-
-      // Si se está actualizando la contraseña, encriptarla
-      if (validatedData.password) {
-        updateData.password = await this.encryptionService.hashPassword(validatedData.password);
-      }
-
-      // Agregar otros campos si están presentes
-      if (validatedData.name !== undefined) updateData.name = validatedData.name;
-      if (validatedData.role !== undefined) updateData.role = validatedData.role;
-      if (validatedData.isActive !== undefined) updateData.isActive = validatedData.isActive;
-
-      // Actualizar usuario
+      // Preparar datos de actualización
+      const updateData = await this.prepareUpdateData(validatedData);
       const updatedUser = await this.userRepository.update(id, updateData);
-
-      // Log de auditoría
       await this.logger.info('Usuario actualizado exitosamente', {
         userId: updatedUser.id,
         email: updatedUser.email,
@@ -80,8 +56,6 @@ export class UpdateUserUseCase {
           isActive: updatedUser.isActive
         }
       });
-
-      // Retornar respuesta sin contraseña
       return {
         id: updatedUser.id!,
         email: updatedUser.email,
@@ -91,25 +65,22 @@ export class UpdateUserUseCase {
         createdAt: updatedUser.createdAt!,
         updatedAt: updatedUser.updatedAt!
       };
-
     } catch (error) {
-      // Log de error
       await this.logger.error('Error al actualizar usuario', {
         error: error instanceof Error ? error.message : 'Error desconocido',
         userId: id,
         data: data,
         action: 'UPDATE_USER'
       });
-
       throw error;
     }
   }
 
   /**
-   * Ejecuta el caso de uso de forma segura
-   * @param id - ID del usuario
-   * @param data - Datos a actualizar
-   * @returns Resultado de la operación
+   * Ejecuta el caso de uso de forma segura, capturando errores y retornando un resultado tipado.
+   * @param id - ID numérico del usuario a actualizar
+   * @param data - Datos a actualizar (DTO)
+   * @returns Resultado de la operación (éxito o error)
    */
   async executeSafe(id: number, data: UpdateUserDTO): Promise<{ success: true; data: UserResponseDTO } | { success: false; error: string }> {
     try {
@@ -119,5 +90,33 @@ export class UpdateUserUseCase {
       const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
       return { success: false, error: errorMessage };
     }
+  }
+
+  /**
+   * Valida el ID del usuario
+   * @param id - ID a validar
+   * @throws {Error} Si el ID es inválido
+   */
+  private validateId(id: number): void {
+    if (!id || id <= 0) {
+      throw new Error('ID de usuario inválido');
+    }
+  }
+
+  /**
+   * Prepara los datos de actualización a partir de los datos validados
+   * @param validatedData - Datos validados
+   * @returns Objeto con los campos a actualizar
+   */
+  private async prepareUpdateData(validatedData: UpdateUserDTO): Promise<Partial<UpdateUserDTO>> {
+    const updateData: Partial<UpdateUserDTO> = {};
+    if (validatedData.email !== undefined) updateData.email = validatedData.email;
+    if (validatedData.password) {
+      updateData.password = await this.encryptionService.hashPassword(validatedData.password);
+    }
+    if (validatedData.name !== undefined) updateData.name = validatedData.name;
+    if (validatedData.role !== undefined) updateData.role = validatedData.role;
+    if (validatedData.isActive !== undefined) updateData.isActive = validatedData.isActive;
+    return updateData;
   }
 } 

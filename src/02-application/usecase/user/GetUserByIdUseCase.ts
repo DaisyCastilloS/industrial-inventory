@@ -1,7 +1,7 @@
 /**
  * @fileoverview Caso de uso para obtener usuario por ID
- * @author Industrial Inventory System
- * @version 1.0.0
+ * @author Daisy Castillo
+ * @version 1.0.1
  */
 
 import { IUserRepository } from '../../../01-domain/repository/UserRepository';
@@ -18,10 +18,10 @@ export class GetUserByIdUseCase {
   ) {}
 
   /**
-   * Ejecuta el caso de uso
-   * @param id - ID del usuario
-   * @returns Usuario encontrado
-   * @throws {Error} Si el usuario no existe
+   * Ejecuta el caso de uso para obtener un usuario por su ID.
+   * @param id - ID numérico del usuario a consultar
+   * @returns DTO del usuario encontrado
+   * @throws {Error} Si el usuario no existe o el ID es inválido
    */
   async execute(id: number): Promise<UserResponseDTO> {
     try {
@@ -72,9 +72,9 @@ export class GetUserByIdUseCase {
   }
 
   /**
-   * Ejecuta el caso de uso de forma segura
-   * @param id - ID del usuario
-   * @returns Resultado de la operación
+   * Ejecuta el caso de uso de forma segura, capturando errores y retornando un resultado tipado.
+   * @param id - ID numérico del usuario a consultar
+   * @returns Resultado de la operación (éxito o error)
    */
   async executeSafe(id: number): Promise<{ success: true; data: UserResponseDTO } | { success: false; error: string }> {
     try {

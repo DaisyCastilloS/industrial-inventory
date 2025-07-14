@@ -14,6 +14,7 @@ export interface CustomJWTPayload {
     userId: number;
     email: string;
     role: string;
+    purpose: TokenPurpose;
     iat?: number;
     exp?: number;
 }

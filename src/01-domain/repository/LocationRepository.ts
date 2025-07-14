@@ -1,13 +1,18 @@
 /**
  * @fileoverview Interfaz del repositorio de ubicaciones
- * @author Industrial Inventory System
+ * @author Daisy Castillo
  * @version 1.0.0
  */
 
 import { Location, ILocation } from '../entity/Location';
+import { AuditLog } from '../entity/AuditLog';
+// Tipos semánticos importados de la entidad Location
+import type { LocationName } from '../entity/Location';
 
 /**
  * Interfaz del repositorio de ubicaciones
+ *
+ * Todos los métodos usan tipado semántico y retornan entidades de dominio.
  */
 export interface ILocationRepository {
   /**
@@ -25,11 +30,11 @@ export interface ILocationRepository {
   findById(id: number): Promise<Location | null>;
 
   /**
-   * Busca una ubicación por nombre
+   * Busca una ubicación por nombre (tipado semántico)
    * @param name - Nombre de la ubicación
    * @returns Ubicación encontrada o null
    */
-  findByName(name: string): Promise<Location | null>;
+  findByName(name: LocationName | string): Promise<Location | null>;
 
   /**
    * Obtiene todas las ubicaciones
@@ -79,16 +84,16 @@ export interface ILocationRepository {
   deactivate(id: number): Promise<Location>;
 
   /**
-   * Verifica si existe una ubicación con el nombre dado
+   * Verifica si existe una ubicación con el nombre dado (tipado semántico)
    * @param name - Nombre a verificar
    * @returns true si existe
    */
-  existsByName(name: string): Promise<boolean>;
+  existsByName(name: LocationName | string): Promise<boolean>;
 
   /**
    * Obtiene el historial de auditoría de una ubicación
    * @param locationId - ID de la ubicación
-   * @returns Lista de logs de auditoría
+   * @returns Lista de logs de auditoría de la ubicación
    */
-  getAuditTrail(locationId: number): Promise<any[]>;
+  getAuditTrail(locationId: number): Promise<AuditLog<ILocation>[]>;
 } 

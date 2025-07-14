@@ -1,7 +1,7 @@
 /**
  * @fileoverview Caso de uso para eliminar usuarios
- * @author Industrial Inventory System
- * @version 1.0.0
+ * @author Daisy Castillo
+ * @version 1.0.1
  */
 
 import { IUserRepository } from '../../../01-domain/repository/UserRepository';
@@ -17,9 +17,9 @@ export class DeleteUserUseCase {
   ) {}
 
   /**
-   * Ejecuta el caso de uso
-   * @param id - ID del usuario
-   * @throws {Error} Si hay un error en la eliminación
+   * Ejecuta el caso de uso para eliminar un usuario.
+   * @param id - ID numérico del usuario a eliminar
+   * @throws {Error} Si hay un error en la validación o eliminación
    */
   async execute(id: number): Promise<void> {
     try {
@@ -70,9 +70,9 @@ export class DeleteUserUseCase {
   }
 
   /**
-   * Ejecuta el caso de uso de forma segura
-   * @param id - ID del usuario
-   * @returns Resultado de la operación
+   * Ejecuta el caso de uso de forma segura, capturando errores y retornando un resultado tipado.
+   * @param id - ID numérico del usuario a eliminar
+   * @returns Resultado de la operación (éxito o error)
    */
   async executeSafe(id: number): Promise<{ success: true } | { success: false; error: string }> {
     try {

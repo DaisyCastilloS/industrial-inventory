@@ -1,10 +1,22 @@
+/**
+ * @fileoverview Implementación de infraestructura del repositorio de productos
+ * @author Daisy Castillo
+ * @version 1.0.0
+ */
+
 import { pool } from "../db/database";
-import { Product, IProduct } from "../../01-domain/entity/Product";
+import { Product, IProduct, ProductName, SKU } from "../../01-domain/entity/Product";
 import { IProductRepository } from "../../01-domain/repository/ProductRepository";
 import { ProductQueries } from "../db/sqlQueries/ProductQueries";
 import { StockStatus } from "../../00-constants/RoleTypes";
+import { AuditLog } from "../../01-domain/entity/AuditLog";
 
 export class ProductRepositoryImpl implements IProductRepository {
+    /**
+     * Crea un nuevo producto en la base de datos
+     * @param product - Datos del producto
+     * @returns Producto creado
+     */
     async create(product: IProduct): Promise<Product> {
         const result = await pool.query(ProductQueries.create, [
             product.name, 
@@ -18,172 +30,89 @@ export class ProductRepositoryImpl implements IProductRepository {
             product.supplierId,
             product.isActive
         ]);
-        
-        // Asignar el ID generado por la base de datos
         if (result.rows.length > 0) {
-            const createdProduct = new Product({
-                id: result.rows[0].id,
-                name: product.name,
-                description: product.description,
-                sku: product.sku,
-                price: product.price,
-                quantity: product.quantity,
-                criticalStock: product.criticalStock,
-                categoryId: product.categoryId,
-                locationId: product.locationId,
-                supplierId: product.supplierId,
-                isActive: product.isActive,
-                createdAt: new Date(),
-                updatedAt: new Date()
-            });
-            return createdProduct;
+            return this.mapRowToProduct(result.rows[0]);
         }
-        
         throw new Error('Error al crear producto');
     }
 
+    /**
+     * Busca un producto por ID
+     * @param id - ID del producto
+     * @returns Producto encontrado o null
+     */
     async findById(id: number): Promise<Product | null> {
         const result = await pool.query(ProductQueries.findById, [id]);
         if (result.rows.length === 0) return null;
-        
-        const row = result.rows[0];
-        return new Product({
-            id: row.id,
-            name: row.name,
-            description: row.description,
-            sku: row.sku,
-            price: row.price,
-            quantity: row.quantity,
-            criticalStock: row.critical_stock,
-            categoryId: row.category_id,
-            locationId: row.location_id,
-            supplierId: row.supplier_id,
-            isActive: row.is_active,
-            createdAt: row.created_at,
-            updatedAt: row.updated_at
-        });
+        return this.mapRowToProduct(result.rows[0]);
     }
 
-    async findBySku(sku: string): Promise<Product | null> {
+    /**
+     * Busca un producto por SKU (tipado semántico)
+     * @param sku - SKU del producto
+     * @returns Producto encontrado o null
+     */
+    async findBySku(sku: SKU | string): Promise<Product | null> {
         const result = await pool.query(ProductQueries.findBySku, [sku]);
         if (result.rows.length === 0) return null;
-        
-        const row = result.rows[0];
-        return new Product({
-            id: row.id,
-            name: row.name,
-            description: row.description,
-            sku: row.sku,
-            price: row.price,
-            quantity: row.quantity,
-            criticalStock: row.critical_stock,
-            categoryId: row.category_id,
-            locationId: row.location_id,
-            supplierId: row.supplier_id,
-            isActive: row.is_active,
-            createdAt: row.created_at,
-            updatedAt: row.updated_at
-        });
+        return this.mapRowToProduct(result.rows[0]);
     }
 
+    /**
+     * Obtiene todos los productos
+     * @returns Lista de productos
+     */
     async findAll(): Promise<Product[]> {
         const result = await pool.query(ProductQueries.findAll);
-        return result.rows.map(row => new Product({
-            id: row.id,
-            name: row.name,
-            description: row.description,
-            sku: row.sku,
-            price: row.price,
-            quantity: row.quantity,
-            criticalStock: row.critical_stock,
-            categoryId: row.category_id,
-            locationId: row.location_id,
-            supplierId: row.supplier_id,
-            isActive: row.is_active,
-            createdAt: row.created_at,
-            updatedAt: row.updated_at
-        }));
+        return result.rows.map(this.mapRowToProduct);
     }
 
+    /**
+     * Obtiene productos activos
+     * @returns Lista de productos activos
+     */
     async findActive(): Promise<Product[]> {
         const result = await pool.query(ProductQueries.findActive);
-        return result.rows.map(row => new Product({
-            id: row.id,
-            name: row.name,
-            description: row.description,
-            sku: row.sku,
-            price: row.price,
-            quantity: row.quantity,
-            criticalStock: row.critical_stock,
-            categoryId: row.category_id,
-            locationId: row.location_id,
-            supplierId: row.supplier_id,
-            isActive: row.is_active,
-            createdAt: row.created_at,
-            updatedAt: row.updated_at
-        }));
+        return result.rows.map(this.mapRowToProduct);
     }
 
+    /**
+     * Busca productos por categoría
+     * @param categoryId - ID de la categoría
+     * @returns Lista de productos de la categoría
+     */
     async findByCategory(categoryId: number): Promise<Product[]> {
         const result = await pool.query(ProductQueries.findByCategory, [categoryId]);
-        return result.rows.map(row => new Product({
-            id: row.id,
-            name: row.name,
-            description: row.description,
-            sku: row.sku,
-            price: row.price,
-            quantity: row.quantity,
-            criticalStock: row.critical_stock,
-            categoryId: row.category_id,
-            locationId: row.location_id,
-            supplierId: row.supplier_id,
-            isActive: row.is_active,
-            createdAt: row.created_at,
-            updatedAt: row.updated_at
-        }));
+        return result.rows.map(this.mapRowToProduct);
     }
 
+    /**
+     * Busca productos por ubicación
+     * @param locationId - ID de la ubicación
+     * @returns Lista de productos en la ubicación
+     */
     async findByLocation(locationId: number): Promise<Product[]> {
         const result = await pool.query(ProductQueries.findByLocation, [locationId]);
-        return result.rows.map(row => new Product({
-            id: row.id,
-            name: row.name,
-            description: row.description,
-            sku: row.sku,
-            price: row.price,
-            quantity: row.quantity,
-            criticalStock: row.critical_stock,
-            categoryId: row.category_id,
-            locationId: row.location_id,
-            supplierId: row.supplier_id,
-            isActive: row.is_active,
-            createdAt: row.created_at,
-            updatedAt: row.updated_at
-        }));
+        return result.rows.map(this.mapRowToProduct);
     }
 
+    /**
+     * Busca productos por proveedor
+     * @param supplierId - ID del proveedor
+     * @returns Lista de productos del proveedor
+     */
     async findBySupplier(supplierId: number): Promise<Product[]> {
         const result = await pool.query(ProductQueries.findBySupplier, [supplierId]);
-        return result.rows.map(row => new Product({
-            id: row.id,
-            name: row.name,
-            description: row.description,
-            sku: row.sku,
-            price: row.price,
-            quantity: row.quantity,
-            criticalStock: row.critical_stock,
-            categoryId: row.category_id,
-            locationId: row.location_id,
-            supplierId: row.supplier_id,
-            isActive: row.is_active,
-            createdAt: row.created_at,
-            updatedAt: row.updated_at
-        }));
+        return result.rows.map(this.mapRowToProduct);
     }
 
+    /**
+     * Busca productos por estado de stock
+     * @param status - Estado del stock
+     * @returns Lista de productos con el estado especificado
+     */
     async findByStockStatus(status: StockStatus): Promise<Product[]> {
         let query: string;
-        
         switch (status) {
             case StockStatus.CRITICAL:
                 query = ProductQueries.findCriticalStock;
@@ -197,23 +126,8 @@ export class ProductRepositoryImpl implements IProductRepository {
             default:
                 return [];
         }
-        
         const result = await pool.query(query);
-        return result.rows.map(row => new Product({
-            id: row.id,
-            name: row.name,
-            description: row.description,
-            sku: row.sku,
-            price: row.price,
-            quantity: row.quantity,
-            criticalStock: row.critical_stock,
-            categoryId: row.category_id,
-            locationId: row.location_id,
-            supplierId: row.supplier_id,
-            isActive: row.is_active,
-            createdAt: row.created_at,
-            updatedAt: row.updated_at
-        }));
+        return result.rows.map(this.mapRowToProduct);
     }
 
     async findCriticalStock(): Promise<Product[]> {
@@ -224,23 +138,14 @@ export class ProductRepositoryImpl implements IProductRepository {
         return this.findByStockStatus(StockStatus.OUT_OF_STOCK);
     }
 
-    async searchByName(name: string): Promise<Product[]> {
+    /**
+     * Busca productos por nombre (tipado semántico)
+     * @param name - Nombre a buscar
+     * @returns Lista de productos que coinciden
+     */
+    async searchByName(name: ProductName | string): Promise<Product[]> {
         const result = await pool.query(ProductQueries.searchByName, [`%${name}%`]);
-        return result.rows.map(row => new Product({
-            id: row.id,
-            name: row.name,
-            description: row.description,
-            sku: row.sku,
-            price: row.price,
-            quantity: row.quantity,
-            criticalStock: row.critical_stock,
-            categoryId: row.category_id,
-            locationId: row.location_id,
-            supplierId: row.supplier_id,
-            isActive: row.is_active,
-            createdAt: row.created_at,
-            updatedAt: row.updated_at
-        }));
+        return result.rows.map(this.mapRowToProduct);
     }
 
     async update(id: number, productData: Partial<IProduct>): Promise<Product> {
@@ -328,7 +233,7 @@ export class ProductRepositoryImpl implements IProductRepository {
             throw new Error(`Producto con ID ${id} no encontrado`);
         }
 
-        const newQuantity = product.getQuantity() + quantity;
+        const newQuantity = product.quantity + quantity;
         return this.update(id, { quantity: newQuantity });
     }
 
@@ -338,17 +243,22 @@ export class ProductRepositoryImpl implements IProductRepository {
             throw new Error(`Producto con ID ${id} no encontrado`);
         }
 
-        if (product.getQuantity() < quantity) {
+        if (product.quantity < quantity) {
             throw new Error('Stock insuficiente para reducir');
         }
 
-        const newQuantity = product.getQuantity() - quantity;
+        const newQuantity = product.quantity - quantity;
         return this.update(id, { quantity: newQuantity });
     }
 
-    async existsBySku(sku: string): Promise<boolean> {
-        const product = await this.findBySku(sku);
-        return product !== null;
+    /**
+     * Verifica si existe un producto con el SKU dado (tipado semántico)
+     * @param sku - SKU a verificar
+     * @returns true si existe
+     */
+    async existsBySku(sku: SKU | string): Promise<boolean> {
+        const result = await pool.query(ProductQueries.existsBySku, [sku]);
+        return !!result.rows[0]?.exists;
     }
 
     async getInventoryStats(): Promise<{
@@ -370,9 +280,14 @@ export class ProductRepositoryImpl implements IProductRepository {
         };
     }
 
-    async getAuditTrail(productId: number): Promise<any[]> {
+    /**
+     * Obtiene el historial de auditoría de un producto
+     * @param productId - ID del producto
+     * @returns Lista de logs de auditoría del producto
+     */
+    async getAuditTrail(productId: number): Promise<AuditLog<IProduct>[]> {
         const result = await pool.query(ProductQueries.getAuditTrail, [productId]);
-        return result.rows;
+        return result.rows.map((row: any) => new AuditLog<IProduct>(row));
     }
 
     // Métodos para usar las vistas SQL
@@ -384,5 +299,24 @@ export class ProductRepositoryImpl implements IProductRepository {
     async getCriticalStockProducts(): Promise<any[]> {
         const result = await pool.query('SELECT * FROM critical_stock_products');
         return result.rows;
+    }
+
+    // --- Método privado para mapear una fila de la BD a la entidad Product ---
+    private mapRowToProduct(row: any): Product {
+        return new Product({
+            id: row.id,
+            name: row.name,
+            description: row.description,
+            sku: row.sku,
+            price: row.price,
+            quantity: row.quantity,
+            criticalStock: row.critical_stock,
+            categoryId: row.category_id,
+            locationId: row.location_id,
+            supplierId: row.supplier_id,
+            isActive: row.is_active,
+            createdAt: row.created_at,
+            updatedAt: row.updated_at
+        });
     }
 }

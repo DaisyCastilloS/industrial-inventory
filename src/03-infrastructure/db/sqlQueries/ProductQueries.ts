@@ -49,5 +49,7 @@ export const ProductQueries = {
         SELECT * FROM audit_logs 
         WHERE table_name = 'products' AND record_id = $1 
         ORDER BY created_at DESC
-    `
+    `,
+
+    existsBySku: `SELECT EXISTS(SELECT 1 FROM products WHERE sku = $1) as exists;`,
 };

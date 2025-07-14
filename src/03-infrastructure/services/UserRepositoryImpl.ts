@@ -1,10 +1,22 @@
+/**
+ * @fileoverview Implementación de infraestructura del repositorio de usuarios
+ * @author Daisy Castillo
+ * @version 1.0.0
+ */
+
 import { pool } from "../db/database";
-import { User, IUser } from "../../01-domain/entity/User";
+import { User, IUser, UserEmail } from "../../01-domain/entity/User";
 import { IUserRepository } from "../../01-domain/repository/UserRepository";
 import { UserQueries } from "../db/sqlQueries/UserQueries";
 import { UserRole } from "../../00-constants/RoleTypes";
+import { AuditLog } from "../../01-domain/entity/AuditLog";
 
 export class UserRepositoryImpl implements IUserRepository {
+    /**
+     * Crea un nuevo usuario en la base de datos
+     * @param user - Datos del usuario
+     * @returns Usuario creado
+     */
     async create(user: IUser): Promise<User> {
         const result = await pool.query(UserQueries.create, [
             user.email,
@@ -15,56 +27,32 @@ export class UserRepositoryImpl implements IUserRepository {
             user.createdAt || new Date(),
             user.updatedAt || new Date()
         ]);
-        
-        // Retornar usuario creado
         if (result.rows.length > 0) {
-            return new User({
-                id: result.rows[0].id,
-                email: user.email,
-                password: user.password,
-                name: user.name,
-                role: user.role,
-                isActive: user.isActive,
-                createdAt: user.createdAt || new Date(),
-                updatedAt: user.updatedAt || new Date()
-            });
+            return this.mapRowToUser(result.rows[0]);
         }
-        
         throw new Error('Error al crear usuario');
     }
 
-    async findByEmail(email: string): Promise<User | null> {
+    /**
+     * Busca un usuario por email (tipado semántico)
+     * @param email - Email del usuario
+     * @returns Usuario encontrado o null
+     */
+    async findByEmail(email: UserEmail | string): Promise<User | null> {
         const result = await pool.query(UserQueries.findByEmail, [email]);
         if (result.rows.length === 0) return null;
-        
-        const row = result.rows[0];
-        return new User({
-            id: row.id,
-            email: row.email,
-            password: row.password,
-            name: row.name,
-            role: row.role,
-            isActive: row.is_active,
-            createdAt: row.created_at,
-            updatedAt: row.updated_at
-        });
+        return this.mapRowToUser(result.rows[0]);
     }
 
+    /**
+     * Busca un usuario por ID
+     * @param id - ID del usuario
+     * @returns Usuario encontrado o null
+     */
     async findById(id: number): Promise<User | null> {
         const result = await pool.query(UserQueries.findById, [id]);
         if (result.rows.length === 0) return null;
-        
-        const row = result.rows[0];
-        return new User({
-            id: row.id,
-            email: row.email,
-            password: row.password,
-            name: row.name,
-            role: row.role,
-            isActive: row.is_active,
-            createdAt: row.created_at,
-            updatedAt: row.updated_at
-        });
+        return this.mapRowToUser(result.rows[0]);
     }
 
     async update(id: number, userData: Partial<IUser>): Promise<User> {
@@ -72,7 +60,6 @@ export class UserRepositoryImpl implements IUserRepository {
         if (!existingUser) {
             throw new Error(`Usuario con ID ${id} no encontrado`);
         }
-
         const updatedData = {
             email: userData.email || existingUser.email,
             password: userData.password || existingUser.password,
@@ -81,7 +68,6 @@ export class UserRepositoryImpl implements IUserRepository {
             isActive: userData.isActive !== undefined ? userData.isActive : existingUser.isActive,
             updatedAt: new Date()
         };
-
         await pool.query(UserQueries.update, [
             updatedData.email,
             updatedData.password,
@@ -91,12 +77,7 @@ export class UserRepositoryImpl implements IUserRepository {
             updatedData.updatedAt,
             id
         ]);
-
-        return new User({
-            id,
-            ...updatedData,
-            createdAt: existingUser.createdAt
-        });
+        return await this.findById(id) as User;
     }
 
     async delete(id: number): Promise<void> {
@@ -105,32 +86,14 @@ export class UserRepositoryImpl implements IUserRepository {
 
     async findAll(): Promise<User[]> {
         const result = await pool.query(UserQueries.findAll);
-        return result.rows.map(row => new User({
-            id: row.id,
-            email: row.email,
-            password: row.password,
-            name: row.name,
-            role: row.role,
-            isActive: row.is_active,
-            createdAt: row.created_at,
-            updatedAt: row.updated_at
-        }));
+        return result.rows.map(this.mapRowToUser);
     }
 
     async findActive(): Promise<User[]> {
         const result = await pool.query(
             `SELECT * FROM users WHERE is_active = true ORDER BY created_at DESC`
         );
-        return result.rows.map(row => new User({
-            id: row.id,
-            email: row.email,
-            password: row.password,
-            name: row.name,
-            role: row.role,
-            isActive: row.is_active,
-            createdAt: row.created_at,
-            updatedAt: row.updated_at
-        }));
+        return result.rows.map(this.mapRowToUser);
     }
 
     async findByRole(role: UserRole): Promise<User[]> {
@@ -138,16 +101,7 @@ export class UserRepositoryImpl implements IUserRepository {
             `SELECT * FROM users WHERE role = $1 ORDER BY created_at DESC`,
             [role]
         );
-        return result.rows.map(row => new User({
-            id: row.id,
-            email: row.email,
-            password: row.password,
-            name: row.name,
-            role: row.role,
-            isActive: row.is_active,
-            createdAt: row.created_at,
-            updatedAt: row.updated_at
-        }));
+        return result.rows.map(this.mapRowToUser);
     }
 
     async activate(id: number): Promise<User> {
@@ -155,7 +109,6 @@ export class UserRepositoryImpl implements IUserRepository {
         if (!user) {
             throw new Error(`Usuario con ID ${id} no encontrado`);
         }
-
         user.activate();
         return this.update(id, { isActive: true });
     }
@@ -165,12 +118,16 @@ export class UserRepositoryImpl implements IUserRepository {
         if (!user) {
             throw new Error(`Usuario con ID ${id} no encontrado`);
         }
-
         user.deactivate();
         return this.update(id, { isActive: false });
     }
 
-    async existsByEmail(email: string): Promise<boolean> {
+    /**
+     * Verifica si existe un usuario con el email dado (tipado semántico)
+     * @param email - Email a verificar
+     * @returns true si existe
+     */
+    async existsByEmail(email: UserEmail | string): Promise<boolean> {
         const result = await pool.query(
             `SELECT COUNT(*) as count FROM users WHERE email = $1`,
             [email]
@@ -178,11 +135,30 @@ export class UserRepositoryImpl implements IUserRepository {
         return parseInt(result.rows[0].count) > 0;
     }
 
-    async getAuditTrail(userId: number): Promise<any[]> {
+    /**
+     * Obtiene el historial de auditoría de un usuario
+     * @param userId - ID del usuario
+     * @returns Lista de logs de auditoría del usuario
+     */
+    async getAuditTrail(userId: number): Promise<AuditLog<IUser>[]> {
         const result = await pool.query(
             `SELECT * FROM audit_logs WHERE user_id = $1 ORDER BY created_at DESC`,
             [userId]
         );
-        return result.rows;
+        return result.rows.map((row: any) => new AuditLog<IUser>(row));
+    }
+
+    // --- Método privado para mapear una fila de la BD a la entidad User ---
+    private mapRowToUser(row: any): User {
+        return new User({
+            id: row.id,
+            email: row.email,
+            password: row.password,
+            name: row.name,
+            role: row.role,
+            isActive: row.is_active,
+            createdAt: row.created_at,
+            updatedAt: row.updated_at
+        });
     }
 } 

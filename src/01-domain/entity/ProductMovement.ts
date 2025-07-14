@@ -1,13 +1,22 @@
 /**
  * @fileoverview Entidad de dominio para movimientos de productos
- * @author Industrial Inventory System
+ * @author Daisy Castillo
  * @version 1.0.0
  */
 
 import { MovementType } from '../../00-constants/RoleTypes';
 
+export { MovementType };
+
 /**
- * Interfaz para datos de movimiento de producto
+ * Tipos semánticos para mayor claridad y robustez
+ */
+type MovementReason = string & { readonly reason: unique symbol };
+
+export type { MovementReason };
+
+/**
+ * Interfaz para datos de movimiento de producto alineada a la tabla 'product_movements'
  */
 export interface IProductMovement {
   id?: number;
@@ -23,19 +32,29 @@ export interface IProductMovement {
 
 /**
  * Entidad de dominio para movimientos de productos
+ *
+ * - Inmutable: solo se crea, no se edita.
+ * - Validación centralizada y exhaustiva.
+ * - Getters públicos para todos los campos relevantes.
+ *
  * @class ProductMovement
  */
 export class ProductMovement {
   private readonly _id?: number;
-  private _productId: number;
-  private _movementType: MovementType;
-  private _quantity: number;
-  private _previousQuantity: number;
-  private _newQuantity: number;
-  private _userId: number;
-  private _reason?: string;
+  private readonly _productId: number;
+  private readonly _movementType: MovementType;
+  private readonly _quantity: number;
+  private readonly _previousQuantity: number;
+  private readonly _newQuantity: number;
+  private readonly _userId: number;
+  private readonly _reason?: MovementReason;
   private readonly _createdAt?: Date;
 
+  /**
+   * Crea una nueva instancia de ProductMovement
+   * @param data - Datos del movimiento
+   * @throws {Error} Si los datos son inválidos
+   */
   constructor(data: IProductMovement) {
     this.validateMovementData(data);
     this._id = data.id;
@@ -45,11 +64,11 @@ export class ProductMovement {
     this._previousQuantity = data.previousQuantity;
     this._newQuantity = data.newQuantity;
     this._userId = data.userId;
-    this._reason = data.reason;
+    this._reason = data.reason as MovementReason;
     this._createdAt = data.createdAt;
   }
 
-  // Getters solo lectura
+  // --- Getters públicos ---
   get id(): number | undefined { return this._id; }
   get productId(): number { return this._productId; }
   get movementType(): MovementType { return this._movementType; }
@@ -60,122 +79,106 @@ export class ProductMovement {
   get reason(): string | undefined { return this._reason; }
   get createdAt(): Date | undefined { return this._createdAt; }
 
-  // Métodos de dominio (si aplica)
-  // No se permite modificar movimientos una vez creados (inmutabilidad)
-
-  // Validaciones centralizadas
-  private validateMovementData(data: IProductMovement): void {
-    if (data.productId <= 0) {
-      throw new Error('El ID del producto es obligatorio');
-    }
-    if (!Object.values(MovementType).includes(data.movementType)) {
-      throw new Error('Tipo de movimiento inválido');
-    }
-    if (data.quantity <= 0) {
-      throw new Error('La cantidad debe ser mayor a 0');
-    }
-    if (data.previousQuantity < 0) {
-      throw new Error('La cantidad anterior no puede ser negativa');
-    }
-    if (data.newQuantity < 0) {
-      throw new Error('La cantidad nueva no puede ser negativa');
-    }
-    if (data.userId <= 0) {
-      throw new Error('El ID del usuario es obligatorio');
-    }
-    if (data.reason && data.reason.length > 200) {
-      throw new Error('La razón no puede exceder 200 caracteres');
-    }
-    // Validar consistencia de cantidades según el tipo de movimiento
-    this.validateQuantityConsistency(data);
-  }
-
-  private validateQuantityConsistency(data: IProductMovement): void {
-    switch (data.movementType) {
-      case MovementType.IN:
-        if (data.newQuantity !== data.previousQuantity + data.quantity) {
-          throw new Error('Cantidad inconsistente para movimiento de entrada');
-        }
-        break;
-      case MovementType.OUT:
-        if (data.newQuantity !== data.previousQuantity - data.quantity) {
-          throw new Error('Cantidad inconsistente para movimiento de salida');
-        }
-        if (data.previousQuantity < data.quantity) {
-          throw new Error('No hay suficiente stock para el movimiento de salida');
-        }
-        break;
-      case MovementType.ADJUSTMENT:
-        if (data.newQuantity !== data.quantity) {
-          throw new Error('Cantidad inconsistente para ajuste');
-        }
-        break;
-    }
-  }
-
   /**
-   * Verifica si es un movimiento de entrada
-   * @returns true si es entrada
+   * Indica si el movimiento es de tipo IN (entrada)
    */
-  public isInMovement(): boolean {
+  public isIn(): boolean {
     return this._movementType === MovementType.IN;
   }
 
   /**
-   * Verifica si es un movimiento de salida
-   * @returns true si es salida
+   * Indica si el movimiento es de tipo OUT (salida)
    */
-  public isOutMovement(): boolean {
+  public isOut(): boolean {
     return this._movementType === MovementType.OUT;
   }
 
   /**
-   * Verifica si es un ajuste
-   * @returns true si es ajuste
+   * Indica si el movimiento es de tipo ADJUSTMENT (ajuste)
    */
   public isAdjustment(): boolean {
     return this._movementType === MovementType.ADJUSTMENT;
   }
 
-  /**
-   * Obtiene la descripción del movimiento
-   * @returns Descripción del movimiento
-   */
-  public getMovementDescription(): string {
-    const typeDescription = {
-      [MovementType.IN]: 'Entrada',
-      [MovementType.OUT]: 'Salida',
-      [MovementType.ADJUSTMENT]: 'Ajuste'
-    };
-
-    const baseDescription = `${typeDescription[this._movementType]} de ${this._quantity} unidades`;
-    
-    if (this._reason) {
-      return `${baseDescription} - ${this._reason}`;
+  // --- Validación centralizada y granular ---
+  private validateMovementData(data: IProductMovement): void {
+    this.validateProductId(data.productId);
+    this.validateMovementType(data.movementType);
+    this.validateQuantity(data.quantity);
+    this.validatePreviousQuantity(data.previousQuantity);
+    this.validateNewQuantity(data.newQuantity);
+    this.validateUserId(data.userId);
+    this.validateReason(data.reason);
+    this.validateQuantityConsistency(data);
+  }
+  private validateProductId(productId: number): void {
+    if (productId <= 0) {
+      throw new Error('El ID del producto es obligatorio');
     }
-    
-    return baseDescription;
+  }
+  private validateMovementType(movementType: MovementType): void {
+    switch (movementType) {
+      case MovementType.IN:
+      case MovementType.OUT:
+      case MovementType.ADJUSTMENT:
+        break;
+      default:
+        throw new Error('Tipo de movimiento inválido');
+    }
+  }
+  private validateQuantity(quantity: number): void {
+    if (quantity <= 0) {
+      throw new Error('La cantidad debe ser mayor a 0');
+    }
+  }
+  private validatePreviousQuantity(previousQuantity: number): void {
+    if (previousQuantity < 0) {
+      throw new Error('La cantidad anterior no puede ser negativa');
+    }
+  }
+  private validateNewQuantity(newQuantity: number): void {
+    if (newQuantity < 0) {
+      throw new Error('La cantidad nueva no puede ser negativa');
+    }
+  }
+  private validateUserId(userId: number): void {
+    if (userId <= 0) {
+      throw new Error('El ID del usuario es obligatorio');
+    }
+  }
+  private validateReason(reason?: string): void {
+    if (reason && reason.length > 200) {
+      throw new Error('La razón no puede exceder 200 caracteres');
+    }
+  }
+  /**
+   * Valida la consistencia de cantidades según el tipo de movimiento
+   * @param data - Datos del movimiento
+   * @throws {Error} Si la consistencia es inválida
+   */
+  private validateQuantityConsistency(data: IProductMovement): void {
+    switch (data.movementType) {
+      case MovementType.IN:
+        if (data.newQuantity !== data.previousQuantity + data.quantity) {
+          throw new Error('Para IN: newQuantity debe ser previousQuantity + quantity');
+        }
+        break;
+      case MovementType.OUT:
+        if (data.newQuantity !== data.previousQuantity - data.quantity) {
+          throw new Error('Para OUT: newQuantity debe ser previousQuantity - quantity');
+        }
+        break;
+      case MovementType.ADJUSTMENT:
+        // Para ajuste, solo se requiere que newQuantity sea explícito
+        break;
+      default:
+        throw new Error('Tipo de movimiento inválido para consistencia');
+    }
   }
 
   /**
-   * Calcula la diferencia de stock
-   * @returns Diferencia de stock
+   * Convierte la entidad a un objeto plano
    */
-  public getStockDifference(): number {
-    return this._newQuantity - this._previousQuantity;
-  }
-
-  /**
-   * Verifica si el movimiento afectó el stock crítico
-   * @param criticalStock - Stock crítico del producto
-   * @returns true si afectó el stock crítico
-   */
-  public affectedCriticalStock(criticalStock: number): boolean {
-    const wasAboveCritical = this._previousQuantity > criticalStock;
-    const isNowBelowCritical = this._newQuantity <= criticalStock;
-    return wasAboveCritical && isNowBelowCritical;
-  }
-
   public toJSON(): IProductMovement {
     return {
       id: this._id,

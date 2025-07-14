@@ -74,30 +74,112 @@ src/
 
 ---
 
-## 🚀 Instalación y Despliegue Rápido con Docker Compose
+## 🚀 Instalación y Orden de Ejecución
 
-1. **Configura tu archivo `.env`:**
+### Primera vez que inicias el proyecto:
+```bash
+# 1. Instalar dependencias
+pnpm install
 
-```env
+# 2. Configurar archivo .env
 DB_USER=postgres
 DB_PASSWORD=postgres
 DB_NAME=inventory_db
-DB_PORT=5432
-```
+DB_PORT=5433  # Usamos 5433 para evitar conflictos con PostgreSQL local
 
-2. **Levanta la base de datos y carga datos de ejemplo:**
+# 3. Construir e iniciar contenedores
+pnpm run docker:build
+pnpm run docker:up
 
-```bash
-docker compose up -d
-```
+# 4. La base de datos se inicializa automáticamente con:
+# - Tablas y estructura
+# - Índices de optimización
+# - Datos de ejemplo (usuarios, productos, categorías)
+# - Triggers de auditoría
+# - Vistas para reportes
 
-Esto creará un contenedor PostgreSQL con el esquema, triggers, vistas y datos de ejemplo (usuarios, productos, ubicaciones, proveedores, etc).
-
-3. **Inicia el backend (en otra terminal):**
-
-```bash
-pnpm install
+# 5. Iniciar el servidor en modo desarrollo
 pnpm run dev
+```
+
+### Verificar la instalación:
+```bash
+# Ver estado de los contenedores
+pnpm run docker:ps
+
+# Ver logs de la base de datos
+pnpm run docker:logs
+
+# Datos iniciales disponibles:
+# - Usuario admin: admin@industrial.com
+# - Categorías: Sensores, Transmisores, Válvulas, etc.
+# - Ubicaciones: Bodega Central, Bodega Sur, etc.
+# - Proveedores y productos de ejemplo
+```
+
+### Reiniciar la base de datos (si es necesario):
+```bash
+# Esto eliminará todos los datos y volverá a inicializar
+pnpm run docker:db:reset
+```
+
+### Desarrollo diario:
+```bash
+# 1. Levantar los contenedores (si no están corriendo)
+pnpm run docker:up
+
+# 2. Iniciar el servidor en modo desarrollo
+pnpm run dev
+```
+
+### Mantenimiento de la base de datos:
+```bash
+# Resetear completamente la base de datos (borra todo y reinicializa)
+pnpm run docker:db:reset
+```
+
+### Antes de hacer commit:
+```bash
+# 1. Verificar tipos
+pnpm run type-check
+
+# 2. Ejecutar tests
+pnpm run test
+
+# 3. Verificar formato y linting
+pnpm run format:check
+pnpm run lint
+```
+
+### Despliegue en producción:
+```bash
+# 1. Instalar dependencias
+pnpm install
+
+# 2. Construir el proyecto
+pnpm run build
+
+# 3. Levantar contenedores
+pnpm run docker:build
+pnpm run docker:up
+
+# 4. Iniciar en modo producción
+pnpm run start
+```
+
+### Comandos útiles durante el desarrollo:
+```bash
+# Ver logs de los contenedores
+pnpm run docker:logs
+
+# Ver estado de los contenedores
+pnpm run docker:ps
+
+# Reiniciar contenedores
+pnpm run docker:restart
+
+# Detener todo
+pnpm run docker:down
 ```
 
 ---
@@ -155,42 +237,66 @@ curl -X POST http://localhost:3000/auth/login \
 
 ## 🔌 API Endpoints
 
-| Método | Endpoint | Descripción | Rol mínimo |
-|--------|----------|-------------|------------|
-| `GET` | `/products` | Listar todos los productos | USER |
-| `GET` | `/products/:id` | Obtener producto por ID | USER |
-| `POST` | `/products` | Crear nuevo producto | USER |
-| `PUT` | `/products/:id` | Actualizar producto | USER |
-| `DELETE` | `/products/:id` | Eliminar producto | ADMIN |
-| `GET` | `/reports/critical-stock` | Productos en stock crítico | ADMIN |
-| `GET` | `/audit-logs` | Ver logs de auditoría | ADMIN |
+### Autenticación
 
-### Ejemplo: Consultar productos
-
+#### Login
 ```bash
-curl -H "Authorization: Bearer <TOKEN>" http://localhost:3000/products
+curl -X POST http://localhost:3000/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "admin@industrial.com",
+    "password": "123456"
+  }'
 ```
 
-Respuesta:
+**Respuesta exitosa:**
 ```json
-[
-  {
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "user": {
     "id": 1,
-    "sku": "SENS-PRES-001",
-    "name": "Sensor de Presión Industrial",
-    "category": "Sensores",
-    "location": "Bodega Central",
-    "supplier": "Industrial Supplies Co.",
-    "quantity": 15,
-    "critical_stock": 5,
-    "price": 1250.00,
-    "stock_status": "NORMAL"
+    "email": "admin@industrial.com",
+    "name": "Admin User",
+    "role": "ADMIN"
   }
-]
+}
 ```
 
-### Ejemplo: Crear producto
+### Productos
 
+#### Listar Productos
+```bash
+curl -H "Authorization: Bearer <TOKEN>" \
+  http://localhost:3000/products?page=1&limit=10
+```
+
+**Respuesta exitosa:**
+```json
+{
+  "data": [
+    {
+      "id": 1,
+      "sku": "SENS-PRES-001",
+      "name": "Sensor de Presión Industrial",
+      "category": "Sensores",
+      "location": "Bodega Central",
+      "supplier": "Industrial Supplies Co.",
+      "quantity": 15,
+      "critical_stock": 5,
+      "price": 1250.00,
+      "stock_status": "NORMAL"
+    }
+  ],
+  "pagination": {
+    "total": 50,
+    "page": 1,
+    "limit": 10,
+    "pages": 5
+  }
+}
+```
+
+#### Crear Producto
 ```bash
 curl -X POST http://localhost:3000/products \
   -H "Authorization: Bearer <TOKEN>" \
@@ -206,6 +312,82 @@ curl -X POST http://localhost:3000/products \
     "location_id": 1,
     "supplier_id": 4
   }'
+```
+
+**Respuesta exitosa:**
+```json
+{
+  "message": "Producto creado exitosamente",
+  "data": {
+    "id": 51,
+    "sku": "COMP-RELE-006",
+    "name": "Relé de Potencia Industrial",
+    "price": 320.00,
+    "quantity": 12,
+    "critical_stock": 3,
+    "stock_status": "NORMAL"
+  }
+}
+```
+
+### Movimientos de Inventario
+
+#### Registrar Movimiento
+```bash
+curl -X POST http://localhost:3000/product-movements \
+  -H "Authorization: Bearer <TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "product_id": 1,
+    "type": "OUT",
+    "quantity": 5,
+    "reason": "Entrega a mantenimiento",
+    "notes": "Solicitud #123"
+  }'
+```
+
+**Respuesta exitosa:**
+```json
+{
+  "message": "Movimiento registrado exitosamente",
+  "data": {
+    "id": 156,
+    "product_id": 1,
+    "type": "OUT",
+    "quantity": 5,
+    "previous_stock": 15,
+    "new_stock": 10,
+    "user_id": 1,
+    "created_at": "2024-03-15T10:30:00Z"
+  }
+}
+```
+
+### Reportes
+
+#### Stock Crítico
+```bash
+curl -H "Authorization: Bearer <TOKEN>" \
+  http://localhost:3000/reports/critical-stock
+```
+
+**Respuesta:**
+```json
+{
+  "data": [
+    {
+      "id": 3,
+      "sku": "VALV-CONT-003",
+      "name": "Válvula de Control Neumática",
+      "quantity": 2,
+      "critical_stock": 2,
+      "units_needed": 0,
+      "category": "Válvulas",
+      "location": "Bodega Central"
+    }
+  ],
+  "total": 1
+}
 ```
 
 ---
@@ -272,6 +454,61 @@ pnpm run test
     docker compose down -v
     docker compose up -d
     ```
+
+---
+
+## 🚨 Códigos de Error Comunes
+
+| Código | Descripción | Solución |
+|--------|-------------|----------|
+| `AUTH_ERROR_001` | Token no proporcionado | Incluir el header `Authorization: Bearer <token>` |
+| `AUTH_ERROR_002` | Token inválido o expirado | Hacer login nuevamente para obtener un token válido |
+| `AUTH_ERROR_003` | Permisos insuficientes | Verificar el rol del usuario |
+| `VALIDATION_ERROR_001` | Datos de entrada inválidos | Revisar el formato y valores requeridos |
+| `RESOURCE_ERROR_001` | Recurso no encontrado | Verificar el ID o parámetros de búsqueda |
+| `STOCK_ERROR_001` | Stock insuficiente | Verificar la cantidad disponible antes de la operación |
+| `DB_ERROR_001` | Error de base de datos | Contactar al administrador del sistema |
+
+### Ejemplos de Errores
+
+#### Error de Autenticación
+```json
+{
+  "error": "Token no proporcionado",
+  "code": "AUTH_ERROR_001",
+  "timestamp": "2024-03-15T10:30:00Z"
+}
+```
+
+#### Error de Validación
+```json
+{
+  "error": "Datos de entrada inválidos",
+  "code": "VALIDATION_ERROR_001",
+  "details": [
+    {
+      "field": "quantity",
+      "message": "La cantidad debe ser mayor a 0",
+      "value": "-5"
+    }
+  ],
+  "timestamp": "2024-03-15T10:30:00Z"
+}
+```
+
+#### Error de Stock
+```json
+{
+  "error": "Stock insuficiente",
+  "code": "STOCK_ERROR_001",
+  "details": {
+    "product_id": 1,
+    "requested": 10,
+    "available": 5
+  },
+  "timestamp": "2024-03-15T10:30:00Z"
+}
+```
 
 ---
 

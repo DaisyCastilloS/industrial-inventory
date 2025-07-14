@@ -59,6 +59,7 @@ CREATE TABLE locations (
 CREATE TABLE suppliers (
     id SERIAL PRIMARY KEY,
     name VARCHAR(200) NOT NULL,
+    description TEXT,
     contact_person VARCHAR(100),
     email VARCHAR(100),
     phone VARCHAR(20),
@@ -173,11 +174,11 @@ INSERT INTO locations (name, description, zone, shelf) VALUES
 ('Almacén Temporal', 'Almacén para materiales temporales', 'Zona Este', 'Estante D');
 
 -- Proveedores por defecto
-INSERT INTO suppliers (name, contact_person, email, phone) VALUES 
-('Industrial Supplies Co.', 'Juan Pérez', 'juan@industrial.com', '+56 9 1234 5678'),
-('Mining Equipment Ltd.', 'María González', 'maria@mining.com', '+56 9 8765 4321'),
-('Safety Gear Pro', 'Carlos Rodríguez', 'carlos@safety.com', '+56 9 5555 1234'),
-('Tech Components Inc.', 'Ana Silva', 'ana@tech.com', '+56 9 1111 2222');
+INSERT INTO suppliers (name, description, contact_person, email, phone) VALUES 
+('Industrial Supplies Co.', 'Proveedor de insumos industriales', 'Juan Pérez', 'juan@industrial.com', '+56 9 1234 5678'),
+('Mining Equipment Ltd.', 'Proveedor de equipos para minería', 'María González', 'maria@mining.com', '+56 9 8765 4321'),
+('Safety Gear Pro', 'Proveedor de equipos de seguridad', 'Carlos Rodríguez', 'carlos@safety.com', '+56 9 5555 1234'),
+('Tech Components Inc.', 'Proveedor de componentes tecnológicos', 'Ana Silva', 'ana@tech.com', '+56 9 1111 2222');
 
 -- Productos de ejemplo
 INSERT INTO products (name, description, sku, price, quantity, critical_stock, category_id, location_id, supplier_id) VALUES 

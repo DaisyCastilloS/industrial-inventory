@@ -1,10 +1,10 @@
 /**
  * @fileoverview Caso de uso para crear productos
- * @author Industrial Inventory System
- * @version 1.0.0
+ * @author Daisy Castillo
+ * @version 1.0.1
  */
 
-import { Product, IProduct } from '../../../01-domain/entity/Product';
+import { Product, IProduct, SKU } from '../../../01-domain/entity/Product';
 import { IProductRepository } from '../../../01-domain/repository/ProductRepository';
 import { CreateProductDTO, validateCreateProduct } from '../../dto/product/CreateProductDTO';
 import { ProductResponseDTO } from '../../dto/product/ProductResponseDTO';
@@ -21,9 +21,9 @@ export class CreateProductUseCase {
   ) {}
 
   /**
-   * Ejecuta el caso de uso
+   * Ejecuta el caso de uso para crear un producto.
    * @param data - Datos del producto a crear
-   * @returns Producto creado
+   * @returns Producto creado (DTO de respuesta)
    * @throws {Error} Si hay un error en la validación o creación
    */
   async execute(data: CreateProductDTO): Promise<ProductResponseDTO> {
@@ -32,7 +32,7 @@ export class CreateProductUseCase {
       const validatedData = validateCreateProduct(data);
 
       // Verificar si el SKU ya existe
-      const existingProduct = await this.productRepository.findBySku(validatedData.sku);
+      const existingProduct = await this.productRepository.findBySku(validatedData.sku as SKU);
       if (existingProduct) {
         throw new Error('Ya existe un producto con este SKU');
       }
@@ -41,7 +41,7 @@ export class CreateProductUseCase {
       const productData: IProduct = {
         name: validatedData.name,
         description: validatedData.description,
-        sku: validatedData.sku,
+        sku: validatedData.sku as SKU,
         price: validatedData.price,
         quantity: validatedData.quantity,
         criticalStock: validatedData.criticalStock,
@@ -120,9 +120,9 @@ export class CreateProductUseCase {
   }
 
   /**
-   * Ejecuta el caso de uso de forma segura
+   * Ejecuta el caso de uso de forma segura, capturando errores y retornando un resultado tipado.
    * @param data - Datos del producto a crear
-   * @returns Resultado de la operación
+   * @returns Resultado de la operación (éxito o error)
    */
   async executeSafe(data: CreateProductDTO): Promise<{ success: true; data: ProductResponseDTO } | { success: false; error: string }> {
     try {

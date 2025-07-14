@@ -1,12 +1,13 @@
 /**
- * @fileoverview Implementación del repositorio de categorías
- * @author Industrial Inventory System
+ * @fileoverview Implementación de infraestructura del repositorio de categorías
+ * @author Daisy Castillo
  * @version 1.0.0
  */
 
 import { pool } from "../db/database";
-import { Category, ICategory } from "../../01-domain/entity/Category";
+import { Category, ICategory, CategoryName } from "../../01-domain/entity/Category";
 import { ICategoryRepository } from "../../01-domain/repository/CategoryRepository";
+import { AuditLog } from "../../01-domain/entity/AuditLog";
 
 /**
  * Consultas SQL para categorías
@@ -67,7 +68,11 @@ const CategoryQueries = {
  * Implementación del repositorio de categorías
  */
 export class CategoryRepositoryImpl implements ICategoryRepository {
-  
+  /**
+   * Crea una nueva categoría en la base de datos
+   * @param category - Datos de la categoría
+   * @returns Categoría creada
+   */
   async create(category: ICategory): Promise<Category> {
     const result = await pool.query(CategoryQueries.create, [
       category.name,
@@ -77,105 +82,60 @@ export class CategoryRepositoryImpl implements ICategoryRepository {
       category.createdAt || new Date(),
       category.updatedAt || new Date()
     ]);
-    
     if (result.rows.length > 0) {
-      const createdCategory = new Category({
-        id: result.rows[0].id,
-        name: category.name,
-        description: category.description,
-        parentId: category.parentId,
-        isActive: category.isActive,
-        createdAt: category.createdAt || new Date(),
-        updatedAt: category.updatedAt || new Date()
-      });
-      return createdCategory;
+      return this.mapRowToCategory(result.rows[0]);
     }
-    
     throw new Error('Error al crear categoría');
   }
 
+  /**
+   * Busca una categoría por ID
+   * @param id - ID de la categoría
+   * @returns Categoría encontrada o null
+   */
   async findById(id: number): Promise<Category | null> {
     const result = await pool.query(CategoryQueries.findById, [id]);
     if (result.rows.length === 0) return null;
-    
-    const row = result.rows[0];
-    return new Category({
-      id: row.id,
-      name: row.name,
-      description: row.description,
-      parentId: row.parent_id,
-      isActive: row.is_active,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at
-    });
+    return this.mapRowToCategory(result.rows[0]);
   }
 
-  async findByName(name: string): Promise<Category | null> {
+  /**
+   * Busca una categoría por nombre (tipado semántico)
+   * @param name - Nombre de la categoría
+   * @returns Categoría encontrada o null
+   */
+  async findByName(name: CategoryName | string): Promise<Category | null> {
     const result = await pool.query(CategoryQueries.findByName, [name]);
     if (result.rows.length === 0) return null;
-    
-    const row = result.rows[0];
-    return new Category({
-      id: row.id,
-      name: row.name,
-      description: row.description,
-      parentId: row.parent_id,
-      isActive: row.is_active,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at
-    });
+    return this.mapRowToCategory(result.rows[0]);
   }
 
+  /**
+   * Obtiene todas las categorías
+   * @returns Lista de categorías
+   */
   async findAll(): Promise<Category[]> {
     const result = await pool.query(CategoryQueries.findAll);
-    return result.rows.map(row => new Category({
-      id: row.id,
-      name: row.name,
-      description: row.description,
-      parentId: row.parent_id,
-      isActive: row.is_active,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at
-    }));
+    return result.rows.map(this.mapRowToCategory);
   }
 
+  /**
+   * Obtiene categorías activas
+   * @returns Lista de categorías activas
+   */
   async findActive(): Promise<Category[]> {
     const result = await pool.query(CategoryQueries.findActive);
-    return result.rows.map(row => new Category({
-      id: row.id,
-      name: row.name,
-      description: row.description,
-      parentId: row.parent_id,
-      isActive: row.is_active,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at
-    }));
+    return result.rows.map(this.mapRowToCategory);
   }
 
   async findByParent(parentId: number): Promise<Category[]> {
     const result = await pool.query(CategoryQueries.findByParent, [parentId]);
-    return result.rows.map(row => new Category({
-      id: row.id,
-      name: row.name,
-      description: row.description,
-      parentId: row.parent_id,
-      isActive: row.is_active,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at
-    }));
+    return result.rows.map(this.mapRowToCategory);
   }
 
   async findRootCategories(): Promise<Category[]> {
     const result = await pool.query(CategoryQueries.findRootCategories);
-    return result.rows.map(row => new Category({
-      id: row.id,
-      name: row.name,
-      description: row.description,
-      parentId: row.parent_id,
-      isActive: row.is_active,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at
-    }));
+    return result.rows.map(this.mapRowToCategory);
   }
 
   async update(id: number, categoryData: Partial<ICategory>): Promise<Category> {
@@ -183,7 +143,6 @@ export class CategoryRepositoryImpl implements ICategoryRepository {
     if (!existingCategory) {
       throw new Error(`Categoría con ID ${id} no encontrada`);
     }
-
     const updatedData = {
       name: categoryData.name || existingCategory.name,
       description: categoryData.description || existingCategory.description,
@@ -191,7 +150,6 @@ export class CategoryRepositoryImpl implements ICategoryRepository {
       isActive: categoryData.isActive !== undefined ? categoryData.isActive : existingCategory.isActive,
       updatedAt: new Date()
     };
-
     await pool.query(CategoryQueries.update, [
       updatedData.name,
       updatedData.description,
@@ -200,12 +158,7 @@ export class CategoryRepositoryImpl implements ICategoryRepository {
       updatedData.updatedAt,
       id
     ]);
-
-    return new Category({
-      id,
-      ...updatedData,
-      createdAt: existingCategory.createdAt
-    });
+    return await this.findById(id) as Category;
   }
 
   async delete(id: number): Promise<void> {
@@ -215,14 +168,24 @@ export class CategoryRepositoryImpl implements ICategoryRepository {
     }
   }
 
-  async existsByName(name: string): Promise<boolean> {
+  /**
+   * Verifica si existe una categoría con el nombre dado (tipado semántico)
+   * @param name - Nombre a verificar
+   * @returns true si existe
+   */
+  async existsByName(name: CategoryName | string): Promise<boolean> {
     const result = await pool.query(CategoryQueries.existsByName, [name]);
     return parseInt(result.rows[0].count) > 0;
   }
 
-  async getAuditTrail(categoryId: number): Promise<any[]> {
+  /**
+   * Obtiene el historial de auditoría de una categoría
+   * @param categoryId - ID de la categoría
+   * @returns Lista de logs de auditoría de la categoría
+   */
+  async getAuditTrail(categoryId: number): Promise<AuditLog<ICategory>[]> {
     const result = await pool.query(CategoryQueries.getAuditTrail, [categoryId]);
-    return result.rows;
+    return result.rows.map((row: any) => new AuditLog<ICategory>(row));
   }
 
   async findChildren(parentId: number): Promise<Category[]> {
@@ -230,7 +193,6 @@ export class CategoryRepositoryImpl implements ICategoryRepository {
   }
 
   async findHierarchy(categoryId: number): Promise<Category[]> {
-    // Implementación recursiva para obtener toda la jerarquía
     const result = await pool.query(
       `WITH RECURSIVE category_hierarchy AS (
         SELECT id, name, description, parent_id, is_active, created_at, updated_at, 0 as level
@@ -244,35 +206,14 @@ export class CategoryRepositoryImpl implements ICategoryRepository {
       SELECT * FROM category_hierarchy ORDER BY level`,
       [categoryId]
     );
-    
-    return result.rows.map(row => new Category({
-      id: row.id,
-      name: row.name,
-      description: row.description,
-      parentId: row.parent_id,
-      isActive: row.is_active,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at
-    }));
+    return result.rows.map(this.mapRowToCategory);
   }
 
   async activate(id: number): Promise<Category> {
-    const category = await this.findById(id);
-    if (!category) {
-      throw new Error(`Categoría con ID ${id} no encontrada`);
-    }
-
-    category.activate();
     return this.update(id, { isActive: true });
   }
 
   async deactivate(id: number): Promise<Category> {
-    const category = await this.findById(id);
-    if (!category) {
-      throw new Error(`Categoría con ID ${id} no encontrada`);
-    }
-
-    category.deactivate();
     return this.update(id, { isActive: false });
   }
 
@@ -281,7 +222,19 @@ export class CategoryRepositoryImpl implements ICategoryRepository {
       `SELECT COUNT(*) as count FROM categories WHERE parent_id = $1 AND is_active = true`,
       [categoryId]
     );
-    
     return parseInt(result.rows[0].count) > 0;
+  }
+
+  // --- Método privado para mapear una fila de la BD a la entidad Category ---
+  private mapRowToCategory(row: any): Category {
+    return new Category({
+      id: row.id,
+      name: row.name,
+      description: row.description,
+      parentId: row.parent_id,
+      isActive: row.is_active,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at
+    });
   }
 } 

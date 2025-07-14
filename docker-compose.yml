@@ -1,6 +1,6 @@
 services:
 
-  db:
+  inventory-db:
     container_name: inventory-db
     image: postgres:latest
     ports:

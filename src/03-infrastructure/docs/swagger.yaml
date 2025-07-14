@@ -34,7 +34,6 @@ info:
     
     **Desarrollado por**: Daisy Castillo Sepulveda
     **Repositorio**: [GitHub](https://github.com/DaisyCastilloS/industrial-inventory)
-    
   contact:
     name: Daisy Castillo Sepulveda
     url: https://github.com/DaisyCastilloS
@@ -51,79 +50,207 @@ servers:
     description: Servidor de producción (ejemplo)
 
 tags:
-  - name: Health
-    description: Endpoints de estado y monitoreo del sistema
   - name: Authentication
-    description: Endpoints para autenticación y autorización de usuarios
+    description: |
+      🔐 **Gestión de Autenticación y Autorización**
+      
+      Endpoints para el manejo de usuarios, sesiones y tokens de acceso.
+      
+      ### Funcionalidades
+      - Registro de usuarios
+      - Inicio de sesión
+      - Refresh de tokens
+      - Cierre de sesión
+      - Gestión de roles y permisos
+      
+      ### Seguridad
+      - Tokens JWT con expiración
+      - Refresh tokens automáticos
+      - Encriptación de contraseñas
+      - Validación de roles
+
   - name: Products
-    description: Gestión completa de instrumentos industriales mineros
+    description: |
+      📦 **Gestión de Productos e Inventario**
+      
+      Endpoints para el manejo completo del catálogo de productos.
+      
+      ### Funcionalidades
+      - CRUD completo de productos
+      - Gestión de stock en tiempo real
+      - Categorización y clasificación
+      - Información de proveedores
+      - Ubicaciones de almacenamiento
+      
+      ### Características
+      - Códigos únicos de producto
+      - Precios y costos
+      - Stock mínimo y máximo
+      - Estados activo/inactivo
+
+  - name: Users
+    description: |
+      👥 **Gestión de Usuarios del Sistema**
+      
+      Endpoints para la administración de usuarios y sus roles.
+      
+      ### Funcionalidades
+      - CRUD completo de usuarios
+      - Gestión de roles (ADMIN, USER, VIEWER)
+      - Estados activo/inactivo
+      - Información de contacto
+      
+      ### Seguridad
+      - Encriptación de contraseñas
+      - Validación de permisos
+      - Logs de auditoría
+
+  - name: Categories
+    description: |
+      📂 **Gestión de Categorías de Productos**
+      
+      Endpoints para organizar productos en categorías jerárquicas.
+      
+      ### Funcionalidades
+      - CRUD completo de categorías
+      - Estructura jerárquica (parent/child)
+      - Descripciones y metadatos
+      - Estados activo/inactivo
+      
+      ### Características
+      - Categorías anidadas
+      - Validación de integridad
+      - Logs de auditoría
+
+  - name: Suppliers
+    description: |
+      🏭 **Gestión de Proveedores**
+      
+      Endpoints para el manejo de proveedores y sus información de contacto.
+      
+      ### Funcionalidades
+      - CRUD completo de proveedores
+      - Información de contacto completa
+      - Estados activo/inactivo
+      - Relación con productos
+      
+      ### Características
+      - Datos de contacto
+      - Direcciones y teléfonos
+      - Personas de contacto
+      - Logs de auditoría
+
+  - name: Locations
+    description: |
+      📍 **Gestión de Ubicaciones de Almacenamiento**
+      
+      Endpoints para el manejo de ubicaciones donde se almacenan los productos.
+      
+      ### Funcionalidades
+      - CRUD completo de ubicaciones
+      - Estructura jerárquica
+      - Códigos únicos de ubicación
+      - Tipos de ubicación
+      
+      ### Características
+      - Ubicaciones anidadas
+      - Códigos de identificación
+      - Tipos (BODEGA, AREA, etc.)
+      - Estados activo/inactivo
+
+  - name: Product Movements
+    description: |
+      📦 **Gestión de Movimientos de Inventario**
+      
+      Endpoints para registrar y consultar movimientos de stock.
+      
+      ### Funcionalidades
+      - Registro de movimientos
+      - Consulta de historial
+      - Filtros avanzados
+      - Actualización automática de stock
+      
+      ### Tipos de Movimiento
+      - **IN**: Entrada de inventario
+      - **OUT**: Salida de inventario
+      - **ADJUSTMENT**: Ajuste de inventario
+      
+      ### Características
+      - Trazabilidad completa
+      - Razones obligatorias
+      - Usuario responsable
+      - Timestamps automáticos
+
+  - name: Audit Logs
+    description: |
+      📊 **Logs de Auditoría del Sistema**
+      
+      Endpoints para consultar el historial de cambios en el sistema.
+      
+      ### Funcionalidades
+      - Consulta de logs de auditoría
+      - Filtros por múltiples criterios
+      - Marcado de logs como revisados
+      - Información detallada de cambios
+      
+      ### Información Registrada
+      - Tabla afectada
+      - Acción realizada
+      - Valores anteriores y nuevos
+      - Usuario responsable
+      - IP y User Agent
+      - Metadatos adicionales
+      
+      ### Propósito
+      - Cumplimiento normativo
+      - Seguridad y trazabilidad
+      - Control de cambios
+      - Auditorías internas
 
 paths:
-  /:
-    get:
-      summary: 🏠 Estado del servidor
-      description: |
-        Endpoint de bienvenida que confirma que la API está funcionando correctamente.
-        
-        ### Información Incluida
-        - Estado del servidor
-        - Versión de la API
-        - Entorno de ejecución
-        - Timestamp de respuesta
-      tags:
-        - Health
-      responses:
-        '200':
-          description: ✅ Servidor funcionando correctamente
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    description: Mensaje de confirmación del estado
-                    example: "✅ Industrial Inventory API running"
-                  timestamp:
-                    type: string
-                    format: date-time
-                    description: Timestamp de la respuesta
-                    example: "2024-01-15T10:30:00.000Z"
-                  version:
-                    type: string
-                    description: Versión actual de la API
-                    example: "1.0.0"
-                  environment:
-                    type: string
-                    description: Entorno de ejecución
-                    example: "development"
-                  status:
-                    type: string
-                    description: Estado del servidor
-                    example: "healthy"
-              example:
-                message: "✅ Industrial Inventory API running"
-                timestamp: "2024-01-15T10:30:00.000Z"
-                version: "1.0.0"
-                environment: "development"
-                status: "healthy"
-
-  /auth/login:
+# --- AUTH ---
+  /auth/register:
     post:
-      summary: 🔐 Iniciar sesión
+      summary: 👤 Register new user
       description: |
-        Autentica un usuario y devuelve un token JWT para acceder a los endpoints protegidos.
+        Registra un nuevo usuario en el sistema.
         
-        ### Proceso de Autenticación
-        1. Validación de credenciales
-        2. Verificación de usuario activo
-        3. Generación de token JWT
-        4. Retorno de información del usuario
+        ### Validaciones
+        - **Email**: 
+          - Formato válido (example@domain.com)
+          - Único en el sistema
+          - Dominio válido
+          - Máximo 255 caracteres
+        - **Password**: 
+          - Mínimo 8 caracteres
+          - Al menos una mayúscula
+          - Al menos una minúscula
+          - Al menos un número
+          - Al menos un carácter especial
+          - Máximo 100 caracteres
+        - **Name**: 
+          - Entre 2 y 100 caracteres
+          - Solo letras, espacios y acentos
+          - Sin caracteres especiales
+        - **Role**: 
+          - ADMIN: Acceso total al sistema
+          - USER: Acceso limitado a operaciones básicas
+          - VIEWER: Solo lectura
         
-        ### Seguridad
-        - Contraseñas encriptadas con bcrypt
-        - Tokens JWT con expiración configurable
-        - Validación de formato de email
+        ### Proceso
+        1. Validación de datos de entrada
+        2. Verificación de email único
+        3. Encriptación de contraseña (bcrypt)
+        4. Creación de usuario en base de datos
+        5. Generación de token JWT
+        6. Registro en logs de auditoría
+        
+        ### Consideraciones de Seguridad
+        - Las contraseñas se almacenan encriptadas con bcrypt
+        - Los tokens tienen expiración configurable (24h por defecto)
+        - Se registra el intento en logs de auditoría
+        - Se valida la fortaleza de la contraseña
+        - Se limita la cantidad de intentos por IP
       tags:
         - Authentication
       requestBody:
@@ -131,56 +258,142 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - email
-                - password
-              properties:
-                email:
-                  type: string
-                  format: email
-                  description: Email del usuario registrado
-                  example: "admin@industrial.com"
-                password:
-                  type: string
-                  format: password
-                  description: Contraseña del usuario (mínimo 6 caracteres)
-                  minLength: 6
-                  example: "password123"
+              $ref: '#/components/schemas/CreateUserRequest'
             example:
-              email: "admin@industrial.com"
-              password: "password123"
+              email: "john.doe@company.com"
+              password: "SecurePass123!"
+              name: "John Doe"
+              role: "USER"
       responses:
-        '200':
-          description: ✅ Login exitoso
+        '201':
+          description: ✅ Usuario registrado exitosamente
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuthResponse'
+                $ref: '#/components/schemas/UserResponse'
               example:
                 success: true
-                message: "Login exitoso"
-                data:
-                  token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiYWRtaW5AaW5kdXN0cmlhbC5jb20iLCJyb2xlIjoiQURNSU4iLCJpYXQiOjE3MDUzNzQwMDAsImV4cCI6MTcwNTQ2MDQwMH0.example"
-                  user:
-                    id: 1
-                    email: "admin@industrial.com"
-                    role: "ADMIN"
-                    name: "Administrador"
-                    isActive: true
+                message: "Usuario registrado exitosamente"
                 timestamp: "2024-01-15T10:30:00.000Z"
+                data:
+                  id: 1
+                  email: "john.doe@company.com"
+                  name: "John Doe"
+                  role: "USER"
+                  isActive: true
+                  createdAt: "2024-01-15T10:30:00.000Z"
+                  updatedAt: "2024-01-15T10:30:00.000Z"
         '400':
-          description: ❌ Datos de entrada inválidos
+          description: ❌ Error en los datos de entrada
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
               example:
                 success: false
-                message: "Email y contraseña son requeridos"
-                error: "VALIDATION_ERROR"
+                message: "Error en los datos de entrada"
                 timestamp: "2024-01-15T10:30:00.000Z"
-        '401':
+                error:
+                  code: "VALIDATION_ERROR"
+                  message: "Datos inválidos"
+                  details:
+                    - field: "email"
+                      message: "El formato del email es inválido"
+                      value: "invalid.email"
+                    - field: "password"
+                      message: "La contraseña debe tener al menos 8 caracteres"
+                      value: "weak"
+                    - field: "name"
+                      message: "El nombre debe tener entre 2 y 100 caracteres"
+                      value: "A"
+        '409':
+          description: ❌ El email ya está registrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "El email ya está registrado"
+                timestamp: "2024-01-15T10:30:00.000Z"
+                error:
+                  code: "CONFLICT"
+                  message: "Ya existe un usuario con ese email"
+                  details:
+                    - field: "email"
+                      message: "Email duplicado"
+                      value: "john.doe@company.com"
+
+  /auth/login:
+    post:
+      summary: 🔑 Login user
+      description: |
+        Autentica un usuario y devuelve tokens de acceso.
+        
+        ### Proceso
+        1. Validación de credenciales
+        2. Verificación de cuenta activa
+        3. Generación de access token
+        4. Generación de refresh token
+        5. Registro de inicio de sesión
+        
+        ### Tokens Generados
+        - **Access Token**: 
+          - JWT para autenticación
+          - Duración: 24 horas
+          - Contiene: userId, role, permissions
+          - Uso: Autorización de requests
+        - **Refresh Token**: 
+          - Para renovar access token
+          - Duración: 7 días
+          - Almacenado en base de datos
+          - Uso único por renovación
+        
+        ### Seguridad
+        - Bloqueo temporal tras 5 intentos fallidos
+        - Registro de IP y User Agent
+        - Validación de contraseña encriptada
+        - Verificación de cuenta activa
+        - Registro en logs de auditoría
+        
+        ### Restricciones
+        - Solo usuarios activos pueden iniciar sesión
+        - Máximo 5 intentos fallidos por hora
+        - Un refresh token por usuario
+        - No se permite múltiples sesiones
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            example:
+              email: "john.doe@company.com"
+              password: "SecurePass123!"
+      responses:
+        '200':
+          description: ✅ Login exitoso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+              example:
+                success: true
+                message: "Login exitoso"
+                timestamp: "2024-01-15T10:30:00.000Z"
+                data:
+                  accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                  refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                  expiresIn: 86400
+                  user:
+                    id: 1
+                    email: "john.doe@company.com"
+                    name: "John Doe"
+                    role: "USER"
+                    isActive: true
+        '400':
           description: ❌ Credenciales inválidas
           content:
             application/json:
@@ -189,56 +402,48 @@ paths:
               example:
                 success: false
                 message: "Credenciales inválidas"
-                error: "INVALID_CREDENTIALS"
                 timestamp: "2024-01-15T10:30:00.000Z"
-        '500':
-          description: ❌ Error interno del servidor
+                error:
+                  code: "INVALID_CREDENTIALS"
+                  message: "Email o contraseña incorrectos"
+        '401':
+          description: ❌ Usuario inactivo o bloqueado
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-              example:
-                success: false
-                message: "Error interno del servidor"
-                error: "INTERNAL_ERROR"
-                timestamp: "2024-01-15T10:30:00.000Z"
 
-  /auth/register:
+  /auth/refresh:
     post:
-      summary: "📝 Registro de usuario"
+      summary: 🔄 Refresh access token
       description: |
-        Registra un nuevo usuario en el sistema.
-        - El email debe ser único.
-        - La contraseña debe tener al menos 6 caracteres, una mayúscula, una minúscula y un número.
-        - El rol puede ser ADMIN, USER o VIEWER.
+        Renueva el token de acceso usando un refresh token válido.
       tags:
         - Authentication
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [email, password, name]
-              properties:
-                email:
-                  type: string
-                  format: email
-                  example: "usuario@mineria.com"
-                password:
-                  type: string
-                  format: password
-                  example: "Password123"
-                name:
-                  type: string
-                  example: "Juan Pérez"
-                role:
-                  type: string
-                  enum: [ADMIN, USER, VIEWER]
-                  example: "USER"
+      security:
+        - BearerAuth: []
       responses:
-        '201':
-          description: "✅ Usuario registrado exitosamente"
+        '200':
+          description: ✅ Token renovado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          description: ❌ Token inválido o expirado
+
+  /auth/logout:
+    post:
+      summary: 🚪 Logout user
+      description: |
+        Cierra la sesión del usuario y revoca sus tokens.
+      tags:
+        - Authentication
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: ✅ Sesión cerrada exitosamente
           content:
             application/json:
               schema:
@@ -249,234 +454,545 @@ paths:
                     example: true
                   message:
                     type: string
-                    example: "Usuario registrado exitosamente"
-                  data:
-                    type: object
-                    properties:
-                      id: { type: integer, example: 1 }
-                      email: { type: string, example: "usuario@mineria.com" }
-                      name: { type: string, example: "Juan Pérez" }
-                      role: { type: string, example: "USER" }
-                      isActive: { type: boolean, example: true }
-                      createdAt: { type: string, format: date-time, example: "2024-01-15T10:30:00.000Z" }
-                      updatedAt: { type: string, format: date-time, example: "2024-01-15T10:30:00.000Z" }
-                  timestamp:
-                    type: string
-                    format: date-time
-                    example: "2024-01-15T10:30:00.000Z"
-        '400':
-          description: "❌ Datos de entrada inválidos"
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '409':
-          description: "❌ El email ya está registrado"
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                    example: "Sesión cerrada exitosamente"
+        '401':
+          description: ❌ Token inválido o expirado
 
+# --- USERS ---
+  /users:
+    get:
+      summary: 📋 List all users
+      description: |
+        Obtiene la lista de todos los usuarios.
+      tags:
+        - Users
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: ✅ Lista de usuarios obtenida exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListUsersResponse'
+        '401':
+          description: ❌ No autorizado
+    post:
+      summary: ➕ Create new user
+      description: |
+        Crea un nuevo usuario en el sistema.
+      tags:
+        - Users
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserRequest'
+      responses:
+        '201':
+          description: ✅ Usuario creado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '400':
+          description: ❌ Datos inválidos
+        '401':
+          description: ❌ No autorizado
+        '409':
+          description: ❌ Email ya registrado
+
+  /users/{id}:
+    get:
+      summary: 🔍 Get user by ID
+      description: |
+        Obtiene los detalles de un usuario específico.
+      tags:
+        - Users
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: ✅ Usuario encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '401':
+          description: ❌ No autorizado
+        '404':
+          description: ❌ Usuario no encontrado
+    put:
+      summary: ✏️ Update user
+      description: |
+        Actualiza los datos de un usuario existente.
+      tags:
+        - Users
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserRequest'
+      responses:
+        '200':
+          description: ✅ Usuario actualizado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '400':
+          description: ❌ Datos inválidos
+        '401':
+          description: ❌ No autorizado
+        '404':
+          description: ❌ Usuario no encontrado
+    delete:
+      summary: 🗑️ Delete user
+      description: |
+        Elimina un usuario del sistema.
+      tags:
+        - Users
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: ✅ Usuario eliminado exitosamente
+        '401':
+          description: ❌ No autorizado
+        '404':
+          description: ❌ Usuario no encontrado
+
+# --- CATEGORIES ---
+  /categories:
+    get:
+      summary: 📋 List all categories
+      description: |
+        Obtiene la lista de todas las categorías.
+      tags:
+        - Categories
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: ✅ Lista de categorías obtenida exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListCategoriesResponse'
+        '401':
+          description: ❌ No autorizado
+    post:
+      summary: ➕ Create new category
+      description: |
+        Crea una nueva categoría.
+      tags:
+        - Categories
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCategoryRequest'
+      responses:
+        '201':
+          description: ✅ Categoría creada exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryResponse'
+        '400':
+          description: ❌ Datos inválidos
+        '401':
+          description: ❌ No autorizado
+        '409':
+          description: ❌ Nombre ya existe
+
+  /categories/{id}:
+    get:
+      summary: 🔍 Get category by ID
+      description: |
+        Obtiene los detalles de una categoría específica.
+      tags:
+        - Categories
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: ✅ Categoría encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryResponse'
+        '401':
+          description: ❌ No autorizado
+        '404':
+          description: ❌ Categoría no encontrada
+    put:
+      summary: ✏️ Update category
+      description: |
+        Actualiza los datos de una categoría existente.
+      tags:
+        - Categories
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCategoryRequest'
+      responses:
+        '200':
+          description: ✅ Categoría actualizada exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryResponse'
+        '400':
+          description: ❌ Datos inválidos
+        '401':
+          description: ❌ No autorizado
+        '404':
+          description: ❌ Categoría no encontrada
+    delete:
+      summary: 🗑️ Delete category
+      description: |
+        Elimina una categoría del sistema.
+      tags:
+        - Categories
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: ✅ Categoría eliminada exitosamente
+        '401':
+          description: ❌ No autorizado
+        '404':
+          description: ❌ Categoría no encontrada
+
+# --- SUPPLIERS ---
+  /suppliers:
+    get:
+      summary: 📋 List all suppliers
+      description: |
+        Obtiene la lista de todos los proveedores.
+      tags:
+        - Suppliers
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: ✅ Lista de proveedores obtenida exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListSuppliersResponse'
+        '401':
+          description: ❌ No autorizado
+    post:
+      summary: ➕ Create new supplier
+      description: |
+        Crea un nuevo proveedor.
+      tags:
+        - Suppliers
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSupplierRequest'
+      responses:
+        '201':
+          description: ✅ Proveedor creado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupplierResponse'
+        '400':
+          description: ❌ Datos inválidos
+        '401':
+          description: ❌ No autorizado
+        '409':
+          description: ❌ RUT/Email ya existe
+
+  /suppliers/{id}:
+    get:
+      summary: 🔍 Get supplier by ID
+      description: |
+        Obtiene los detalles de un proveedor específico.
+      tags:
+        - Suppliers
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: ✅ Proveedor encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupplierResponse'
+        '401':
+          description: ❌ No autorizado
+        '404':
+          description: ❌ Proveedor no encontrado
+    put:
+      summary: ✏️ Update supplier
+      description: |
+        Actualiza los datos de un proveedor existente.
+      tags:
+        - Suppliers
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSupplierRequest'
+      responses:
+        '200':
+          description: ✅ Proveedor actualizado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupplierResponse'
+        '400':
+          description: ❌ Datos inválidos
+        '401':
+          description: ❌ No autorizado
+        '404':
+          description: ❌ Proveedor no encontrado
+    delete:
+      summary: 🗑️ Delete supplier
+      description: |
+        Elimina un proveedor del sistema.
+      tags:
+        - Suppliers
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: ✅ Proveedor eliminado exitosamente
+        '401':
+          description: ❌ No autorizado
+        '404':
+          description: ❌ Proveedor no encontrado
+
+# --- LOCATIONS ---
+  /locations:
+    get:
+      summary: 📋 List all locations
+      description: |
+        Obtiene la lista de todas las ubicaciones.
+      tags:
+        - Locations
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: ✅ Lista de ubicaciones obtenida exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListLocationsResponse'
+        '401':
+          description: ❌ No autorizado
+    post:
+      summary: ➕ Create new location
+      description: |
+        Crea una nueva ubicación.
+      tags:
+        - Locations
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateLocationRequest'
+      responses:
+        '201':
+          description: ✅ Ubicación creada exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LocationResponse'
+        '400':
+          description: ❌ Datos inválidos
+        '401':
+          description: ❌ No autorizado
+        '409':
+          description: ❌ Código ya existe
+
+  /locations/{id}:
+    get:
+      summary: 🔍 Get location by ID
+      description: |
+        Obtiene los detalles de una ubicación específica.
+      tags:
+        - Locations
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: ✅ Ubicación encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LocationResponse'
+        '401':
+          description: ❌ No autorizado
+        '404':
+          description: ❌ Ubicación no encontrada
+    put:
+      summary: ✏️ Update location
+      description: |
+        Actualiza los datos de una ubicación existente.
+      tags:
+        - Locations
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateLocationRequest'
+      responses:
+        '200':
+          description: ✅ Ubicación actualizada exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LocationResponse'
+        '400':
+          description: ❌ Datos inválidos
+        '401':
+          description: ❌ No autorizado
+        '404':
+          description: ❌ Ubicación no encontrada
+    delete:
+      summary: 🗑️ Delete location
+      description: |
+        Elimina una ubicación del sistema.
+      tags:
+        - Locations
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: ✅ Ubicación eliminada exitosamente
+        '401':
+          description: ❌ No autorizado
+        '404':
+          description: ❌ Ubicación no encontrada
+
+# --- PRODUCTS ---
   /products:
     get:
-      summary: 📋 Listar instrumentos industriales mineros
+      summary: 📋 List all products
       description: |
-        Obtiene una lista paginada de todos los instrumentos industriales mineros en el inventario.
-        
-        ### Características
-        - **Paginación automática**: Control de páginas y límites
-        - **Filtrado avanzado**: Por categoría, ubicación, estado
-        - **Ordenamiento flexible**: Por nombre, precio, cantidad, fecha
-        - **Búsqueda inteligente**: En nombre y descripción
-        - **Respuesta optimizada**: Para grandes volúmenes de datos
-        
-        ### Parámetros de Consulta
-        - `page`: Número de página (default: 1)
-        - `limit`: Elementos por página (default: 20, max: 100)
-        - `sort`: Campo de ordenamiento
-        - `order`: Dirección del ordenamiento
-        - `search`: Término de búsqueda
-        
-        ### Permisos Requeridos
-        - **ADMIN**: Acceso completo con todos los filtros
-        - **USER**: Acceso de lectura con filtros básicos
-        - **VIEWER**: Solo lectura sin filtros avanzados
+        Obtiene la lista de todos los productos.
       tags:
         - Products
       security:
         - BearerAuth: []
-      parameters:
-        - name: page
-          in: query
-          description: Número de página (comienza en 1)
-          required: false
-          schema:
-            type: integer
-            minimum: 1
-            default: 1
-          example: 1
-        - name: limit
-          in: query
-          description: Número de instrumentos por página (máximo 100)
-          required: false
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 20
-          example: 20
-        - name: sort
-          in: query
-          description: Campo para ordenar los resultados
-          required: false
-          schema:
-            type: string
-            enum: [name, price, quantity, created_at, categoryId]
-            default: created_at
-          example: "name"
-        - name: order
-          in: query
-          description: Orden de clasificación (ascendente o descendente)
-          required: false
-          schema:
-            type: string
-            enum: [asc, desc]
-            default: desc
-          example: "desc"
-        - name: search
-          in: query
-          description: Término de búsqueda en nombre y descripción
-          required: false
-          schema:
-            type: string
-            minLength: 2
-          example: "sensor"
-        - name: categoryId
-          in: query
-          description: Filtrar por ID de categoría
-          required: false
-          schema:
-            type: integer
-            minimum: 1
-          example: 2
-        - name: isActive
-          in: query
-          description: Filtrar por estado activo/inactivo
-          required: false
-          schema:
-            type: boolean
-          example: true
       responses:
         '200':
-          description: ✅ Lista de instrumentos obtenida exitosamente
+          description: ✅ Lista de productos obtenida exitosamente
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ProductListResponse'
-              example:
-                success: true
-                message: "Instrumentos obtenidos exitosamente"
-                data:
-                  products:
-                    - id: 1
-                      name: "Sensor de Presión Industrial"
-                      description: "Sensor de presión diferencial para monitoreo de fluidos en minería subterránea"
-                      price: 1250.00
-                      quantity: 15
-                      categoryId: 2
-                      location: "Bodega Central - Zona Norte"
-                      criticalStock: 5
-                      isActive: true
-                      created_at: "2024-01-15T10:30:00.000Z"
-                      updated_at: "2024-01-15T10:30:00.000Z"
-                    - id: 2
-                      name: "Transmisor de Temperatura RTD"
-                      description: "Transmisor de temperatura con sensor RTD Pt100 para control de procesos mineros"
-                      price: 890.00
-                      quantity: 25
-                      categoryId: 3
-                      location: "Bodega Sur - Zona Mina"
-                      criticalStock: 3
-                      isActive: true
-                      created_at: "2024-01-15T10:30:00.000Z"
-                      updated_at: "2024-01-15T10:30:00.000Z"
-                    - id: 3
-                      name: "Analizador de Gases Portátil"
-                      description: "Equipo portátil para análisis de gases en túneles de mina"
-                      price: 3500.00
-                      quantity: 5
-                      categoryId: 1
-                      location: "Bodega Oeste - Zona Central"
-                      criticalStock: 10
-                      isActive: true
-                      created_at: "2024-01-15T10:30:00.000Z"
-                      updated_at: "2024-01-15T10:30:00.000Z"
-                  pagination:
-                    page: 1
-                    limit: 20
-                    total: 3
-                    totalPages: 1
-                    hasNext: false
-                    hasPrev: false
-                timestamp: "2024-01-15T10:30:00.000Z"
+                $ref: '#/components/schemas/ListProductsResponse'
         '401':
-          description: ❌ No autorizado - Token requerido
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              example:
-                success: false
-                message: "Token de autenticación requerido"
-                error: "UNAUTHORIZED"
-                timestamp: "2024-01-15T10:30:00.000Z"
-        '403':
-          description: ❌ Acceso denegado - Permisos insuficientes
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              example:
-                success: false
-                message: "No tienes permisos para acceder a este recurso"
-                error: "FORBIDDEN"
-                timestamp: "2024-01-15T10:30:00.000Z"
-        '500':
-          description: ❌ Error interno del servidor
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              example:
-                success: false
-                message: "Error interno del servidor"
-                error: "INTERNAL_ERROR"
-                timestamp: "2024-01-15T10:30:00.000Z"
-
+          description: ❌ No autorizado
     post:
-      summary: ➕ Crear nuevo instrumento industrial
+      summary: ➕ Create new product
       description: |
-        Crea un nuevo instrumento industrial minero en el inventario.
-        
-        ### Validaciones de Entrada
-        - **Nombre**: Requerido, máximo 100 caracteres
-        - **Descripción**: Requerido, máximo 500 caracteres
-        - **Precio**: Requerido, mayor a 0, máximo 999,999.99
-        - **Cantidad**: Requerido, entero mayor o igual a 0, máximo 999,999
-        - **Categoría**: Requerido, ID de categoría válido
-        - **Ubicación**: Requerido, máximo 200 caracteres
-        - **Stock Crítico**: Requerido, entero mayor o igual a 0, máximo 999,999
-        - **Activo**: Requerido, booleano (default: true)
-        
-        ### Proceso de Creación
-        1. Validación de datos con Zod
-        2. Verificación de unicidad
-        3. Creación en base de datos
-        4. Retorno del instrumento creado
-        
-        ### Permisos Requeridos
-        - **ADMIN**: Crear cualquier instrumento
-        - **USER**: Crear instrumentos (limitado por categoría)
+        Crea un nuevo producto.
       tags:
         - Products
       security:
@@ -487,125 +1003,25 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/CreateProductRequest'
-            example:
-              name: "Sensor de Presión Industrial"
-              description: "Sensor de presión diferencial para monitoreo de fluidos en minería subterránea"
-              price: 1250.00
-              quantity: 15
-              categoryId: 2
-              location: "Bodega Central - Zona Norte"
-              criticalStock: 5
-              isActive: true
       responses:
         '201':
-          description: ✅ Instrumento creado exitosamente
+          description: ✅ Producto creado exitosamente
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProductResponse'
-              example:
-                success: true
-                message: "Instrumento creado exitosamente"
-                data:
-                  id: 1
-                  name: "Sensor de Presión Industrial"
-                  description: "Sensor de presión diferencial para monitoreo de fluidos en minería subterránea"
-                  price: 1250.00
-                  quantity: 15
-                  categoryId: 2
-                  location: "Bodega Central - Zona Norte"
-                  criticalStock: 5
-                  isActive: true
-                  created_at: "2024-01-15T10:30:00.000Z"
-                  updated_at: "2024-01-15T10:30:00.000Z"
-                timestamp: "2024-01-15T10:30:00.000Z"
         '400':
-          description: ❌ Datos de entrada inválidos
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ValidationErrorResponse'
-              example:
-                success: false
-                message: "Datos de entrada inválidos"
-                error: "VALIDATION_ERROR"
-                details:
-                  - field: "name"
-                    message: "El nombre es requerido"
-                    value: ""
-                  - field: "price"
-                    message: "El precio debe ser mayor a 0"
-                    value: -1
-                  - field: "categoryId"
-                    message: "El ID de categoría debe ser un entero positivo"
-                    value: 0
-                timestamp: "2024-01-15T10:30:00.000Z"
+          description: ❌ Datos inválidos
         '401':
-          description: ❌ No autorizado - Token requerido
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              example:
-                success: false
-                message: "Token de autenticación requerido"
-                error: "UNAUTHORIZED"
-                timestamp: "2024-01-15T10:30:00.000Z"
-        '403':
-          description: ❌ Acceso denegado - Permisos insuficientes
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              example:
-                success: false
-                message: "No tienes permisos para crear instrumentos"
-                error: "FORBIDDEN"
-                timestamp: "2024-01-15T10:30:00.000Z"
+          description: ❌ No autorizado
         '409':
-          description: ❌ Conflicto - Instrumento ya existe
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              example:
-                success: false
-                message: "Ya existe un instrumento con ese nombre"
-                error: "CONFLICT"
-                timestamp: "2024-01-15T10:30:00.000Z"
-        '500':
-          description: ❌ Error interno del servidor
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              example:
-                success: false
-                message: "Error interno del servidor"
-                error: "INTERNAL_ERROR"
-                timestamp: "2024-01-15T10:30:00.000Z"
+          description: ❌ SKU/Código ya existe
 
   /products/{id}:
     get:
-      summary: 🔍 Obtener instrumento por ID
+      summary: 🔍 Get product by ID
       description: |
-        Obtiene los detalles completos de un instrumento industrial específico por su ID.
-        
-        ### Información Incluida
-        - **Datos básicos**: Nombre, descripción, precio, cantidad
-        - **Metadatos**: Categoría, ubicación, stock crítico, estado
-        - **Timestamps**: Fecha de creación y última actualización
-        - **Estado actual**: Información del inventario en tiempo real
-        
-        ### Validaciones
-        - ID debe ser un entero positivo
-        - Instrumento debe existir en la base de datos
-        - Usuario debe tener permisos de lectura
-        
-        ### Permisos Requeridos
-        - **ADMIN**: Acceso completo a cualquier instrumento
-        - **USER**: Acceso de lectura a instrumentos de su categoría
-        - **VIEWER**: Solo lectura de instrumentos públicos
+        Obtiene los detalles de un producto específico.
       tags:
         - Products
       security:
@@ -613,115 +1029,24 @@ paths:
       parameters:
         - name: id
           in: path
-          description: ID único del instrumento a consultar
           required: true
           schema:
             type: integer
-            minimum: 1
-          example: 1
       responses:
         '200':
-          description: ✅ Instrumento encontrado exitosamente
+          description: ✅ Producto encontrado
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProductResponse'
-              example:
-                success: true
-                message: "Instrumento encontrado exitosamente"
-                data:
-                  id: 1
-                  name: "Sensor de Presión Industrial"
-                  description: "Sensor de presión diferencial para monitoreo de fluidos en minería subterránea"
-                  price: 1250.00
-                  quantity: 15
-                  categoryId: 2
-                  location: "Bodega Central - Zona Norte"
-                  criticalStock: 5
-                  isActive: true
-                  created_at: "2024-01-15T10:30:00.000Z"
-                  updated_at: "2024-01-15T10:30:00.000Z"
-                timestamp: "2024-01-15T10:30:00.000Z"
-        '400':
-          description: ❌ ID inválido
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              example:
-                success: false
-                message: "ID de instrumento inválido"
-                error: "VALIDATION_ERROR"
-                timestamp: "2024-01-15T10:30:00.000Z"
         '401':
-          description: ❌ No autorizado - Token requerido
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              example:
-                success: false
-                message: "Token de autenticación requerido"
-                error: "UNAUTHORIZED"
-                timestamp: "2024-01-15T10:30:00.000Z"
-        '403':
-          description: ❌ Acceso denegado - Permisos insuficientes
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              example:
-                success: false
-                message: "No tienes permisos para acceder a este instrumento"
-                error: "FORBIDDEN"
-                timestamp: "2024-01-15T10:30:00.000Z"
+          description: ❌ No autorizado
         '404':
-          description: ❌ Instrumento no encontrado
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              example:
-                success: false
-                message: "Instrumento con ID 1 no encontrado"
-                error: "NOT_FOUND"
-                timestamp: "2024-01-15T10:30:00.000Z"
-        '500':
-          description: ❌ Error interno del servidor
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              example:
-                success: false
-                message: "Error interno del servidor"
-                error: "INTERNAL_ERROR"
-                timestamp: "2024-01-15T10:30:00.000Z"
-
+          description: ❌ Producto no encontrado
     put:
-      summary: ✏️ Actualizar instrumento industrial
+      summary: ✏️ Update product
       description: |
-        Actualiza los datos de un instrumento industrial existente.
-        
-        ### Características
-        - **Actualización parcial**: Solo se actualizan los campos enviados
-        - **Validación en tiempo real**: Cada campo se valida individualmente
-        - **Historial de cambios**: Se registra automáticamente la modificación
-        - **Verificación de permisos**: Según el rol del usuario
-        
-        ### Campos Actualizables
-        - `name`: Nombre del instrumento
-        - `description`: Descripción detallada
-        - `price`: Precio unitario
-        - `quantity`: Cantidad en inventario
-        - `categoryId`: ID de categoría
-        - `location`: Ubicación física
-        - `criticalStock`: Stock crítico
-        - `isActive`: Estado activo/inactivo
-        
-        ### Permisos Requeridos
-        - **ADMIN**: Actualizar cualquier instrumento
-        - **USER**: Actualizar instrumentos de su categoría (limitado)
+        Actualiza los datos de un producto existente.
       tags:
         - Products
       security:
@@ -729,134 +1054,32 @@ paths:
       parameters:
         - name: id
           in: path
-          description: ID único del instrumento a actualizar
           required: true
           schema:
             type: integer
-            minimum: 1
-          example: 2
       requestBody:
         required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/UpdateProductRequest'
-            example:
-              name: "Transmisor de Temperatura RTD Mejorado"
-              description: "Transmisor de temperatura con sensor RTD Pt100 para control de procesos mineros - Versión mejorada"
-              price: 950.00
-              quantity: 30
-              categoryId: 3
-              location: "Bodega Sur - Zona Mina - Estante A"
-              criticalStock: 5
-              isActive: true
       responses:
         '200':
-          description: ✅ Instrumento actualizado exitosamente
+          description: ✅ Producto actualizado exitosamente
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProductResponse'
-              example:
-                success: true
-                message: "Instrumento actualizado exitosamente"
-                data:
-                  id: 2
-                  name: "Transmisor de Temperatura RTD Mejorado"
-                  description: "Transmisor de temperatura con sensor RTD Pt100 para control de procesos mineros - Versión mejorada"
-                  price: 950.00
-                  quantity: 30
-                  categoryId: 3
-                  location: "Bodega Sur - Zona Mina - Estante A"
-                  criticalStock: 5
-                  isActive: true
-                  created_at: "2024-01-15T10:30:00.000Z"
-                  updated_at: "2024-01-15T11:45:00.000Z"
-                timestamp: "2024-01-15T11:45:00.000Z"
         '400':
-          description: ❌ Datos de entrada inválidos
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ValidationErrorResponse'
-              example:
-                success: false
-                message: "Datos de entrada inválidos"
-                error: "VALIDATION_ERROR"
-                details:
-                  - field: "price"
-                    message: "El precio debe ser mayor a 0"
-                    value: -50
-                  - field: "quantity"
-                    message: "La cantidad debe ser un entero no negativo"
-                    value: -5
-                timestamp: "2024-01-15T11:45:00.000Z"
+          description: ❌ Datos inválidos
         '401':
-          description: ❌ No autorizado - Token requerido
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              example:
-                success: false
-                message: "Token de autenticación requerido"
-                error: "UNAUTHORIZED"
-                timestamp: "2024-01-15T11:45:00.000Z"
-        '403':
-          description: ❌ Acceso denegado - Permisos insuficientes
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              example:
-                success: false
-                message: "No tienes permisos para actualizar este instrumento"
-                error: "FORBIDDEN"
-                timestamp: "2024-01-15T11:45:00.000Z"
+          description: ❌ No autorizado
         '404':
-          description: ❌ Instrumento no encontrado
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              example:
-                success: false
-                message: "Instrumento con ID 2 no encontrado"
-                error: "NOT_FOUND"
-                timestamp: "2024-01-15T11:45:00.000Z"
-        '500':
-          description: ❌ Error interno del servidor
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              example:
-                success: false
-                message: "Error interno del servidor"
-                error: "INTERNAL_ERROR"
-                timestamp: "2024-01-15T11:45:00.000Z"
-
+          description: ❌ Producto no encontrado
     delete:
-      summary: 🗑️ Eliminar instrumento industrial
+      summary: 🗑️ Delete product
       description: |
-        Elimina permanentemente un instrumento industrial del inventario.
-        
-        ⚠️ **ADVERTENCIA**: Esta acción es irreversible y eliminará permanentemente el instrumento del sistema.
-        
-        ### Proceso de Eliminación
-        1. Verificación de existencia del instrumento
-        2. Validación de permisos del usuario
-        3. Eliminación lógica/física según configuración
-        4. Registro de la acción en logs
-        
-        ### Consideraciones
-        - Solo instrumentos inactivos pueden ser eliminados
-        - Se verifica que no haya dependencias activas
-        - Se mantiene un registro de auditoría
-        
-        ### Permisos Requeridos
-        - **ADMIN**: Eliminar cualquier instrumento
-        - **USER**: No puede eliminar instrumentos
+        Elimina un producto del sistema.
       tags:
         - Products
       security:
@@ -864,81 +1087,83 @@ paths:
       parameters:
         - name: id
           in: path
-          description: ID único del instrumento a eliminar
           required: true
           schema:
             type: integer
-            minimum: 1
-          example: 3
       responses:
         '200':
-          description: ✅ Instrumento eliminado exitosamente
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DeleteResponse'
-              example:
-                success: true
-                message: "Instrumento eliminado exitosamente"
-                data:
-                  id: 3
-                  deleted_at: "2024-01-15T12:00:00.000Z"
-                timestamp: "2024-01-15T12:00:00.000Z"
-        '400':
-          description: ❌ ID inválido o instrumento no puede ser eliminado
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              example:
-                success: false
-                message: "El instrumento no puede ser eliminado porque está activo"
-                error: "VALIDATION_ERROR"
-                timestamp: "2024-01-15T12:00:00.000Z"
+          description: ✅ Producto eliminado exitosamente
         '401':
-          description: ❌ No autorizado - Token requerido
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              example:
-                success: false
-                message: "Token de autenticación requerido"
-                error: "UNAUTHORIZED"
-                timestamp: "2024-01-15T12:00:00.000Z"
-        '403':
-          description: ❌ Acceso denegado - Permisos insuficientes
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              example:
-                success: false
-                message: "No tienes permisos para eliminar instrumentos"
-                error: "FORBIDDEN"
-                timestamp: "2024-01-15T12:00:00.000Z"
+          description: ❌ No autorizado
         '404':
-          description: ❌ Instrumento no encontrado
+          description: ❌ Producto no encontrado
+
+# --- PRODUCT MOVEMENTS ---
+  /product-movements:
+    get:
+      summary: 📋 List all product movements
+      description: |
+        Obtiene la lista de todos los movimientos de productos.
+      tags:
+        - Product Movements
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: ✅ Lista de movimientos obtenida exitosamente
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              example:
-                success: false
-                message: "Instrumento con ID 3 no encontrado"
-                error: "NOT_FOUND"
-                timestamp: "2024-01-15T12:00:00.000Z"
-        '500':
-          description: ❌ Error interno del servidor
+                $ref: '#/components/schemas/ListProductMovementsResponse'
+        '401':
+          description: ❌ No autorizado
+    post:
+      summary: ➕ Create new product movement
+      description: |
+        Registra un nuevo movimiento de producto.
+      tags:
+        - Product Movements
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProductMovementRequest'
+      responses:
+        '201':
+          description: ✅ Movimiento registrado exitosamente
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              example:
-                success: false
-                message: "Error interno del servidor"
-                error: "INTERNAL_ERROR"
-                timestamp: "2024-01-15T12:00:00.000Z"
+                $ref: '#/components/schemas/ProductMovementResponse'
+        '400':
+          description: ❌ Datos inválidos
+        '401':
+          description: ❌ No autorizado
+        '409':
+          description: ❌ Stock insuficiente
+
+# --- AUDIT LOGS ---
+  /audit-logs:
+    get:
+      summary: 📋 List all audit logs
+      description: |
+        Obtiene la lista de todos los logs de auditoría.
+      tags:
+        - Audit Logs
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: ✅ Lista de logs obtenida exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListAuditLogsResponse'
+        '401':
+          description: ❌ No autorizado
 
 components:
   securitySchemes:
@@ -946,18 +1171,25 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
-      description: |
-        Token JWT obtenido al iniciar sesión.
-        
-        **Formato**: `Bearer <token>`
-        
-        **Ejemplo**: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...`
-        
-        **Duración**: 24 horas (configurable)
 
   schemas:
-    # Esquemas de Autenticación
-    AuthResponse:
+    # Auth Schemas
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: "admin@example.com"
+        password:
+          type: string
+          minLength: 1
+          example: "SecurePass123"
+
+    LoginResponse:
       type: object
       properties:
         success:
@@ -965,22 +1197,575 @@ components:
           example: true
         message:
           type: string
-          example: "Login exitoso"
-        data:
-          type: object
-          properties:
-            token:
-              type: string
-              description: Token JWT para autenticación
-              example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-            user:
-              $ref: '#/components/schemas/User'
+          example: "Login successful"
         timestamp:
           type: string
           format: date-time
-          example: "2024-01-15T10:30:00.000Z"
+          example: "2023-01-01T00:00:00.000Z"
+        data:
+          type: object
+          properties:
+            accessToken:
+              type: string
+              example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+            refreshToken:
+              type: string
+              example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+            expiresIn:
+              type: integer
+              example: 86400
+            user:
+              $ref: '#/components/schemas/UserData'
 
-    User:
+    UserData:
+      type: object
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+        name:
+          type: string
+        role:
+          type: string
+        isActive:
+          type: boolean
+
+    UpdateUserRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+        name:
+          type: string
+        role:
+          type: string
+          enum: [ADMIN, USER, VIEWER]
+        isActive:
+          type: boolean
+
+    ListUsersResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserData'
+
+    CreateCategoryRequest:
+      type: object
+      required: [name, description]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        parentId:
+          type: integer
+          nullable: true
+        isActive:
+          type: boolean
+
+    UpdateCategoryRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        parentId:
+          type: integer
+          nullable: true
+        isActive:
+          type: boolean
+
+    CategoryResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        data:
+          $ref: '#/components/schemas/CategoryData'
+
+    CategoryData:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        parentId:
+          type: integer
+          nullable: true
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ListCategoriesResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/CategoryData'
+
+    CreateSupplierRequest:
+      type: object
+      required: [name, description, contactPerson, email, phone, address]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        contactPerson:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        address:
+          type: string
+        isActive:
+          type: boolean
+
+    UpdateSupplierRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        contactPerson:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        address:
+          type: string
+        isActive:
+          type: boolean
+
+    SupplierResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        data:
+          $ref: '#/components/schemas/SupplierData'
+
+    SupplierData:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        contactPerson:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        address:
+          type: string
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ListSuppliersResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/SupplierData'
+
+    CreateLocationRequest:
+      type: object
+      required: [name, description, code, type]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        code:
+          type: string
+        type:
+          type: string
+          enum: [BODEGA, AREA, SECCION, ESTANTE]
+        parentId:
+          type: integer
+          nullable: true
+        isActive:
+          type: boolean
+
+    UpdateLocationRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        code:
+          type: string
+        type:
+          type: string
+          enum: [BODEGA, AREA, SECCION, ESTANTE]
+        parentId:
+          type: integer
+          nullable: true
+        isActive:
+          type: boolean
+
+    LocationResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        data:
+          $ref: '#/components/schemas/LocationData'
+
+    LocationData:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        code:
+          type: string
+        type:
+          type: string
+        parentId:
+          type: integer
+          nullable: true
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ListLocationsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/LocationData'
+
+    CreateProductRequest:
+      type: object
+      required: [name, description, sku, categoryId, supplierId, locationId]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        sku:
+          type: string
+        categoryId:
+          type: integer
+        supplierId:
+          type: integer
+        locationId:
+          type: integer
+        minStock:
+          type: number
+        maxStock:
+          type: number
+        currentStock:
+          type: number
+        price:
+          type: number
+        isActive:
+          type: boolean
+
+    UpdateProductRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        sku:
+          type: string
+        categoryId:
+          type: integer
+        supplierId:
+          type: integer
+        locationId:
+          type: integer
+        minStock:
+          type: number
+        maxStock:
+          type: number
+        price:
+          type: number
+        isActive:
+          type: boolean
+
+    ProductResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        data:
+          $ref: '#/components/schemas/ProductData'
+
+    ProductData:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        sku:
+          type: string
+        categoryId:
+          type: integer
+        supplierId:
+          type: integer
+        locationId:
+          type: integer
+        minStock:
+          type: number
+        maxStock:
+          type: number
+        currentStock:
+          type: number
+        price:
+          type: number
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ListProductsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductData'
+
+    CreateProductMovementRequest:
+      type: object
+      required: [productId, movementType, quantity, reason]
+      properties:
+        productId:
+          type: integer
+        movementType:
+          type: string
+          enum: [IN, OUT, ADJUSTMENT]
+        quantity:
+          type: number
+        reason:
+          type: string
+
+    ProductMovementResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        data:
+          $ref: '#/components/schemas/ProductMovementData'
+
+    ProductMovementData:
+      type: object
+      properties:
+        id:
+          type: integer
+        productId:
+          type: integer
+        userId:
+          type: integer
+        movementType:
+          type: string
+        quantity:
+          type: number
+        reason:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    ListProductMovementsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductMovementData'
+
+    ListAuditLogsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditLogData'
+
+    AuditLogData:
+      type: object
+      properties:
+        id:
+          type: integer
+        tableName:
+          type: string
+        action:
+          type: string
+        oldValues:
+          type: object
+        newValues:
+          type: object
+        userId:
+          type: integer
+        ipAddress:
+          type: string
+        userAgent:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    # Additional User Schemas
+    CreateUserRequest:
+      type: object
+      required:
+        - email
+        - password
+        - name
+        - role
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 100
+          example: "admin@example.com"
+        password:
+          type: string
+          minLength: 6
+          maxLength: 50
+          pattern: "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)"
+          example: "SecurePass123"
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          pattern: "^[a-zA-ZáéíóúÁÉÍÓÚñÑ\\s]+$"
+          example: "Admin User"
+        role:
+          type: string
+          enum: [ADMIN, USER, VIEWER]
+          default: USER
+          example: "ADMIN"
+
+    UserResponse:
       type: object
       properties:
         id:
@@ -989,291 +1774,27 @@ components:
         email:
           type: string
           format: email
-          example: "admin@industrial.com"
+          example: "admin@example.com"
+        name:
+          type: string
+          example: "Admin User"
         role:
           type: string
           enum: [ADMIN, USER, VIEWER]
           example: "ADMIN"
-        name:
-          type: string
-          example: "Administrador"
-        created_at:
-          type: string
-          format: date-time
-          example: "2024-01-15T10:30:00.000Z"
-
-    # Esquemas de Productos
-    Product:
-      type: object
-      properties:
-        id:
-          type: integer
-          description: ID único del instrumento
-          example: 1
-        name:
-          type: string
-          description: Nombre del instrumento industrial minero
-          maxLength: 100
-          example: "Sensor de Presión Industrial"
-        description:
-          type: string
-          description: Descripción detallada del instrumento
-          maxLength: 500
-          example: "Sensor de presión diferencial para monitoreo de fluidos en minería subterránea"
-        price:
-          type: number
-          format: float
-          description: Precio unitario del instrumento
-          minimum: 0
-          maximum: 999999.99
-          example: 1250.00
-        quantity:
-          type: integer
-          description: Cantidad disponible en inventario
-          minimum: 0
-          maximum: 999999
-          example: 15
-        categoryId:
-          type: integer
-          description: ID de la categoría del instrumento
-          minimum: 1
-          example: 2
-        location:
-          type: string
-          description: Ubicación física o almacén del instrumento
-          maxLength: 200
-          example: "Bodega Central - Zona Norte"
-        criticalStock:
-          type: integer
-          description: Stock crítico para alertas
-          minimum: 0
-          maximum: 999999
-          example: 5
         isActive:
           type: boolean
-          description: ¿El instrumento está activo en inventario?
-          default: true
           example: true
-        created_at:
+        createdAt:
           type: string
           format: date-time
-          description: Fecha de creación
-          example: "2024-01-15T10:30:00.000Z"
-        updated_at:
+          example: "2023-01-01T00:00:00.000Z"
+        updatedAt:
           type: string
           format: date-time
-          description: Fecha de última actualización
-          example: "2024-01-15T10:30:00.000Z"
-      required:
-        - id
-        - name
-        - description
-        - price
-        - quantity
-        - categoryId
-        - location
-        - criticalStock
-        - isActive
+          example: "2023-01-01T00:00:00.000Z"
 
-    CreateProductRequest:
-      type: object
-      required:
-        - name
-        - description
-        - price
-        - quantity
-        - categoryId
-        - location
-        - criticalStock
-        - isActive
-      properties:
-        name:
-          type: string
-          description: Nombre del instrumento industrial minero
-          maxLength: 100
-          example: "Sensor de Presión Industrial"
-        description:
-          type: string
-          description: Descripción detallada del instrumento
-          maxLength: 500
-          example: "Sensor de presión diferencial para monitoreo de fluidos en minería subterránea"
-        price:
-          type: number
-          format: float
-          description: Precio unitario del instrumento
-          minimum: 0
-          maximum: 999999.99
-          example: 1250.00
-        quantity:
-          type: integer
-          description: Cantidad inicial en inventario
-          minimum: 0
-          maximum: 999999
-          example: 15
-        categoryId:
-          type: integer
-          description: ID de la categoría del instrumento
-          minimum: 1
-          example: 2
-        location:
-          type: string
-          description: Ubicación física o almacén del instrumento
-          maxLength: 200
-          example: "Bodega Central - Zona Norte"
-        criticalStock:
-          type: integer
-          description: Stock crítico para alertas
-          minimum: 0
-          maximum: 999999
-          example: 5
-        isActive:
-          type: boolean
-          description: ¿El instrumento está activo en inventario?
-          default: true
-          example: true
-
-    UpdateProductRequest:
-      type: object
-      properties:
-        name:
-          type: string
-          description: Nuevo nombre del instrumento
-          maxLength: 100
-          example: "Transmisor de Temperatura RTD"
-        description:
-          type: string
-          description: Nueva descripción del instrumento
-          maxLength: 500
-          example: "Transmisor de temperatura con sensor RTD Pt100 para control de procesos mineros"
-        price:
-          type: number
-          format: float
-          description: Nuevo precio unitario
-          minimum: 0
-          maximum: 999999.99
-          example: 890.00
-        quantity:
-          type: integer
-          description: Nueva cantidad en inventario
-          minimum: 0
-          maximum: 999999
-          example: 25
-        categoryId:
-          type: integer
-          description: Nuevo ID de la categoría
-          minimum: 1
-          example: 3
-        location:
-          type: string
-          description: Nueva ubicación física
-          maxLength: 200
-          example: "Bodega Sur - Zona Mina"
-        criticalStock:
-          type: integer
-          description: Nuevo stock crítico
-          minimum: 0
-          maximum: 999999
-          example: 3
-        isActive:
-          type: boolean
-          description: ¿El instrumento está activo?
-          example: false
-
-    # Esquemas de Respuesta
-    ProductResponse:
-      type: object
-      properties:
-        success:
-          type: boolean
-          example: true
-        message:
-          type: string
-          example: "Producto obtenido exitosamente"
-        data:
-          $ref: '#/components/schemas/Product'
-        timestamp:
-          type: string
-          format: date-time
-          example: "2024-01-15T10:30:00.000Z"
-
-    ProductListResponse:
-      type: object
-      properties:
-        success:
-          type: boolean
-          example: true
-        message:
-          type: string
-          example: "Productos obtenidos exitosamente"
-        data:
-          type: object
-          properties:
-            products:
-              type: array
-              items:
-                $ref: '#/components/schemas/Product'
-            pagination:
-              $ref: '#/components/schemas/Pagination'
-        timestamp:
-          type: string
-          format: date-time
-          example: "2024-01-15T10:30:00.000Z"
-
-    Pagination:
-      type: object
-      properties:
-        page:
-          type: integer
-          description: Página actual
-          example: 1
-        limit:
-          type: integer
-          description: Elementos por página
-          example: 20
-        total:
-          type: integer
-          description: Total de elementos
-          example: 100
-        totalPages:
-          type: integer
-          description: Total de páginas
-          example: 5
-        hasNext:
-          type: boolean
-          description: ¿Hay página siguiente?
-          example: true
-        hasPrev:
-          type: boolean
-          description: ¿Hay página anterior?
-          example: false
-
-    DeleteResponse:
-      type: object
-      properties:
-        success:
-          type: boolean
-          example: true
-        message:
-          type: string
-          example: "Producto eliminado exitosamente"
-        data:
-          type: object
-          properties:
-            id:
-              type: integer
-              description: ID del producto eliminado
-              example: 1
-            deleted_at:
-              type: string
-              format: date-time
-              description: Fecha de eliminación
-              example: "2024-01-15T12:00:00.000Z"
-        timestamp:
-          type: string
-          format: date-time
-          example: "2024-01-15T12:00:00.000Z"
-
-    # Esquemas de Error
+    # Error Response
     ErrorResponse:
       type: object
       properties:
@@ -1282,45 +1803,27 @@ components:
           example: false
         message:
           type: string
-          description: Mensaje de error descriptivo
-          example: "Producto no encontrado"
+          example: "Error message"
         error:
-          type: string
-          description: Código de error
-          enum: [VALIDATION_ERROR, NOT_FOUND, UNAUTHORIZED, FORBIDDEN, INTERNAL_ERROR, INVALID_CREDENTIALS]
-          example: "NOT_FOUND"
-        timestamp:
-          type: string
-          format: date-time
-          example: "2024-01-15T10:30:00.000Z"
-
-    ValidationErrorResponse:
-      allOf:
-        - $ref: '#/components/schemas/ErrorResponse'
-        - type: object
+          type: object
           properties:
+            code:
+              type: string
+              example: "VALIDATION_ERROR"
+            message:
+              type: string
+              example: "Detailed error description"
             details:
               type: array
-              description: Detalles de los errores de validación
               items:
                 type: object
                 properties:
                   field:
                     type: string
-                    description: Campo con error
-                    example: "name"
+                    example: "email"
                   message:
                     type: string
-                    description: Mensaje de error específico
-                    example: "El nombre es requerido"
+                    example: "Email is required"
                   value:
                     type: string
-                    description: Valor proporcionado (opcional)
-                    example: ""
-              example:
-                - field: "name"
-                  message: "El nombre es requerido"
-                  value: ""
-                - field: "price"
-                  message: "El precio debe ser mayor a 0"
-                  value: -1
+                    example: "invalid-email"

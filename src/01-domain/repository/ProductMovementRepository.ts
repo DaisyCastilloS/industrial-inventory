@@ -1,14 +1,19 @@
 /**
  * @fileoverview Interfaz del repositorio de movimientos de productos
- * @author Industrial Inventory System
+ * @author Daisy Castillo
  * @version 1.0.0
  */
 
 import { ProductMovement, IProductMovement } from '../entity/ProductMovement';
 import { MovementType } from '../../00-constants/RoleTypes';
+import { AuditLog } from '../entity/AuditLog';
+// Tipos semánticos importados de la entidad ProductMovement
+import type { MovementReason } from '../entity/ProductMovement';
 
 /**
  * Interfaz del repositorio de movimientos de productos
+ *
+ * Todos los métodos usan tipado semántico y retornan entidades de dominio.
  */
 export interface IProductMovementRepository {
   /**
@@ -117,7 +122,7 @@ export interface IProductMovementRepository {
   /**
    * Obtiene el historial de auditoría de un movimiento
    * @param movementId - ID del movimiento
-   * @returns Lista de logs de auditoría
+   * @returns Lista de logs de auditoría del movimiento
    */
-  getAuditTrail(movementId: number): Promise<any[]>;
+  getAuditTrail(movementId: number): Promise<AuditLog<IProductMovement>[]>;
 } 

@@ -1,7 +1,7 @@
 /**
  * @fileoverview Caso de uso para listar usuarios
- * @author Industrial Inventory System
- * @version 1.0.0
+ * @author Daisy Castillo
+ * @version 1.0.1
  */
 
 import { IUserRepository } from '../../../01-domain/repository/UserRepository';
@@ -36,10 +36,11 @@ export class ListUsersUseCase {
   ) {}
 
   /**
-   * Ejecuta el caso de uso
-   * @param filters - Filtros de búsqueda
-   * @param pagination - Opciones de paginación
-   * @returns Lista de usuarios
+   * Ejecuta el caso de uso para listar usuarios con filtros y paginación.
+   * @param filters - Filtros de búsqueda (opcional)
+   * @param pagination - Opciones de paginación (opcional)
+   * @returns DTO con la lista de usuarios y metadatos de paginación
+   * @throws {Error} Si ocurre un error en la consulta
    */
   async execute(filters?: UserFilters, pagination?: PaginationOptions): Promise<UserListResponseDTO> {
     try {
@@ -48,15 +49,12 @@ export class ListUsersUseCase {
 
       // Aplicar filtros
       let filteredUsers = users;
-
       if (filters?.role) {
         filteredUsers = filteredUsers.filter(user => user.role === filters.role);
       }
-
       if (filters?.isActive !== undefined) {
         filteredUsers = filteredUsers.filter(user => user.isActive === filters.isActive);
       }
-
       if (filters?.search) {
         const searchTerm = filters.search.toLowerCase();
         filteredUsers = filteredUsers.filter(user => 
@@ -65,9 +63,9 @@ export class ListUsersUseCase {
         );
       }
 
-      // Aplicar paginación
-      const page = pagination?.page || 1;
-      const limit = pagination?.limit || 10;
+      // Validar parámetros de paginación
+      const page = pagination?.page && pagination.page > 0 ? pagination.page : 1;
+      const limit = pagination?.limit && pagination.limit > 0 ? pagination.limit : 10;
       const startIndex = (page - 1) * limit;
       const endIndex = startIndex + limit;
       const paginatedUsers = filteredUsers.slice(startIndex, endIndex);
@@ -124,10 +122,10 @@ export class ListUsersUseCase {
   }
 
   /**
-   * Ejecuta el caso de uso de forma segura
-   * @param filters - Filtros de búsqueda
-   * @param pagination - Opciones de paginación
-   * @returns Resultado de la operación
+   * Ejecuta el caso de uso de forma segura, capturando errores y retornando un resultado tipado.
+   * @param filters - Filtros de búsqueda (opcional)
+   * @param pagination - Opciones de paginación (opcional)
+   * @returns Resultado de la operación (éxito o error)
    */
   async executeSafe(filters?: UserFilters, pagination?: PaginationOptions): Promise<{ success: true; data: UserListResponseDTO } | { success: false; error: string }> {
     try {

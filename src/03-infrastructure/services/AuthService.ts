@@ -65,7 +65,7 @@ export class AuthService {
         ipAddress: 'N/A'
       });
 
-      return user;
+      return createdUser;
     } catch (error) {
       await this.logger.error('Error en registro de usuario', {
         email,
@@ -206,9 +206,12 @@ export class AuthService {
       // Encriptar nueva contraseña
       const hashedNewPassword = await this.encryptionService.hashPassword(newPassword);
       
-      // Actualizar contraseña
-      user.updatePassword(hashedNewPassword);
-      await this.userRepository.update(user.id || 0, user.toJSON());
+      // Actualizar contraseña en el repositorio
+      const updatedUserData = {
+        ...user.toJSON(),
+        password: hashedNewPassword
+      };
+      await this.userRepository.update(user.id || 0, updatedUserData);
 
       // Log de auditoría
       await this.logger.audit('PASSWORD_CHANGE', 'User', userId, userId);

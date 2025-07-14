@@ -41,7 +41,6 @@ export class JWTService implements JWTInterface {
       };
 
       return jwt.sign(tokenPayload, secret, {
-        expiresIn: expiration,
         issuer: 'industrial-inventory-api',
         audience: 'industrial-inventory-users'
       });
@@ -101,7 +100,8 @@ export class JWTService implements JWTInterface {
       return await this.generateToken({
         userId: payload.userId,
         email: payload.email,
-        role: payload.role
+        role: payload.role,
+        purpose: payload.purpose
       }, 'ACCESS');
     } catch (error) {
       throw new Error(`Error al refrescar token: ${error instanceof Error ? error.message : 'Error desconocido'}`);

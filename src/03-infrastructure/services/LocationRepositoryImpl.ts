@@ -1,21 +1,22 @@
 /**
- * @fileoverview Implementación del repositorio de ubicaciones
- * @author Industrial Inventory System
+ * @fileoverview Implementación de infraestructura del repositorio de ubicaciones
+ * @author Daisy Castillo
  * @version 1.0.0
  */
 
 import { pool } from "../db/database";
-import { Location, ILocation } from "../../01-domain/entity/Location";
+import { Location, ILocation, LocationName } from "../../01-domain/entity/Location";
 import { ILocationRepository } from "../../01-domain/repository/LocationRepository";
+import { AuditLog } from "../../01-domain/entity/AuditLog";
 
 /**
  * Consultas SQL para ubicaciones
  */
 const LocationQueries = {
   create: `
-    INSERT INTO locations (name, description, zone, shelf, is_active, created_at, updated_at)
-    VALUES ($1, $2, $3, $4, $5, $6, $7)
-    RETURNING id
+    INSERT INTO locations (name, description, code, type, parent_id, zone, shelf, is_active, created_at, updated_at)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+    RETURNING *
   `,
   
   findById: `
@@ -44,8 +45,8 @@ const LocationQueries = {
   
   update: `
     UPDATE locations 
-    SET name = $1, description = $2, zone = $3, shelf = $4, is_active = $5, updated_at = $6
-    WHERE id = $7
+    SET name = $1, description = $2, code = $3, type = $4, parent_id = $5, zone = $6, shelf = $7, is_active = $8, updated_at = $9
+    WHERE id = $10
   `,
   
   delete: `
@@ -67,123 +68,78 @@ const LocationQueries = {
  * Implementación del repositorio de ubicaciones
  */
 export class LocationRepositoryImpl implements ILocationRepository {
-  
+  /**
+   * Crea una nueva ubicación en la base de datos
+   * @param location - Datos de la ubicación
+   * @returns Ubicación creada
+   */
   async create(location: ILocation): Promise<Location> {
     const result = await pool.query(LocationQueries.create, [
       location.name,
       location.description,
+      location.code,
+      location.type,
+      location.parentId,
       location.zone,
       location.shelf,
       location.isActive,
       location.createdAt || new Date(),
       location.updatedAt || new Date()
     ]);
-    
     if (result.rows.length > 0) {
-      const createdLocation = new Location({
-        id: result.rows[0].id,
-        name: location.name,
-        description: location.description,
-        zone: location.zone,
-        shelf: location.shelf,
-        isActive: location.isActive,
-        createdAt: location.createdAt || new Date(),
-        updatedAt: location.updatedAt || new Date()
-      });
-      return createdLocation;
+      return this.mapRowToLocation(result.rows[0]);
     }
-    
     throw new Error('Error al crear ubicación');
   }
 
+  /**
+   * Busca una ubicación por ID
+   * @param id - ID de la ubicación
+   * @returns Ubicación encontrada o null
+   */
   async findById(id: number): Promise<Location | null> {
     const result = await pool.query(LocationQueries.findById, [id]);
     if (result.rows.length === 0) return null;
-    
-    const row = result.rows[0];
-    return new Location({
-      id: row.id,
-      name: row.name,
-      description: row.description,
-      zone: row.zone,
-      shelf: row.shelf,
-      isActive: row.is_active,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at
-    });
+    return this.mapRowToLocation(result.rows[0]);
   }
 
-  async findByName(name: string): Promise<Location | null> {
+  /**
+   * Busca una ubicación por nombre (tipado semántico)
+   * @param name - Nombre de la ubicación
+   * @returns Ubicación encontrada o null
+   */
+  async findByName(name: LocationName | string): Promise<Location | null> {
     const result = await pool.query(LocationQueries.findByName, [name]);
     if (result.rows.length === 0) return null;
-    
-    const row = result.rows[0];
-    return new Location({
-      id: row.id,
-      name: row.name,
-      description: row.description,
-      zone: row.zone,
-      shelf: row.shelf,
-      isActive: row.is_active,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at
-    });
+    return this.mapRowToLocation(result.rows[0]);
   }
 
+  /**
+   * Obtiene todas las ubicaciones
+   * @returns Lista de ubicaciones
+   */
   async findAll(): Promise<Location[]> {
     const result = await pool.query(LocationQueries.findAll);
-    return result.rows.map(row => new Location({
-      id: row.id,
-      name: row.name,
-      description: row.description,
-      zone: row.zone,
-      shelf: row.shelf,
-      isActive: row.is_active,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at
-    }));
+    return result.rows.map(this.mapRowToLocation);
   }
 
+  /**
+   * Obtiene ubicaciones activas
+   * @returns Lista de ubicaciones activas
+   */
   async findActive(): Promise<Location[]> {
     const result = await pool.query(LocationQueries.findActive);
-    return result.rows.map(row => new Location({
-      id: row.id,
-      name: row.name,
-      description: row.description,
-      zone: row.zone,
-      shelf: row.shelf,
-      isActive: row.is_active,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at
-    }));
+    return result.rows.map(this.mapRowToLocation);
   }
 
   async findByZone(zone: string): Promise<Location[]> {
     const result = await pool.query(LocationQueries.findByZone, [zone]);
-    return result.rows.map(row => new Location({
-      id: row.id,
-      name: row.name,
-      description: row.description,
-      zone: row.zone,
-      shelf: row.shelf,
-      isActive: row.is_active,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at
-    }));
+    return result.rows.map(this.mapRowToLocation);
   }
 
   async findByShelf(shelf: string): Promise<Location[]> {
     const result = await pool.query(LocationQueries.findByShelf, [shelf]);
-    return result.rows.map(row => new Location({
-      id: row.id,
-      name: row.name,
-      description: row.description,
-      zone: row.zone,
-      shelf: row.shelf,
-      isActive: row.is_active,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at
-    }));
+    return result.rows.map(this.mapRowToLocation);
   }
 
   async update(id: number, locationData: Partial<ILocation>): Promise<Location> {
@@ -191,31 +147,30 @@ export class LocationRepositoryImpl implements ILocationRepository {
     if (!existingLocation) {
       throw new Error(`Ubicación con ID ${id} no encontrada`);
     }
-
     const updatedData = {
       name: locationData.name || existingLocation.name,
       description: locationData.description || existingLocation.description,
+      code: locationData.code || existingLocation.code,
+      type: locationData.type || existingLocation.type,
+      parentId: locationData.parentId || existingLocation.parentId,
       zone: locationData.zone || existingLocation.zone,
       shelf: locationData.shelf || existingLocation.shelf,
       isActive: locationData.isActive !== undefined ? locationData.isActive : existingLocation.isActive,
       updatedAt: new Date()
     };
-
     await pool.query(LocationQueries.update, [
       updatedData.name,
       updatedData.description,
+      updatedData.code,
+      updatedData.type,
+      updatedData.parentId,
       updatedData.zone,
       updatedData.shelf,
       updatedData.isActive,
       updatedData.updatedAt,
       id
     ]);
-
-    return new Location({
-      id,
-      ...updatedData,
-      createdAt: existingLocation.createdAt
-    });
+    return await this.findById(id) as Location;
   }
 
   async delete(id: number): Promise<void> {
@@ -225,14 +180,24 @@ export class LocationRepositoryImpl implements ILocationRepository {
     }
   }
 
-  async existsByName(name: string): Promise<boolean> {
+  /**
+   * Verifica si existe una ubicación con el nombre dado (tipado semántico)
+   * @param name - Nombre a verificar
+   * @returns true si existe
+   */
+  async existsByName(name: LocationName | string): Promise<boolean> {
     const result = await pool.query(LocationQueries.existsByName, [name]);
     return parseInt(result.rows[0].count) > 0;
   }
 
-  async getAuditTrail(locationId: number): Promise<any[]> {
+  /**
+   * Obtiene el historial de auditoría de una ubicación
+   * @param locationId - ID de la ubicación
+   * @returns Lista de logs de auditoría de la ubicación
+   */
+  async getAuditTrail(locationId: number): Promise<AuditLog<ILocation>[]> {
     const result = await pool.query(LocationQueries.getAuditTrail, [locationId]);
-    return result.rows;
+    return result.rows.map((row: any) => new AuditLog<ILocation>(row));
   }
 
   async findByDescription(description: string): Promise<Location[]> {
@@ -240,35 +205,31 @@ export class LocationRepositoryImpl implements ILocationRepository {
       `SELECT * FROM locations WHERE description ILIKE $1 AND is_active = true`,
       [`%${description}%`]
     );
-    return result.rows.map(row => new Location({
+    return result.rows.map(this.mapRowToLocation);
+  }
+
+  async activate(id: number): Promise<Location> {
+    return this.update(id, { isActive: true });
+  }
+
+  async deactivate(id: number): Promise<Location> {
+    return this.update(id, { isActive: false });
+  }
+
+  // --- Método privado para mapear una fila de la BD a la entidad Location ---
+  private mapRowToLocation(row: any): Location {
+    return new Location({
       id: row.id,
       name: row.name,
       description: row.description,
+      code: row.code,
+      type: row.type,
+      parentId: row.parent_id,
       zone: row.zone,
       shelf: row.shelf,
       isActive: row.is_active,
       createdAt: row.created_at,
       updatedAt: row.updated_at
-    }));
-  }
-
-  async activate(id: number): Promise<Location> {
-    const location = await this.findById(id);
-    if (!location) {
-      throw new Error(`Ubicación con ID ${id} no encontrada`);
-    }
-
-    location.activate();
-    return this.update(id, { isActive: true });
-  }
-
-  async deactivate(id: number): Promise<Location> {
-    const location = await this.findById(id);
-    if (!location) {
-      throw new Error(`Ubicación con ID ${id} no encontrada`);
-    }
-
-    location.deactivate();
-    return this.update(id, { isActive: false });
+    });
   }
 } 

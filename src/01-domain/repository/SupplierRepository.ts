@@ -1,13 +1,18 @@
 /**
  * @fileoverview Interfaz del repositorio de proveedores
- * @author Industrial Inventory System
+ * @author Daisy Castillo
  * @version 1.0.0
  */
 
 import { Supplier, ISupplier } from '../entity/Supplier';
+import { AuditLog } from '../entity/AuditLog';
+// Tipos semánticos importados de la entidad Supplier
+import type { SupplierName, SupplierEmail, ContactPerson } from '../entity/Supplier';
 
 /**
  * Interfaz del repositorio de proveedores
+ *
+ * Todos los métodos usan tipado semántico y retornan entidades de dominio.
  */
 export interface ISupplierRepository {
   /**
@@ -25,18 +30,18 @@ export interface ISupplierRepository {
   findById(id: number): Promise<Supplier | null>;
 
   /**
-   * Busca un proveedor por nombre
+   * Busca un proveedor por nombre (tipado semántico)
    * @param name - Nombre del proveedor
    * @returns Proveedor encontrado o null
    */
-  findByName(name: string): Promise<Supplier | null>;
+  findByName(name: SupplierName | string): Promise<Supplier | null>;
 
   /**
-   * Busca un proveedor por email
+   * Busca un proveedor por email (tipado semántico)
    * @param email - Email del proveedor
    * @returns Proveedor encontrado o null
    */
-  findByEmail(email: string): Promise<Supplier | null>;
+  findByEmail(email: SupplierEmail | string): Promise<Supplier | null>;
 
   /**
    * Obtiene todos los proveedores
@@ -51,11 +56,11 @@ export interface ISupplierRepository {
   findActive(): Promise<Supplier[]>;
 
   /**
-   * Busca proveedores por persona de contacto
+   * Busca proveedores por persona de contacto (tipado semántico)
    * @param contactPerson - Persona de contacto
    * @returns Lista de proveedores que coinciden
    */
-  findByContactPerson(contactPerson: string): Promise<Supplier[]>;
+  findByContactPerson(contactPerson: ContactPerson | string): Promise<Supplier[]>;
 
   /**
    * Busca proveedores con información de contacto completa
@@ -92,18 +97,18 @@ export interface ISupplierRepository {
   deactivate(id: number): Promise<Supplier>;
 
   /**
-   * Verifica si existe un proveedor con el nombre dado
+   * Verifica si existe un proveedor con el nombre dado (tipado semántico)
    * @param name - Nombre a verificar
    * @returns true si existe
    */
-  existsByName(name: string): Promise<boolean>;
+  existsByName(name: SupplierName | string): Promise<boolean>;
 
   /**
-   * Verifica si existe un proveedor con el email dado
+   * Verifica si existe un proveedor con el email dado (tipado semántico)
    * @param email - Email a verificar
    * @returns true si existe
    */
-  existsByEmail(email: string): Promise<boolean>;
+  existsByEmail(email: SupplierEmail | string): Promise<boolean>;
 
   /**
    * Obtiene estadísticas de proveedores
@@ -118,7 +123,7 @@ export interface ISupplierRepository {
   /**
    * Obtiene el historial de auditoría de un proveedor
    * @param supplierId - ID del proveedor
-   * @returns Lista de logs de auditoría
+   * @returns Lista de logs de auditoría del proveedor
    */
-  getAuditTrail(supplierId: number): Promise<any[]>;
+  getAuditTrail(supplierId: number): Promise<AuditLog<ISupplier>[]>;
 } 

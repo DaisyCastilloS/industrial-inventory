@@ -1,14 +1,20 @@
 /**
  * @fileoverview Interfaz del repositorio de productos
- * @author Industrial Inventory System
+ * @author Daisy Castillo
  * @version 1.0.0
  */
 
 import { Product, IProduct } from '../entity/Product';
 import { StockStatus } from '../../00-constants/RoleTypes';
+import { AuditLog } from '../entity/AuditLog';
+
+// Tipos semánticos importados de la entidad Product
+import type { SKU, ProductName } from '../entity/Product';
 
 /**
  * Interfaz del repositorio de productos
+ *
+ * Todos los métodos usan tipado semántico y retornan entidades de dominio.
  */
 export interface IProductRepository {
   /**
@@ -27,10 +33,10 @@ export interface IProductRepository {
 
   /**
    * Busca un producto por SKU
-   * @param sku - SKU del producto
+   * @param sku - SKU del producto (tipado semántico)
    * @returns Producto encontrado o null
    */
-  findBySku(sku: string): Promise<Product | null>;
+  findBySku(sku: SKU | string): Promise<Product | null>;
 
   /**
    * Obtiene todos los productos
@@ -85,11 +91,11 @@ export interface IProductRepository {
   findOutOfStock(): Promise<Product[]>;
 
   /**
-   * Busca productos por nombre (búsqueda parcial)
+   * Busca productos por nombre (búsqueda parcial, tipado semántico)
    * @param name - Nombre a buscar
    * @returns Lista de productos que coinciden
    */
-  searchByName(name: string): Promise<Product[]>;
+  searchByName(name: ProductName | string): Promise<Product[]>;
 
   /**
    * Actualiza un producto
@@ -130,11 +136,11 @@ export interface IProductRepository {
   reduceStock(id: number, quantity: number): Promise<Product>;
 
   /**
-   * Verifica si existe un producto con el SKU dado
+   * Verifica si existe un producto con el SKU dado (tipado semántico)
    * @param sku - SKU a verificar
    * @returns true si existe
    */
-  existsBySku(sku: string): Promise<boolean>;
+  existsBySku(sku: SKU | string): Promise<boolean>;
 
   /**
    * Obtiene estadísticas de inventario
@@ -151,7 +157,7 @@ export interface IProductRepository {
   /**
    * Obtiene el historial de auditoría de un producto
    * @param productId - ID del producto
-   * @returns Lista de logs de auditoría
+   * @returns Lista de logs de auditoría del producto
    */
-  getAuditTrail(productId: number): Promise<any[]>;
+  getAuditTrail(productId: number): Promise<AuditLog<IProduct>[]>;
 }

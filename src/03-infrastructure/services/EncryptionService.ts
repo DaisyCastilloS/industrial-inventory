@@ -115,4 +115,23 @@ export class EncryptionService implements EncryptionInterface {
       throw new Error(`Error al generar salt: ${error instanceof Error ? error.message : 'Error desconocido'}`);
     }
   }
+
+  /**
+   * Alias para hashPassword - compatibilidad con tests
+   * @param password - Contraseña a encriptar
+   * @returns Contraseña encriptada
+   */
+  async hash(password: string): Promise<string> {
+    return this.hashPassword(password);
+  }
+
+  /**
+   * Alias para verifyPassword - compatibilidad con tests
+   * @param password - Contraseña a verificar
+   * @param hash - Hash de la contraseña
+   * @returns true si la contraseña coincide
+   */
+  async compare(password: string, hash: string): Promise<boolean> {
+    return this.verifyPassword(password, hash);
+  }
 }

@@ -333,4 +333,64 @@ INSERT INTO locations (name, zone, shelf) VALUES
 
 ---
 
+## 📊 Vistas del Sistema
+
+### 1. Vista `products_full_info`
+```sql
+CREATE VIEW products_full_info AS
+SELECT 
+    p.*,
+    c.name as category_name,
+    l.name as location_name,
+    s.name as supplier_name,
+    CASE 
+        WHEN p.quantity <= p.critical_stock THEN 'CRITICAL'
+        WHEN p.quantity <= (p.critical_stock * 1.5) THEN 'WARNING'
+        ELSE 'NORMAL'
+    END as stock_status
+FROM products p
+LEFT JOIN categories c ON p.category_id = c.id
+LEFT JOIN locations l ON p.location_id = l.id
+LEFT JOIN suppliers s ON p.supplier_id = s.id;
+```
+
+**Uso**: Vista principal para consultar productos con toda su información relacionada y estado de stock.
+
+### 2. Vista `critical_stock_products`
+```sql
+CREATE VIEW critical_stock_products AS
+SELECT 
+    p.*,
+    c.name as category_name,
+    l.name as location_name,
+    s.name as supplier_name,
+    (p.critical_stock - p.quantity) as units_needed
+FROM products p
+LEFT JOIN categories c ON p.category_id = c.id
+LEFT JOIN locations l ON p.location_id = l.id
+LEFT JOIN suppliers s ON p.supplier_id = s.id
+WHERE p.quantity <= p.critical_stock;
+```
+
+**Uso**: Monitoreo de productos en estado crítico de stock.
+
+### 3. Vista `recent_movements`
+```sql
+CREATE VIEW recent_movements AS
+SELECT 
+    pm.*,
+    p.name as product_name,
+    p.sku,
+    u.name as user_name,
+    u.email as user_email
+FROM product_movements pm
+JOIN products p ON pm.product_id = p.id
+JOIN users u ON pm.user_id = u.id
+ORDER BY pm.created_at DESC;
+```
+
+**Uso**: Seguimiento de movimientos recientes de inventario.
+
+---
+
 **Este esquema proporciona una base sólida para un sistema de inventario industrial escalable y robusto.** 

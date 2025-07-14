@@ -1,13 +1,18 @@
 /**
  * @fileoverview Interfaz del repositorio de categorías
- * @author Industrial Inventory System
+ * @author Daisy Castillo
  * @version 1.0.0
  */
 
 import { Category, ICategory } from '../entity/Category';
+import { AuditLog } from '../entity/AuditLog';
+// Tipos semánticos importados de la entidad Category
+import type { CategoryName } from '../entity/Category';
 
 /**
  * Interfaz del repositorio de categorías
+ *
+ * Todos los métodos usan tipado semántico y retornan entidades de dominio.
  */
 export interface ICategoryRepository {
   /**
@@ -25,11 +30,11 @@ export interface ICategoryRepository {
   findById(id: number): Promise<Category | null>;
 
   /**
-   * Busca una categoría por nombre
+   * Busca una categoría por nombre (tipado semántico)
    * @param name - Nombre de la categoría
    * @returns Categoría encontrada o null
    */
-  findByName(name: string): Promise<Category | null>;
+  findByName(name: CategoryName | string): Promise<Category | null>;
 
   /**
    * Obtiene todas las categorías
@@ -92,11 +97,11 @@ export interface ICategoryRepository {
   deactivate(id: number): Promise<Category>;
 
   /**
-   * Verifica si existe una categoría con el nombre dado
+   * Verifica si existe una categoría con el nombre dado (tipado semántico)
    * @param name - Nombre a verificar
    * @returns true si existe
    */
-  existsByName(name: string): Promise<boolean>;
+  existsByName(name: CategoryName | string): Promise<boolean>;
 
   /**
    * Verifica si una categoría tiene subcategorías
@@ -108,7 +113,7 @@ export interface ICategoryRepository {
   /**
    * Obtiene el historial de auditoría de una categoría
    * @param categoryId - ID de la categoría
-   * @returns Lista de logs de auditoría
+   * @returns Lista de logs de auditoría de la categoría
    */
-  getAuditTrail(categoryId: number): Promise<any[]>;
+  getAuditTrail(categoryId: number): Promise<AuditLog<ICategory>[]>;
 } 
