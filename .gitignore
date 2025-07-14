@@ -22,3 +22,6 @@ postgres_data/
 .vscode/
 .idea/
 *.swp
+
+# Test coverage
+coverage/
