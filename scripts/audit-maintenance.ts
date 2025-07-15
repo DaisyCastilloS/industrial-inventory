@@ -4,8 +4,8 @@
  * @version 1.0.0
  */
 
-import { pool } from '../src/03-infrastructure/db/database';
-import { auditLogCache } from '../src/03-infrastructure/services/AuditLogCache';
+import { pool } from '../src/infrastructure/db/database';
+import { auditLogCache } from '../src/infrastructure/services/AuditLogCache';
 
 interface MaintenanceOptions {
   retentionDays: number;

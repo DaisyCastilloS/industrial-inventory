@@ -7,7 +7,7 @@
 import { Request, Response } from 'express';
 import { BaseController } from './base/BaseController';
 import { ListAuditLogsUseCase } from '../../core/application/usecase/auditLog/ListAuditLogsUseCase';
-import AuditLogRepositoryImpl from '../../infrastructure/services/AuditLogRepositoryImpl';
+import { AuditLogRepositoryImpl } from '../../infrastructure/services/AuditLogRepositoryImpl';
 import { WinstonLogger } from '../../infrastructure/logger/WinstonLogger';
 
 /**
