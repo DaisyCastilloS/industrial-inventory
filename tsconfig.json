@@ -4,10 +4,18 @@
         "module": "ES2020",
         "outDir": "dist",
         "strict": true,
-        "moduleResolution": "node",
+        "moduleResolution": "bundler",
         "esModuleInterop": true,
         "forceConsistentCasingInFileNames": true,
-        "skipLibCheck": true
+        "skipLibCheck": true,
+        "baseUrl": ".",
+        "paths": {
+            "@/*": ["src/*"],
+            "@shared/*": ["src/shared/*"],
+            "@core/*": ["src/core/*"],
+            "@infrastructure/*": ["src/infrastructure/*"],
+            "@presentation/*": ["src/presentation/*"]
+        }
     },
     "include": [
         "src"

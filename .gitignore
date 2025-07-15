@@ -1,27 +1,138 @@
-# Node.js
-node_modules
-.env
-logs/
+# ===== DEPENDENCIAS =====
+node_modules/
+pnpm-lock.yaml
+
+# ===== ARCHIVOS DE CONSTRUCCIÓN =====
 dist/
-
-dist/**/*.js
-dist/**/*.js.map
-src/**/*.js
-src/**/*.js.map
-
-# TypeScript
+build/
 *.tsbuildinfo
 
-# Docker
+# ===== ARCHIVOS DE ENTORNO =====
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+.env.*.local
+
+# ===== LOGS =====
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# ===== COBERTURA DE TESTS =====
+coverage/
+.nyc_output/
+*.lcov
+
+# ===== DOCKER =====
 postgres_data/
+docker-compose.override.yml
 
-# OS
+# ===== SISTEMA OPERATIVO =====
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
 
-# Editor configs
+# ===== EDITORES =====
 .vscode/
 .idea/
 *.swp
+*.swo
+*~
 
-# Test coverage
-coverage/
+# ===== TEMPORALES =====
+*.tmp
+*.temp
+.cache/
+.temp/
+
+# ===== ARCHIVOS DE CONFIGURACIÓN LOCAL =====
+.eslintrc.local.js
+.prettierrc.local
+jest.config.local.js
+
+# ===== ARCHIVOS DE SEGURIDAD =====
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+
+# ===== ARCHIVOS DE BASE DE DATOS =====
+*.sqlite
+*.sqlite3
+*.db
+
+# ===== ARCHIVOS DE BACKUP =====
+*.bak
+*.backup
+*.old
+
+# ===== ARCHIVOS DE DEPLOY =====
+.deploy/
+.deployment/
+
+# ===== ARCHIVOS DE MONITOREO =====
+*.pid
+*.seed
+*.pid.lock
+
+# ===== ARCHIVOS DE CACHE =====
+.cache/
+.parcel-cache/
+.next/
+.nuxt/
+.vuepress/dist/
+
+# ===== ARCHIVOS DE TESTING =====
+test-results/
+playwright-report/
+test-results.xml
+
+# ===== ARCHIVOS DE DOCUMENTACIÓN GENERADA =====
+docs/build/
+docs/.vuepress/dist/
+
+# ===== ARCHIVOS DE SCRIPTS DE PRUEBA =====
+test-api.sh
+quick-test.sh
+TESTING-ENDPOINTS.md
+RESUMEN-PRUEBAS.md
+
+# ===== ARCHIVOS DE CONFIGURACIÓN DE HUSKY =====
+.husky/_
+.husky/.gitignore
+
+# ===== ARCHIVOS DE LINT-STAGED =====
+.lintstagedrc.local.js
+
+# ===== ARCHIVOS DE COMMITLINT =====
+commitlint.config.local.js
+
+# ===== ARCHIVOS DE TYPESCRIPT =====
+src/**/*.js
+src/**/*.js.map
+dist/**/*.js
+dist/**/*.js.map
+
+# ===== ARCHIVOS DE CONFIGURACIÓN DE ESLINT =====
+.eslintcache
+.eslintrc.js.bak
+
+# ===== ARCHIVOS DE CONFIGURACIÓN DE PRETTIER =====
+.prettierrc.bak
+
+# ===== ARCHIVOS DE CONFIGURACIÓN DE JEST =====
+jest.config.js.bak
+
+# ===== ARCHIVOS DE CONFIGURACIÓN DE TSCONFIG =====
+tsconfig.tsbuildinfo
