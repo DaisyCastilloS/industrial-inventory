@@ -166,17 +166,23 @@ describe('JWTService', () => {
         email: 'test@example.com',
         role: 'ADMIN',
         purpose: TokenPurpose.ACCESS,
-        exp: Math.floor(Date.now() / 1000) - 3600, // 1 hour ago
       };
+
+      // Mock Date.now() to simulate token generation in the past
+      const realDateNow = Date.now;
+      Date.now = jest.fn(() => realDateNow() - 7200000); // 2 hours ago
 
       const token = await jwtService.generateToken(
         payload,
         TokenPurpose.ACCESS
       );
 
+      // Restore Date.now
+      Date.now = realDateNow;
+
       await expect(
         jwtService.verifyToken(token, TokenPurpose.ACCESS)
-      ).rejects.toThrow();
+      ).rejects.toThrow('Token expirado');
     });
 
     it('should reject a revoked token', async () => {
@@ -254,15 +260,21 @@ describe('JWTService', () => {
         email: 'test@example.com',
         role: 'ADMIN',
         purpose: TokenPurpose.REFRESH,
-        exp: Math.floor(Date.now() / 1000) - 3600, // 1 hour ago
       };
+
+      // Mock Date.now() to simulate token generation in the past
+      const realDateNow = Date.now;
+      Date.now = jest.fn(() => realDateNow() - 8 * 24 * 60 * 60 * 1000); // 8 days ago
 
       const refreshToken = await jwtService.generateToken(
         payload,
         TokenPurpose.REFRESH
       );
 
-      await expect(jwtService.refreshToken(refreshToken)).rejects.toThrow();
+      // Restore Date.now
+      Date.now = realDateNow;
+
+      await expect(jwtService.refreshToken(refreshToken)).rejects.toThrow('Token expirado');
     });
   });
 
@@ -302,15 +314,21 @@ describe('JWTService', () => {
         email: 'test@example.com',
         role: 'ADMIN',
         purpose: TokenPurpose.ACCESS,
-        exp: Math.floor(Date.now() / 1000) - 3600, // 1 hour ago
       };
+
+      // Mock Date.now() to simulate token generation in the past
+      const realDateNow = Date.now;
+      Date.now = jest.fn(() => realDateNow() - 7200000); // 2 hours ago
 
       const token = await jwtService.generateToken(
         payload,
         TokenPurpose.ACCESS
       );
-      const isExpired = await jwtService.isTokenExpired(token);
 
+      // Restore Date.now
+      Date.now = realDateNow;
+
+      const isExpired = await jwtService.isTokenExpired(token);
       expect(isExpired).toBe(true);
     });
 
@@ -363,15 +381,21 @@ describe('JWTService', () => {
         email: 'test@example.com',
         role: 'ADMIN',
         purpose: TokenPurpose.ACCESS,
-        exp: Math.floor(Date.now() / 1000) - 3600, // 1 hour ago
       };
+
+      // Mock Date.now() to simulate token generation in the past
+      const realDateNow = Date.now;
+      Date.now = jest.fn(() => realDateNow() - 7200000); // 2 hours ago
 
       const token = await jwtService.generateToken(
         payload,
         TokenPurpose.ACCESS
       );
-      const timeRemaining = await jwtService.getTokenTimeRemaining(token);
 
+      // Restore Date.now
+      Date.now = realDateNow;
+
+      const timeRemaining = await jwtService.getTokenTimeRemaining(token);
       expect(timeRemaining).toBe(0);
     });
 

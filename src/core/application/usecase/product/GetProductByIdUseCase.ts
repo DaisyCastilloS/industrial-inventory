@@ -9,22 +9,23 @@ import { IProductRepository } from '../../../domain/repository/ProductRepository
 import { LoggerWrapperInterface } from '../../interface/LoggerWrapperInterface';
 import { ProductFullResponseDTO } from '../../dto/product/ProductResponseDTO';
 import { Product } from '../../../domain/entity/Product';
+import { ServiceResult } from '../../../../infrastructure/services/base/ServiceTypes';
 
-export class GetProductByIdUseCase extends BaseGetByIdUseCase<ProductFullResponseDTO> {
+export class GetProductByIdUseCase extends BaseGetByIdUseCase<Product, ProductFullResponseDTO> {
   constructor(
     private productRepository: IProductRepository,
     logger: LoggerWrapperInterface
   ) {
-    super(logger, { action: 'GET_PRODUCT_BY_ID', entityName: 'Producto' });
+    super(logger, { action: 'GET_PRODUCT_BY_ID', entityName: 'Product' });
   }
 
-  protected async findById(id: number): Promise<Product | null> {
+  protected async findById(id: number): Promise<ServiceResult<Product>> {
     return this.productRepository.findById(id);
   }
 
-  protected validateEntity(product: Product): void {
-    if (!product) {
-      throw new Error('Producto no encontrado');
+  protected async validateEntity(entity: Product): Promise<void> {
+    if (!entity || !entity.name || !entity.sku) {
+      throw new Error('Invalid product entity');
     }
   }
 
@@ -49,5 +50,14 @@ export class GetProductByIdUseCase extends BaseGetByIdUseCase<ProductFullRespons
       locationName: null,
       supplierName: null,
     };
+  }
+
+  public async execute(id: number): Promise<ProductFullResponseDTO> {
+    const result = await this.findById(id);
+    if (!result.success || !result.data) {
+      throw new Error('Product not found');
+    }
+    await this.validateEntity(result.data);
+    return this.mapToDTO(result.data);
   }
 }

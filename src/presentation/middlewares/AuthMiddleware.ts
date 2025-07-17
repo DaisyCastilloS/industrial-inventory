@@ -12,6 +12,7 @@ import {
   ErrorType,
   ErrorCode,
 } from '../../core/application/error/ApplicationError';
+import { TokenPurpose } from '../../shared/constants/TokenPurpose';
 import rateLimit from 'express-rate-limit';
 
 export interface AuthUser {
@@ -31,7 +32,7 @@ export interface AuthenticatedRequest extends Request {
 // Rate limiter específico para intentos de autenticación
 const authRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 5, // 5 intentos fallidos
+  max: 50, // Aumentado de 10 a 50 para pruebas
   message:
     'Demasiados intentos fallidos de autenticación. Por favor, intente más tarde.',
   statusCode: 429,
@@ -39,7 +40,18 @@ const authRateLimiter = rateLimit({
   keyGenerator: req => {
     return `${req.ip}:${(req.headers.authorization || '').substring(0, 20)}`;
   },
+  skip: (req) => {
+    // Solo aplicar rate limiting a rutas de autenticación
+    return !req.path.startsWith('/api/auth/');
+  }
 });
+
+/**
+ * Middleware de rate limiting específico para autenticación
+ */
+export function createAuthRateLimitMiddleware() {
+  return authRateLimiter;
+}
 
 /**
  * Middleware de autenticación JWT
@@ -49,7 +61,6 @@ export function createAuthMiddleware(logger: LoggerWrapperInterface) {
   const tokenBlacklist = new Set<string>();
 
   return [
-    authRateLimiter,
     async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
       const startTime = Date.now();
       const requestId = req.headers['x-request-id'] || 'unknown';
@@ -58,37 +69,37 @@ export function createAuthMiddleware(logger: LoggerWrapperInterface) {
         const authHeader = req.headers.authorization;
 
         if (!authHeader) {
-          throw new ApplicationError('Token de autorización requerido', {
+          return next(new ApplicationError('Token de autorización requerido', {
             type: ErrorType.UNAUTHORIZED,
             code: ErrorCode.INVALID_TOKEN,
             httpStatus: 401,
             isOperational: true,
-          });
+          }));
         }
 
         const token = authHeader.replace('Bearer ', '');
 
         if (!token) {
-          throw new ApplicationError('Token de autorización inválido', {
+          return next(new ApplicationError('Token de autorización inválido', {
             type: ErrorType.UNAUTHORIZED,
             code: ErrorCode.INVALID_TOKEN,
             httpStatus: 401,
             isOperational: true,
-          });
+          }));
         }
 
         // Verificar si el token está en la lista negra
         if (tokenBlacklist.has(token)) {
-          throw new ApplicationError('Token revocado', {
+          return next(new ApplicationError('Token revocado', {
             type: ErrorType.UNAUTHORIZED,
             code: ErrorCode.TOKEN_REVOKED,
             httpStatus: 401,
             isOperational: true,
-          });
+          }));
         }
 
         try {
-          const payload = await jwtService.verifyToken(token, 'ACCESS');
+          const payload = await jwtService.verifyToken(token, TokenPurpose.ACCESS);
 
           req.user = {
             id: payload.userId, // Añadir id para compatibilidad
@@ -140,11 +151,11 @@ export function createAuthMiddleware(logger: LoggerWrapperInterface) {
             error: error instanceof Error ? error.message : 'Token inválido',
           });
 
-          throw error;
+          return next(error);
         }
       } catch (error) {
         if (error instanceof ApplicationError) {
-          throw error;
+          return next(error);
         }
 
         await logger.error('Error en middleware de autenticación', {
@@ -157,12 +168,12 @@ export function createAuthMiddleware(logger: LoggerWrapperInterface) {
           ipAddress: req.ip,
         });
 
-        throw new ApplicationError('Error interno del servidor', {
+        return next(new ApplicationError('Error interno del servidor', {
           type: ErrorType.INTERNAL,
           code: ErrorCode.SERVER_ERROR,
           httpStatus: 500,
           isOperational: false,
-        });
+        }));
       }
     },
   ];

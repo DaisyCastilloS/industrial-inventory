@@ -1,6 +1,5 @@
 import { z } from 'zod';
 
-// Schema de validación para login de usuario
 export const LoginUserSchema = z.object({
   email: z
     .string()
@@ -11,12 +10,6 @@ export const LoginUserSchema = z.object({
 
 export type LoginUserDTO = z.infer<typeof LoginUserSchema>;
 
-/**
- * Valida los datos de entrada para login de usuario
- * @param data - Datos a validar
- * @returns Datos validados
- * @throws Error si la validación falla
- */
 export function validateLoginUserDTO(data: unknown): LoginUserDTO {
   try {
     return LoginUserSchema.parse(data);

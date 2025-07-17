@@ -1,278 +1,188 @@
+import { BaseGetByIdUseCase, BaseListUseCase, BaseCreateUseCase, BaseUpdateUseCase, BaseDeleteUseCase } from '../../base/BaseUseCase';
+import { Product } from '../../../domain/entity/Product';
 import { IProductRepository } from '../../../domain/repository/ProductRepository';
+import { CreateProductDTO } from '../../dto/product/CreateProductDTO';
+import { UpdateProductDTO } from '../../dto/product/UpdateProductDTO';
+import { ProductResponseDTO } from '../../dto/product/ProductResponseDTO';
+import { DTOMapper } from '../../utils/DTOMapper';
+import { ServiceResult, PaginatedResult } from '../../../../infrastructure/services/base/ServiceTypes';
 import { LoggerWrapperInterface } from '../../interface/LoggerWrapperInterface';
-import {
-  ProductFullResponseDTO,
-  ProductListResponseDTO,
-} from '../../dto/product/ProductResponseDTO';
-import {
-  CreateProductDTO,
-  validateCreateProduct,
-} from '../../dto/product/CreateProductDTO';
-import {
-  UpdateProductDTO,
-  validateUpdateProduct,
-} from '../../dto/product/UpdateProductDTO';
-import {
-  BaseGetByIdUseCase,
-  BaseListUseCase,
-  BaseCreateUseCase,
-  BaseUpdateUseCase,
-  BaseDeleteUseCase,
-} from '../../base/BaseUseCase';
-import { Product, IProduct, SKU } from '../../../domain/entity/Product';
 
-export class OptimizedGetProductByIdUseCase extends BaseGetByIdUseCase<ProductFullResponseDTO> {
+export class GetProductByIdUseCase extends BaseGetByIdUseCase<Product, ProductResponseDTO> {
   constructor(
     private productRepository: IProductRepository,
     logger: LoggerWrapperInterface
   ) {
-    super(logger, { action: 'GET_PRODUCT_BY_ID', entityName: 'Producto' });
+    super(logger, { action: 'GET_PRODUCT_BY_ID', entityName: 'Product' });
   }
 
-  protected async findById(id: number): Promise<Product | null> {
+  protected async findById(id: number): Promise<ServiceResult<Product>> {
     return this.productRepository.findById(id);
   }
 
-  protected validateEntity(product: Product): void {
-    if (!product) {
-      throw new Error('Producto no encontrado');
+  protected async validateEntity(entity: Product): Promise<void> {
+    if (!entity || !entity.name || !entity.sku) {
+      throw new Error('Invalid product entity');
     }
   }
 
-  protected mapToDTO(product: Product): ProductFullResponseDTO {
+  protected mapToDTO(entity: Product): ProductResponseDTO {
     return {
-      id: product.id || 0,
-      name: product.name,
-      description: product.description || null,
-      sku: product.sku,
-      price: product.price,
-      quantity: product.quantity,
-      criticalStock: product.criticalStock,
-      categoryId: product.categoryId,
-      locationId: product.locationId || null,
-      supplierId: product.supplierId || null,
-      isActive: product.isActive,
-      stockStatus: product.getStockStatus(),
-      inventoryValue: product.getInventoryValue(),
-      createdAt: product.createdAt || new Date(),
-      updatedAt: product.updatedAt || new Date(),
-      categoryName: null,
-      locationName: null,
-      supplierName: null,
+      id: entity.id || 0,
+      name: entity.name,
+      description: entity.description || null,
+      isActive: entity.isActive,
+      sku: entity.sku,
+      price: entity.price,
+      quantity: entity.quantity,
+      criticalStock: entity.criticalStock,
+      categoryId: entity.categoryId,
+      locationId: entity.locationId || null,
+      supplierId: entity.supplierId || null,
+      createdAt: entity.createdAt || new Date(),
+      updatedAt: entity.updatedAt || new Date(),
+      stockStatus: entity.getStockStatus(),
+      inventoryValue: entity.getInventoryValue()
     };
   }
 }
 
-export class OptimizedListProductsUseCase extends BaseListUseCase<ProductListResponseDTO> {
+export class ListProductsUseCase extends BaseListUseCase<Product, ProductResponseDTO> {
   constructor(
     private productRepository: IProductRepository,
     logger: LoggerWrapperInterface
   ) {
-    super(logger, { action: 'LIST_PRODUCTS', entityName: 'Producto' });
+    super(logger, { action: 'LIST_PRODUCTS', entityName: 'Product' });
   }
 
-  protected async findAll(): Promise<Product[]> {
-    return this.productRepository.findAll();
+  protected async findAll(filters?: Record<string, any>): Promise<ServiceResult<PaginatedResult<Product>>> {
+    return this.productRepository.findAll(filters);
   }
 
-  protected isValidEntity(product: Product): boolean {
-    return !!product;
-  }
-
-  protected mapToDTO(product: Product): ProductFullResponseDTO {
+  protected mapToDTO(entity: Product): ProductResponseDTO {
     return {
-      id: product.id || 0,
-      name: product.name,
-      description: product.description || null,
-      sku: product.sku,
-      price: product.price,
-      quantity: product.quantity,
-      criticalStock: product.criticalStock,
-      categoryId: product.categoryId,
-      locationId: product.locationId || null,
-      supplierId: product.supplierId || null,
-      isActive: product.isActive,
-      stockStatus: product.getStockStatus(),
-      inventoryValue: product.getInventoryValue(),
-      createdAt: product.createdAt || new Date(),
-      updatedAt: product.updatedAt || new Date(),
-      categoryName: null,
-      locationName: null,
-      supplierName: null,
-    };
-  }
-
-  protected createListResponse(
-    products: ProductFullResponseDTO[],
-    total: number,
-    page: number,
-    limit: number,
-    totalPages: number
-  ): ProductListResponseDTO {
-    return {
-      products,
-      total,
-      page,
-      limit,
-      totalPages,
+      id: entity.id || 0,
+      name: entity.name,
+      description: entity.description || null,
+      isActive: entity.isActive,
+      sku: entity.sku,
+      price: entity.price,
+      quantity: entity.quantity,
+      criticalStock: entity.criticalStock,
+      categoryId: entity.categoryId,
+      locationId: entity.locationId || null,
+      supplierId: entity.supplierId || null,
+      createdAt: entity.createdAt || new Date(),
+      updatedAt: entity.updatedAt || new Date(),
+      stockStatus: entity.getStockStatus(),
+      inventoryValue: entity.getInventoryValue()
     };
   }
 }
 
-export class OptimizedCreateProductUseCase extends BaseCreateUseCase<
-  CreateProductDTO,
-  ProductFullResponseDTO
-> {
+export class CreateProductUseCase extends BaseCreateUseCase<CreateProductDTO, Product> {
   constructor(
     private productRepository: IProductRepository,
     logger: LoggerWrapperInterface
   ) {
-    super(logger, { action: 'CREATE_PRODUCT', entityName: 'Producto' });
+    super(logger, { action: 'CREATE_PRODUCT', entityName: 'Product' });
   }
 
-  protected validateInput(input: CreateProductDTO): void {
-    validateCreateProduct(input);
-  }
-
-  protected async createEntity(data: CreateProductDTO): Promise<Product> {
-    const existingProduct = await this.productRepository.findBySku(
-      data.sku as SKU
-    );
-    if (existingProduct) {
-      throw new Error('Ya existe un producto con este SKU');
+  protected async validateCreateInput(input: CreateProductDTO): Promise<void> {
+    if (!input.name || !input.sku) {
+      throw new Error('Product name and SKU are required');
     }
+  }
 
-    const productData: IProduct = {
+  protected async performCreate(data: CreateProductDTO): Promise<ServiceResult<Product>> {
+    const product = new Product({
       name: data.name,
       description: data.description,
-      sku: data.sku as SKU,
+      isActive: data.is_active ?? true,
+      sku: data.sku,
       price: data.price,
       quantity: data.quantity,
-      criticalStock: data.criticalStock,
-      categoryId: data.categoryId,
-      locationId: data.locationId,
-      supplierId: data.supplierId,
-      isActive: data.isActive,
-    };
-
-    const product = new Product(productData);
+      criticalStock: data.critical_stock,
+      categoryId: data.category_id,
+      locationId: data.location_id,
+      supplierId: data.supplier_id
+    });
     return this.productRepository.create(product);
   }
 
-  protected validateCreatedEntity(product: Product): void {
-    if (!product) {
-      throw new Error('Error al crear el producto');
+  protected async validateCreatedEntity(entity: Product): Promise<void> {
+    if (!entity || !entity.name || !entity.sku) {
+      throw new Error('Invalid product entity');
     }
-  }
-
-  protected mapToDTO(product: Product): ProductFullResponseDTO {
-    return {
-      id: product.id || 0,
-      name: product.name,
-      description: product.description || null,
-      sku: product.sku,
-      price: product.price,
-      quantity: product.quantity,
-      criticalStock: product.criticalStock,
-      categoryId: product.categoryId,
-      locationId: product.locationId || null,
-      supplierId: product.supplierId || null,
-      isActive: product.isActive,
-      stockStatus: product.getStockStatus(),
-      inventoryValue: product.getInventoryValue(),
-      createdAt: product.createdAt || new Date(),
-      updatedAt: product.updatedAt || new Date(),
-      categoryName: null,
-      locationName: null,
-      supplierName: null,
-    };
+    // Validar solo que tenga ID, no createdAt/updatedAt
+    if (!entity.id) {
+      throw new Error('Product entity must have an ID after creation');
+    }
   }
 }
 
-export class OptimizedUpdateProductUseCase extends BaseUpdateUseCase<
-  UpdateProductDTO,
-  ProductFullResponseDTO
-> {
+export class UpdateProductUseCase extends BaseUpdateUseCase<UpdateProductDTO & { id: number }, Product> {
   constructor(
     private productRepository: IProductRepository,
     logger: LoggerWrapperInterface
   ) {
-    super(logger, { action: 'UPDATE_PRODUCT', entityName: 'Producto' });
+    super(logger, { action: 'UPDATE_PRODUCT', entityName: 'Product' });
   }
 
-  protected async findById(id: number): Promise<Product | null> {
+  protected async validateUpdateInput(input: UpdateProductDTO & { id: number }): Promise<void> {
+    if (input.name !== undefined && input.name.trim() === '') {
+      throw new Error('Product name cannot be empty');
+    }
+    if (input.sku !== undefined && input.sku.trim() === '') {
+      throw new Error('Product SKU cannot be empty');
+    }
+  }
+
+  protected async findEntityById(id: number): Promise<ServiceResult<Product>> {
     return this.productRepository.findById(id);
   }
 
-  protected validateInput(input: UpdateProductDTO): void {
-    validateUpdateProduct(input);
+  protected async performUpdate(current: Product, input: UpdateProductDTO & { id: number }): Promise<ServiceResult<Product>> {
+    const updatedProduct = new Product({
+      ...current,
+      name: input.name ?? current.name,
+      description: input.description ?? current.description,
+      isActive: input.isActive ?? current.isActive,
+      sku: input.sku ?? current.sku,
+      price: input.price ?? current.price,
+      quantity: input.quantity ?? current.quantity,
+      criticalStock: input.criticalStock ?? current.criticalStock,
+      categoryId: input.categoryId ?? current.categoryId,
+      locationId: input.locationId ?? current.locationId,
+      supplierId: input.supplierId ?? current.supplierId
+    });
+    return this.productRepository.update(input.id, updatedProduct);
   }
 
-  protected async updateEntity(
-    id: number,
-    data: UpdateProductDTO
-  ): Promise<Product> {
-    if (data.sku) {
-      const existingProduct = await this.productRepository.findById(id);
-      if (existingProduct && data.sku !== existingProduct.sku) {
-        const productWithSku = await this.productRepository.findBySku(data.sku);
-        if (productWithSku) {
-          throw new Error('Ya existe un producto con este SKU');
-        }
-      }
+  protected async validateUpdatedEntity(entity: Product): Promise<void> {
+    if (!entity || !entity.name || !entity.sku) {
+      throw new Error('Invalid product entity');
     }
-    return this.productRepository.update(id, data);
-  }
-
-  protected validateUpdatedEntity(product: Product): void {
-    if (!product) {
-      throw new Error('Error al actualizar el producto');
+    // Validar solo que tenga ID, no createdAt/updatedAt
+    if (!entity.id) {
+      throw new Error('Product entity must have an ID after update');
     }
-  }
-
-  protected mapToDTO(product: Product): ProductFullResponseDTO {
-    return {
-      id: product.id || 0,
-      name: product.name,
-      description: product.description || null,
-      sku: product.sku,
-      price: product.price,
-      quantity: product.quantity,
-      criticalStock: product.criticalStock,
-      categoryId: product.categoryId,
-      locationId: product.locationId || null,
-      supplierId: product.supplierId || null,
-      isActive: product.isActive,
-      stockStatus: product.getStockStatus(),
-      inventoryValue: product.getInventoryValue(),
-      createdAt: product.createdAt || new Date(),
-      updatedAt: product.updatedAt || new Date(),
-      categoryName: null,
-      locationName: null,
-      supplierName: null,
-    };
   }
 }
 
-export class OptimizedDeleteProductUseCase extends BaseDeleteUseCase {
+export class DeleteProductUseCase extends BaseDeleteUseCase<Product> {
   constructor(
     private productRepository: IProductRepository,
     logger: LoggerWrapperInterface
   ) {
-    super(logger, { action: 'DELETE_PRODUCT', entityName: 'Producto' });
+    super(logger, { action: 'DELETE_PRODUCT', entityName: 'Product' });
   }
 
-  protected async findById(id: number): Promise<Product | null> {
+  protected async findEntityById(id: number): Promise<ServiceResult<Product>> {
     return this.productRepository.findById(id);
   }
 
-  protected async deleteEntity(id: number): Promise<void> {
-    const product = await this.productRepository.findById(id);
-    if (product && product.quantity > 0) {
-      throw new Error(
-        'No se puede eliminar un producto que tiene stock disponible'
-      );
-    }
-    await this.productRepository.delete(id);
+  protected async performDelete(id: number): Promise<ServiceResult<void>> {
+    return this.productRepository.delete(id);
   }
 }

@@ -1,11 +1,7 @@
-/**
- * @fileoverview Caso de uso optimizado para listar ubicaciones
- * @author Daisy Castillo
- * @version 1.0.0
- */
+
 
 import { BaseListUseCase } from '../base/BaseUseCase';
-import { ILocationRepository } from '../../../domain/repository/LocationRepository';
+import { LocationRepositoryImpl } from '../../../../infrastructure/services/LocationRepositoryImpl';
 import { LoggerWrapperInterface } from '../../interface/LoggerWrapperInterface';
 import { ListLocationsResponseDTO } from '../../dto/location/ListLocationsResponseDTO';
 import { LocationResponseDTO } from '../../dto/location/LocationResponseDTO';
@@ -13,7 +9,7 @@ import { DTOMapper } from '../../utils/DTOMapper';
 
 export class ListLocationsUseCase extends BaseListUseCase<ListLocationsResponseDTO> {
   constructor(
-    private locationRepository: ILocationRepository,
+    private locationRepository: LocationRepositoryImpl,
     logger: LoggerWrapperInterface
   ) {
     super(logger, {
@@ -22,12 +18,18 @@ export class ListLocationsUseCase extends BaseListUseCase<ListLocationsResponseD
     });
   }
 
-  protected async findAll(): Promise<any[]> {
-    return this.locationRepository.findAll();
+  protected async findAll(): Promise<any> {
+    const result = await this.locationRepository.findAll();
+    if (!result.success || !result.data) {
+      throw new Error(
+        result.error?.message || 'Error al obtener la lista de ubicaciones'
+      );
+    }
+    return result;
   }
 
   protected isValidEntity(entity: any): boolean {
-    return !!(entity.id && entity.createdAt && entity.updatedAt);
+    return !!(entity.id && entity.name);
   }
 
   protected mapToDTO(entity: any): LocationResponseDTO {

@@ -1,7 +1,4 @@
-/**
- * DTO de respuesta para logs de auditoría
- * @author Daisy Castillo
- */
+
 export interface AuditLogResponseDTO {
   id: number;
   tableName: string;

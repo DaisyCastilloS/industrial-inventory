@@ -5,7 +5,7 @@
  */
 
 import { BaseUpdateUseCase } from '../base/BaseUseCase';
-import { ILocationRepository } from '../../../domain/repository/LocationRepository';
+import { LocationRepositoryImpl } from '../../../../infrastructure/services/LocationRepositoryImpl';
 import { LoggerWrapperInterface } from '../../interface/LoggerWrapperInterface';
 import {
   UpdateLocationDTO,
@@ -19,7 +19,7 @@ export class UpdateLocationUseCase extends BaseUpdateUseCase<
   LocationResponseDTO
 > {
   constructor(
-    private locationRepository: ILocationRepository,
+    private locationRepository: LocationRepositoryImpl,
     logger: LoggerWrapperInterface
   ) {
     super(logger, {
@@ -37,15 +37,20 @@ export class UpdateLocationUseCase extends BaseUpdateUseCase<
   }
 
   protected async updateEntity(id: number, data: any): Promise<any> {
-    return this.locationRepository.update(id, data);
+    const result = await this.locationRepository.update(id, data);
+    if (!result.success || !result.data) {
+      throw new Error('Error al actualizar la ubicación');
+    }
+    return result.data;
   }
 
   protected validateUpdatedEntity(entity: any): void {
-    if (!entity.id || !entity.createdAt || !entity.updatedAt) {
+    if (!entity || !entity.id) {
       throw new Error(
-        'Persistencia inconsistente: la ubicación actualizada no tiene id, createdAt o updatedAt'
+        'Persistencia inconsistente: la ubicación actualizada no tiene id'
       );
     }
+    // Solo validar ID, no createdAt/updatedAt
   }
 
   protected mapToDTO(entity: any): LocationResponseDTO {

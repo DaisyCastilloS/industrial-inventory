@@ -6,12 +6,12 @@
 
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
-import { EncryptionInterface } from '@core/application/interface/EncryptionInterface';
+import { EncryptionInterface } from '../../../core/application/interface/EncryptionInterface';
 import {
   ApplicationError,
   ErrorCode,
   ErrorType,
-} from '@core/application/error/ApplicationError';
+} from '../../../core/application/error/ApplicationError';
 
 interface EncryptionResult {
   encrypted: string;
@@ -29,6 +29,8 @@ export abstract class BaseEncryptionService implements EncryptionInterface {
   protected readonly keyLength: number;
   protected readonly minPasswordLength: number;
   protected readonly maxPasswordLength: number;
+  protected readonly minSaltRounds: number = 10;
+  protected readonly maxSaltRounds: number = 20;
 
   constructor() {
     this.validateEnvironmentVariables();
@@ -226,19 +228,18 @@ export abstract class BaseEncryptionService implements EncryptionInterface {
    */
   async encrypt(data: string): Promise<string> {
     try {
+      if (typeof data !== 'string') {
+        throw new ApplicationError('Los datos a encriptar deben ser una cadena de texto', {
+          type: ErrorType.VALIDATION,
+          code: ErrorCode.INVALID_FORMAT,
+          httpStatus: 400,
+          isOperational: true,
+        });
+      }
+
+      // Special marker for empty string
       if (data === '') {
-        const iv = crypto.randomBytes(12);
-        const cipher = crypto.createCipheriv(
-          this.algorithm,
-          this.secretKey,
-          iv
-        ) as crypto.CipherGCM;
-
-        let encrypted = cipher.update('', 'utf8', 'hex');
-        encrypted += cipher.final('hex');
-        const tag = cipher.getAuthTag();
-
-        return `${iv.toString('hex')}:${tag.toString('hex')}:${encrypted}`;
+        return 'EMPTY_STRING';
       }
 
       const iv = crypto.randomBytes(12); // GCM recomienda 12 bytes
@@ -250,11 +251,14 @@ export abstract class BaseEncryptionService implements EncryptionInterface {
 
       let encrypted = cipher.update(data, 'utf8', 'hex');
       encrypted += cipher.final('hex');
-      const tag = cipher.getAuthTag();
+      const tag = cipher.getAuthTag().toString('hex');
 
-      // Formato: iv:tag:encrypted
-      return `${iv.toString('hex')}:${tag.toString('hex')}:${encrypted}`;
+      // Combinar IV, tag y datos encriptados en un solo string
+      return `${iv.toString('hex')}:${tag}:${encrypted}`;
     } catch (error) {
+      if (error instanceof ApplicationError) {
+        throw error;
+      }
       throw new ApplicationError(
         'Error al encriptar datos',
         {
@@ -269,12 +273,12 @@ export abstract class BaseEncryptionService implements EncryptionInterface {
   }
 
   /**
-   * Desencripta datos sensibles usando AES-256-GCM
+   * Desencripta datos usando AES-256-GCM
    */
   async decrypt(encryptedData: string): Promise<string> {
     try {
-      if (!encryptedData || typeof encryptedData !== 'string') {
-        throw new ApplicationError('Datos encriptados inválidos', {
+      if (typeof encryptedData !== 'string') {
+        throw new ApplicationError('Los datos encriptados deben ser una cadena de texto', {
           type: ErrorType.VALIDATION,
           code: ErrorCode.INVALID_FORMAT,
           httpStatus: 400,
@@ -282,25 +286,15 @@ export abstract class BaseEncryptionService implements EncryptionInterface {
         });
       }
 
-      // Special case for empty string
-      if (encryptedData === '') {
+      // Check for empty string marker
+      if (encryptedData === 'EMPTY_STRING') {
         return '';
       }
 
-      const [ivHex, tagHex, encrypted] = encryptedData.split(':');
+      const [ivHex, tagHex, encryptedHex] = encryptedData.split(':');
 
-      if (!ivHex || !tagHex || !encrypted) {
-        throw new ApplicationError('Datos encriptados manipulados', {
-          type: ErrorType.VALIDATION,
-          code: ErrorCode.INVALID_FORMAT,
-          httpStatus: 400,
-          isOperational: true,
-        });
-      }
-
-      // Validate hex format
-      if (!/^[0-9a-fA-F]+$/.test(ivHex) || !/^[0-9a-fA-F]+$/.test(tagHex) || !/^[0-9a-fA-F]+$/.test(encrypted)) {
-        throw new ApplicationError('Datos encriptados manipulados', {
+      if (!ivHex || !tagHex || !encryptedHex) {
+        throw new ApplicationError('Formato de datos encriptados inválido', {
           type: ErrorType.VALIDATION,
           code: ErrorCode.INVALID_FORMAT,
           httpStatus: 400,
@@ -318,18 +312,10 @@ export abstract class BaseEncryptionService implements EncryptionInterface {
 
       decipher.setAuthTag(tag);
 
-      try {
-        let decrypted = decipher.update(encrypted, 'hex', 'utf8');
-        decrypted += decipher.final('utf8');
-        return decrypted;
-      } catch (cryptoError) {
-        throw new ApplicationError('Datos encriptados manipulados', {
-          type: ErrorType.VALIDATION,
-          code: ErrorCode.INVALID_FORMAT,
-          httpStatus: 400,
-          isOperational: true,
-        });
-      }
+      let decrypted = decipher.update(encryptedHex, 'hex', 'utf8');
+      decrypted += decipher.final('utf8');
+
+      return decrypted;
     } catch (error) {
       if (error instanceof ApplicationError) {
         throw error;
@@ -348,13 +334,13 @@ export abstract class BaseEncryptionService implements EncryptionInterface {
   }
 
   /**
-   * Genera un token seguro usando crypto.randomBytes
+   * Genera un token seguro usando crypto
    */
   async generateSecureToken(length: number = 32): Promise<string> {
     try {
-      if (length < 16) {
+      if (length < 16 || length > 128) {
         throw new ApplicationError(
-          'La longitud del token debe ser al menos 16 bytes',
+          'La longitud del token debe estar entre 16 y 128 caracteres',
           {
             type: ErrorType.VALIDATION,
             code: ErrorCode.INVALID_INPUT,
@@ -363,7 +349,9 @@ export abstract class BaseEncryptionService implements EncryptionInterface {
           }
         );
       }
-      return crypto.randomBytes(length).toString('hex');
+
+      const buffer = crypto.randomBytes(length);
+      return buffer.toString('hex');
     } catch (error) {
       if (error instanceof ApplicationError) {
         throw error;
@@ -372,7 +360,7 @@ export abstract class BaseEncryptionService implements EncryptionInterface {
         'Error al generar token seguro',
         {
           type: ErrorType.INTERNAL,
-          code: ErrorCode.ENCRYPTION_ERROR,
+          code: ErrorCode.TOKEN_GENERATION_ERROR,
           httpStatus: 500,
           isOperational: true,
         },
@@ -382,13 +370,13 @@ export abstract class BaseEncryptionService implements EncryptionInterface {
   }
 
   /**
-   * Genera un salt para encriptación
+   * Genera un salt usando bcrypt
    */
   async generateSalt(rounds: number = 12): Promise<string> {
     try {
-      if (rounds < 10 || rounds > 20) {
+      if (rounds < this.minSaltRounds || rounds > this.maxSaltRounds) {
         throw new ApplicationError(
-          'El número de rondas debe estar entre 10 y 20',
+          `El número de rondas debe estar entre ${this.minSaltRounds} y ${this.maxSaltRounds}`,
           {
             type: ErrorType.VALIDATION,
             code: ErrorCode.INVALID_INPUT,
@@ -397,6 +385,7 @@ export abstract class BaseEncryptionService implements EncryptionInterface {
           }
         );
       }
+
       return await bcrypt.genSalt(rounds);
     } catch (error) {
       if (error instanceof ApplicationError) {
@@ -416,14 +405,14 @@ export abstract class BaseEncryptionService implements EncryptionInterface {
   }
 
   /**
-   * Alias para hashPassword - compatibilidad con tests
+   * Genera un hash usando bcrypt
    */
   async hash(password: string): Promise<string> {
     return this.hashPassword(password);
   }
 
   /**
-   * Alias para verifyPassword - compatibilidad con tests
+   * Compara una contraseña con su hash usando bcrypt
    */
   async compare(password: string, hash: string): Promise<boolean> {
     return this.verifyPassword(password, hash);

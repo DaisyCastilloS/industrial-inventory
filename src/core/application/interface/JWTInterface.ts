@@ -4,7 +4,7 @@
  * @version 1.0.0
  */
 
-import { TokenPurpose } from '../../shared/constants/TokenPurpose';
+import { TokenPurpose } from '../../../shared/constants/TokenPurpose';
 
 /**
  * Payload del token JWT

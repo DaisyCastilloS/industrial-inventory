@@ -5,13 +5,13 @@
  */
 
 import { BaseDeleteUseCase } from '../base/BaseUseCase';
-import { IUserRepository } from '../../../domain/repository/UserRepository';
+import { UserRepositoryImpl } from '../../../../infrastructure/services/UserRepositoryImpl';
 import { LoggerWrapperInterface } from '../../interface/LoggerWrapperInterface';
 import { ServiceResult } from '../../../../infrastructure/services/base/ServiceTypes';
 
 export default class DeleteUserUseCase extends BaseDeleteUseCase {
   constructor(
-    private userRepository: IUserRepository,
+    private userRepository: UserRepositoryImpl,
     protected logger: LoggerWrapperInterface
   ) {
     super(logger, {
@@ -22,10 +22,8 @@ export default class DeleteUserUseCase extends BaseDeleteUseCase {
 
   protected async findById(id: number): Promise<any> {
     const result = await this.userRepository.findById(id);
-    if (!result.success || !result.data) {
-      throw new Error(
-        result.error?.message || `Usuario con ID ${id} no encontrado`
-      );
+    if (!result.success) {
+      return null;
     }
     return result.data;
   }

@@ -13,15 +13,15 @@ export const CreateSupplierSchema = z.object({
     .string()
     .max(100, 'El nombre de contacto no puede exceder 100 caracteres')
     .optional(),
-  email: z.string().email('Email de contacto inválido').max(100).optional(),
+  email: z.string().email('Email de contacto inválido').max(100).nullable().optional(),
   phone: z
     .string()
     .max(30, 'El teléfono no puede exceder 30 caracteres')
-    .optional(),
+    .nullable().optional(),
   address: z
     .string()
     .max(255, 'La dirección no puede exceder 255 caracteres')
-    .optional(),
+    .nullable().optional(),
   isActive: z.boolean().optional().default(true),
 });
 

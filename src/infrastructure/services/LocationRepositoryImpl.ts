@@ -1,9 +1,3 @@
-/**
- * @fileoverview Implementación del repositorio de ubicaciones
- * @author Daisy Castillo
- * @version 1.0.0
- */
-
 import { BaseRepositoryImpl } from './base/BaseRepositoryImpl';
 import {
   Location,
@@ -12,104 +6,81 @@ import {
 } from '../../core/domain/entity/Location';
 import { ILocationRepository } from '../../core/domain/repository/LocationRepository';
 import { pool } from '../db/database';
+import { ServiceResult } from './base/ServiceTypes';
 
 export class LocationRepositoryImpl
   extends BaseRepositoryImpl<Location>
-  implements ILocationRepository
 {
   protected tableName = 'locations';
   protected entityClass = Location;
 
-  /**
-   * Busca una ubicación por nombre
-   */
-  async findByName(name: LocationName | string): Promise<Location | null> {
-    return this.findByField('name', name).then(results => results[0] || null);
+  protected getAllowedFields(): string[] {
+    return [
+      'id', 'name', 'description', 'code', 'type', 'zone', 'shelf', 'capacity',
+      'currentUsage', 'isActive', 'createdAt', 'updatedAt'
+    ];
   }
 
-  /**
-   * Busca ubicaciones por descripción
-   */
-  async findByDescription(description: string): Promise<Location[]> {
-    const query = `SELECT * FROM ${this.tableName} WHERE description ILIKE $1 ORDER BY created_at DESC`;
-    const result = await pool.query(query, [`%${description}%`]);
-    return result.rows.map(row => this.mapRowToEntity(row));
-  }
-
-  /**
-   * Busca ubicaciones por zona
-   */
-  async findByZone(zone: string): Promise<Location[]> {
-    return this.findByField('zone', zone);
-  }
-
-  /**
-   * Busca ubicaciones por estante
-   */
-  async findByShelf(shelf: string): Promise<Location[]> {
-    return this.findByField('shelf', shelf);
-  }
-
-  /**
-   * Busca ubicaciones raíz (sin padre)
-   */
-  async findRootLocations(): Promise<Location[]> {
-    const query = `SELECT * FROM ${this.tableName} WHERE parent_id IS NULL AND is_active = true ORDER BY created_at DESC`;
-    const result = await pool.query(query);
-    return result.rows.map(row => this.mapRowToEntity(row));
-  }
-
-  /**
-   * Busca ubicaciones hijas de una ubicación padre
-   */
-  async findByParent(parentId: number): Promise<Location[]> {
-    return this.findByField('parent_id', parentId);
-  }
-
-  /**
-   * Verifica si existe una ubicación con el nombre dado
-   */
-  async existsByName(name: LocationName | string): Promise<boolean> {
-    const query = `SELECT COUNT(*) FROM ${this.tableName} WHERE name = $1`;
-    const result = await pool.query(query, [name]);
-    return parseInt(result.rows[0].count) > 0;
-  }
-
-  /**
-   * Obtiene el historial de auditoría de una ubicación
-   */
-  async getAuditTrail(id: number): Promise<any[]> {
-    const query = `
-      SELECT * FROM audit_logs 
-      WHERE table_name = 'locations' AND record_id = $1 
-      ORDER BY created_at DESC
-    `;
-    const result = await pool.query(query, [id]);
-    return result.rows;
-  }
-
-  /**
-   * Obtiene estadísticas de ubicaciones
-   */
-  async getStats(): Promise<{
-    totalLocations: number;
-    activeLocations: number;
-    rootLocations: number;
-  }> {
-    const totalQuery = `SELECT COUNT(*) FROM ${this.tableName}`;
-    const activeQuery = `SELECT COUNT(*) FROM ${this.tableName} WHERE is_active = true`;
-    const rootQuery = `SELECT COUNT(*) FROM ${this.tableName} WHERE parent_id IS NULL AND is_active = true`;
-
-    const [totalResult, activeResult, rootResult] = await Promise.all([
-      pool.query(totalQuery),
-      pool.query(activeQuery),
-      pool.query(rootQuery),
-    ]);
-
-    return {
-      totalLocations: parseInt(totalResult.rows[0].count),
-      activeLocations: parseInt(activeResult.rows[0].count),
-      rootLocations: parseInt(rootResult.rows[0].count),
+  protected mapFieldName(field: string): string {
+    // Mapeo específico para campos de la entidad Location
+    const fieldMapping: { [key: string]: string } = {
+      '_name': 'name',
+      '_address': 'address',
+      '_description': 'description',
+      '_isActive': 'is_active',
+      '_createdAt': 'created_at',
+      '_updatedAt': 'updated_at',
+      'name': 'name',
+      'address': 'address',
+      'description': 'description',
+      'isActive': 'is_active',
+      'createdAt': 'created_at',
+      'updatedAt': 'updated_at'
     };
+    
+    return fieldMapping[field] || field;
+  }
+
+  async findByName(name: LocationName | string): Promise<Location | null> {
+    const result = await this.findByField('name', name);
+    return result.data?.[0] || null;
+  }
+
+  async findActive(): Promise<Location[]> {
+    const result = await this.findByField('is_active', true);
+    return result.data || [];
+  }
+
+  async findByDescription(description: string): Promise<Location[]> {
+    const result = await this.findByField('description', description);
+    return result.data || [];
+  }
+
+  async create(location: ILocation): Promise<ServiceResult<Location>> {
+    try {
+      const query = `
+        INSERT INTO ${this.tableName} (name, description, code, type, is_active, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+        RETURNING *
+      `;
+      
+      const values = [
+        location.name,
+        location.description || null,
+        location.code,
+        location.type,
+        location.isActive !== undefined ? location.isActive : true
+      ];
+
+      const result = await pool.query(query, values);
+      if (result.rows.length === 0) {
+        return { success: false, error: new Error('No se pudo crear la ubicación') };
+      }
+      const createdLocation = this.mapRowToEntity(result.rows[0]);
+      return { success: true, data: createdLocation };
+    } catch (error) {
+      console.error('Error creating Location:', error);
+      return { success: false, error: error instanceof Error ? error : new Error(String(error)) };
+    }
   }
 }

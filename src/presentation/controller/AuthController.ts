@@ -1,9 +1,3 @@
-/**
- * @fileoverview Controlador para autenticación
- * @author Daisy Castillo
- * @version 1.0.0
- */
-
 import { Request, Response } from 'express';
 import { BaseController } from './base/BaseController';
 import RegisterUserUseCase from '../../core/application/usecase/auth/RegisterUserUseCase';
@@ -19,9 +13,6 @@ import {
   buildCreatedResponse,
 } from '../utils/ResponseHelper';
 
-/**
- * Controlador para autenticación
- */
 export class AuthController extends BaseController {
   private readonly registerUserUseCase: RegisterUserUseCase;
   private readonly loginUserUseCase: LoginUserUseCase;
@@ -57,13 +48,13 @@ export class AuthController extends BaseController {
   }
 
   register = async (req: Request, res: Response): Promise<void> => {
+    console.log('DEBUG: AuthController.register - req.body:', JSON.stringify(req.body, null, 2));
     try {
-      const validatedData = validateRegisterUserDTO(req.body);
-      const user = await this.registerUserUseCase.execute(validatedData);
-      res
-        .status(201)
-        .json(buildCreatedResponse(user, 'Usuario registrado exitosamente'));
+      await this.handleCreate(req, res, validateRegisterUserDTO, data =>
+        this.registerUserUseCase.execute(data)
+      );
     } catch (error) {
+      console.log('DEBUG: AuthController.register - error:', error);
       this.handleError(error, req, res, 'register');
     }
   };
@@ -71,11 +62,11 @@ export class AuthController extends BaseController {
   login = async (req: Request, res: Response): Promise<void> => {
     try {
       const validatedData = validateLoginUserDTO(req.body);
-      const { token, user } =
+      const { accessToken, user } =
         await this.loginUserUseCase.execute(validatedData);
       res.status(200).json(
         buildSuccessResponse('Login exitoso', {
-          token,
+          accessToken,
           user,
         })
       );
@@ -90,9 +81,6 @@ export class AuthController extends BaseController {
       if (!refreshToken) {
         throw new Error('Refresh token requerido');
       }
-
-      // Aquí se implementaría la lógica de refresh token
-      // Por ahora retornamos un error genérico
       throw new Error('Funcionalidad de refresh token no implementada');
     } catch (error) {
       this.handleError(error, req, res, 'refresh');

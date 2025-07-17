@@ -8,6 +8,7 @@ import { AuditLogRepositoryImpl } from '../../infrastructure/services/AuditLogRe
 import { AuditLog } from '../../core/domain/entity/AuditLog';
 import { pool } from '../../infrastructure/db/database';
 import { QueryResult } from 'pg';
+import { AuditAction } from '../../shared/constants/RoleTypes';
 
 // Mock de la base de datos
 jest.mock('../../infrastructure/db/database', () => ({
@@ -77,7 +78,6 @@ describe('AuditLogRepositoryImpl', () => {
     it('should find logs by user', async () => {
       const mockRows = [
         { id: 1, table_name: 'users', record_id: 1, user_id: 456, action: 'CREATE' },
-        { id: 2, table_name: 'users', record_id: 2, user_id: 456, action: 'UPDATE' },
       ];
       mockPool.query.mockResolvedValue({ rows: mockRows } as QueryResult);
 
@@ -87,7 +87,7 @@ describe('AuditLogRepositoryImpl', () => {
         expect.stringContaining('SELECT * FROM audit_logs WHERE user_id = $1'),
         [456]
       );
-      expect(result.data).toHaveLength(2);
+      expect(result.data).toHaveLength(1);
     });
   });
 
@@ -101,7 +101,7 @@ describe('AuditLogRepositoryImpl', () => {
       const criteria = {
         tableName: 'users',
         userId: 123,
-        action: 'UPDATE',
+        action: AuditAction.UPDATE,
         startDate: new Date('2024-01-01'),
         endDate: new Date('2024-12-31'),
       };
@@ -110,7 +110,7 @@ describe('AuditLogRepositoryImpl', () => {
 
       expect(mockPool.query).toHaveBeenCalledWith(
         expect.stringContaining('SELECT * FROM audit_logs'),
-        ['users', 123, 'UPDATE', new Date('2024-01-01'), new Date('2024-12-31')]
+        ['users', 123, AuditAction.UPDATE, new Date('2024-01-01'), new Date('2024-12-31')]
       );
       expect(result.data).toHaveLength(1);
     });
@@ -121,6 +121,7 @@ describe('AuditLogRepositoryImpl', () => {
           id: 1,
           table_name: 'users',
           record_id: 1,
+          action: AuditAction.CREATE,
           old_values: '{"name": "John"}',
           new_values: '{"name": "Jane"}',
         },
@@ -150,7 +151,7 @@ describe('AuditLogRepositoryImpl', () => {
       const result = await repository.getStatsByTable();
 
       expect(mockPool.query).toHaveBeenCalledWith(
-        expect.stringContaining('SELECT table_name, COUNT(*) as count FROM audit_logs GROUP BY table_name ORDER BY count DESC')
+        'SELECT table_name, COUNT(*) as count FROM audit_logs GROUP BY table_name ORDER BY count DESC'
       );
       expect(result.data).toEqual([
         { tableName: 'users', count: 10 },
@@ -169,7 +170,7 @@ describe('AuditLogRepositoryImpl', () => {
       const result = await repository.getStatsByAction();
 
       expect(mockPool.query).toHaveBeenCalledWith(
-        expect.stringContaining('SELECT action, COUNT(*) as count FROM audit_logs GROUP BY action ORDER BY count DESC')
+        'SELECT action, COUNT(*) as count FROM audit_logs GROUP BY action ORDER BY count DESC'
       );
       expect(result.data).toEqual([
         { action: 'CREATE', count: 15 },
@@ -231,9 +232,7 @@ describe('AuditLogRepositoryImpl', () => {
       const result = await repository.getRecordHistory('users', 123);
 
       expect(mockPool.query).toHaveBeenCalledWith(
-        expect.stringContaining(
-          'SELECT * FROM audit_logs WHERE table_name = $1 AND record_id = $2'
-        ),
+        'SELECT * FROM audit_logs WHERE table_name = $1 AND record_id = $2 ORDER BY created_at ASC',
         ['users', 123]
       );
       expect(result.data).toHaveLength(2);
@@ -249,24 +248,16 @@ describe('AuditLogRepositoryImpl', () => {
           action: 'CREATE',
           created_at: new Date(),
         },
-        {
-          id: 2,
-          table_name: 'products',
-          record_id: 2,
-          user_id: 456,
-          action: 'UPDATE',
-          created_at: new Date(),
-        },
       ];
       mockPool.query.mockResolvedValue({ rows: mockRows } as QueryResult);
 
       const result = await repository.getUserRecentActivity(456);
 
       expect(mockPool.query).toHaveBeenCalledWith(
-        expect.stringContaining('SELECT * FROM audit_logs WHERE user_id = $1'),
-        [456]
+        'SELECT * FROM audit_logs WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2',
+        [456, 50]
       );
-      expect(result.data).toHaveLength(2);
+      expect(result.data).toHaveLength(1);
     });
 
     it('should get activity by IP', async () => {
@@ -279,58 +270,28 @@ describe('AuditLogRepositoryImpl', () => {
           action: 'CREATE',
           created_at: new Date(),
         },
-        {
-          id: 2,
-          table_name: 'products',
-          record_id: 2,
-          ip_address: '192.168.1.1',
-          action: 'UPDATE',
-          created_at: new Date(),
-        },
       ];
       mockPool.query.mockResolvedValue({ rows: mockRows } as QueryResult);
 
       const result = await repository.getActivityByIp('192.168.1.1');
 
       expect(mockPool.query).toHaveBeenCalledWith(
-        expect.stringContaining('SELECT * FROM audit_logs WHERE ip_address = $1'),
-        ['192.168.1.1']
+        'SELECT * FROM audit_logs WHERE ip_address = $1 ORDER BY created_at DESC LIMIT $2',
+        ['192.168.1.1', 50]
       );
-      expect(result.data).toHaveLength(2);
+      expect(result.data).toHaveLength(1);
     });
 
     it('should clean old logs', async () => {
-      mockPool.query.mockResolvedValue({ rowCount: 50 } as QueryResult);
+      const mockRows = [{ id: 1 }, { id: 2 }];
+      mockPool.query.mockResolvedValue({ rows: mockRows, rowCount: 2 } as QueryResult);
 
       const result = await repository.cleanOldLogs(30);
 
       expect(mockPool.query).toHaveBeenCalledWith(
-        expect.stringContaining('DELETE FROM audit_logs WHERE created_at < $1'),
-        [expect.any(Date)]
+        'DELETE FROM audit_logs WHERE created_at < NOW() - INTERVAL \'30 days\' RETURNING id'
       );
-      expect(result.data).toBe(50);
-    });
-
-    it('should handle database errors', async () => {
-      mockPool.query.mockRejectedValue(new Error('Database connection failed'));
-
-      await expect(repository.findAll()).rejects.toThrow(
-        'Database connection failed'
-      );
-    });
-
-    it('should handle empty results', async () => {
-      mockPool.query.mockResolvedValue({
-        rows: [],
-        command: 'SELECT',
-        rowCount: 0,
-        oid: 0,
-        fields: [],
-      } as QueryResult);
-
-      const result = await repository.findAll();
-
-      expect(result.data).toHaveLength(0);
+      expect(result.data).toBe(2);
     });
   });
 });

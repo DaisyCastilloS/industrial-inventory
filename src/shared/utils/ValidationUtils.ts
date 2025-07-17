@@ -1,14 +1,5 @@
-/**
- * @fileoverview Utilidades para validación
- * @author Industrial Inventory System
- * @version 1.0.0
- */
-
 import { SecurityConfig } from '../constants/TokenPurpose';
 
-/**
- * Valida una contraseña según los requisitos de seguridad
- */
 export function validatePassword(password: string): {
   isValid: boolean;
   errors: string[];
@@ -49,41 +40,26 @@ export function validatePassword(password: string): {
   };
 }
 
-/**
- * Valida un email
- */
 export function validateEmail(email: string): boolean {
   const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
   return emailRegex.test(email);
 }
 
-/**
- * Valida un número de teléfono
- */
 export function validatePhone(phone: string): boolean {
   const phoneRegex = /^\+?[1-9]\d{1,14}$/;
   return phoneRegex.test(phone);
 }
 
-/**
- * Valida un código postal
- */
 export function validatePostalCode(postalCode: string): boolean {
   const postalCodeRegex = /^\d{5}(-\d{4})?$/;
   return postalCodeRegex.test(postalCode);
 }
 
-/**
- * Valida un SKU
- */
 export function validateSKU(sku: string): boolean {
   const skuRegex = /^[A-Z0-9]{2,}-[A-Z0-9]{3,}$/;
   return skuRegex.test(sku);
 }
 
-/**
- * Valida una URL
- */
 export function validateURL(url: string): boolean {
   try {
     new URL(url);
@@ -93,9 +69,6 @@ export function validateURL(url: string): boolean {
   }
 }
 
-/**
- * Valida un número de documento
- */
 export function validateDocumentNumber(
   type: 'DNI' | 'RUC' | 'CE',
   number: string
@@ -112,17 +85,11 @@ export function validateDocumentNumber(
   }
 }
 
-/**
- * Valida una fecha
- */
 export function validateDate(date: string): boolean {
   const dateObj = new Date(date);
   return dateObj instanceof Date && !isNaN(dateObj.getTime());
 }
 
-/**
- * Valida un rango de fechas
- */
 export function validateDateRange(
   startDate: string,
   endDate: string
@@ -152,9 +119,6 @@ export function validateDateRange(
   };
 }
 
-/**
- * Valida un monto monetario
- */
 export function validateAmount(amount: number): {
   isValid: boolean;
   error?: string;
@@ -185,9 +149,6 @@ export function validateAmount(amount: number): {
   };
 }
 
-/**
- * Valida coordenadas geográficas
- */
 export function validateCoordinates(
   lat: number,
   lng: number

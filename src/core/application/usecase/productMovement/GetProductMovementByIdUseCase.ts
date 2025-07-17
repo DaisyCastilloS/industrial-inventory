@@ -1,18 +1,15 @@
-/**
- * @fileoverview Caso de uso para obtener movimiento de producto por ID
- * @author Daisy Castillo
- * @version 1.0.0
- */
+
 
 import { BaseGetByIdUseCase } from '../../base/BaseUseCase';
-import { IProductMovementRepository } from '../../../domain/repository/ProductMovementRepository';
+import { ProductMovementRepositoryImpl } from '../../../../infrastructure/services/ProductMovementRepositoryImpl';
 import { LoggerWrapperInterface } from '../../interface/LoggerWrapperInterface';
 import { ProductMovementResponseDTO } from '../../dto/productMovement/ProductMovementResponseDTO';
 import { ProductMovement } from '../../../domain/entity/ProductMovement';
+import { ServiceResult } from '../../../../infrastructure/services/base/ServiceTypes';
 
-export class GetProductMovementByIdUseCase extends BaseGetByIdUseCase<ProductMovementResponseDTO> {
+export class GetProductMovementByIdUseCase extends BaseGetByIdUseCase<ProductMovement, ProductMovementResponseDTO> {
   constructor(
-    private productMovementRepository: IProductMovementRepository,
+    private productMovementRepository: ProductMovementRepositoryImpl,
     logger: LoggerWrapperInterface
   ) {
     super(logger, {
@@ -21,7 +18,7 @@ export class GetProductMovementByIdUseCase extends BaseGetByIdUseCase<ProductMov
     });
   }
 
-  protected async findById(id: number): Promise<ProductMovement | null> {
+  protected async findById(id: number): Promise<ServiceResult<ProductMovement>> {
     return this.productMovementRepository.findById(id);
   }
 
@@ -40,10 +37,8 @@ export class GetProductMovementByIdUseCase extends BaseGetByIdUseCase<ProductMov
       quantity: movement.quantity,
       previousQuantity: movement.previousQuantity,
       newQuantity: movement.newQuantity,
-      reason: movement.reason,
-      notes: movement.notes || null,
+      reason: movement.reason || null,
       createdAt: movement.createdAt || new Date(),
-      updatedAt: movement.updatedAt || new Date(),
     };
   }
 }

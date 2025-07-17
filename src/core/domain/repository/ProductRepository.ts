@@ -1,15 +1,10 @@
-/**
- * @fileoverview Interfaz del repositorio de productos
- * @author Daisy Castillo
- */
-
 import { IBaseRepository } from './base/BaseRepository';
 import { Product, SKU } from '../entity/Product';
-import { StockStatus } from '../../shared/constants/RoleTypes';
+import { StockStatus } from '../../../shared/constants/RoleTypes';
 import {
   ServiceResult,
   RepositoryOptions,
-} from '../../infrastructure/services/base/ServiceTypes';
+} from '../../../infrastructure/services/base/ServiceTypes';
 import { AuditLog } from '../entity/AuditLog';
 
 export interface IProductRepository extends IBaseRepository<Product> {

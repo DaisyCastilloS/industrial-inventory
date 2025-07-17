@@ -1,32 +1,28 @@
 import { z } from 'zod';
 import { MovementType } from '../../../../shared/constants/RoleTypes';
 
-/**
- * DTO y validador para la creación de movimientos de producto
- * @author Daisy Castillo
- */
 export const CreateProductMovementSchema = z.object({
-  productId: z.number().int().positive('El ID de producto es obligatorio'),
-  movementType: z.nativeEnum(MovementType),
+  product_id: z.number().int().positive('El ID de producto es obligatorio'),
+  movement_type: z.nativeEnum(MovementType),
   quantity: z.number().int().positive('La cantidad debe ser mayor a 0'),
-  previousQuantity: z
-    .number()
-    .int()
-    .min(0, 'La cantidad anterior no puede ser negativa'),
-  newQuantity: z
-    .number()
-    .int()
-    .min(0, 'La cantidad nueva no puede ser negativa'),
   reason: z
     .string()
     .max(200, 'La razón no puede exceder 200 caracteres')
     .optional(),
-  userId: z.number().int().positive('El ID de usuario es obligatorio'),
+  notes: z
+    .string()
+    .max(500, 'Las notas no pueden exceder 500 caracteres')
+    .optional(),
 });
 
 export type CreateProductMovementDTO = z.infer<
   typeof CreateProductMovementSchema
 >;
+
+// Tipo extendido que incluye user_id inyectado desde el controlador
+export type CreateProductMovementWithUserIdDTO = CreateProductMovementDTO & {
+  user_id: number;
+};
 
 export function validateCreateProductMovement(
   data: unknown

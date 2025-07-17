@@ -17,7 +17,19 @@ export const LocationQueries = {
   findByName: `SELECT * FROM locations WHERE name = $1`,
   findActive: `SELECT * FROM locations WHERE is_active = true`,
   existsByName: `SELECT COUNT(*) FROM locations WHERE name = $1`,
-  findByField: field => `SELECT * FROM locations WHERE ${field} = $1`,
+  
+  findByField: (field: string) => {
+    const allowedFields = [
+      'id', 'name', 'description', 'is_active', 'created_at', 'updated_at'
+    ];
+    
+    if (!allowedFields.includes(field)) {
+      throw new Error(`Campo no permitido: ${field}`);
+    }
+    
+    return `SELECT * FROM locations WHERE ${field} = $1`;
+  },
+  
   stats: {
     total: `SELECT COUNT(*) FROM locations`,
     active: `SELECT COUNT(*) FROM locations WHERE is_active = true`,

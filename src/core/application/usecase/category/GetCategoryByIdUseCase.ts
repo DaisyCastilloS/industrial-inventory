@@ -22,15 +22,20 @@ export class GetCategoryByIdUseCase extends BaseGetByIdUseCase<CategoryResponseD
   }
 
   protected async findById(id: number): Promise<any> {
-    return this.categoryRepository.findById(id);
+    const result = await this.categoryRepository.findById(id);
+    if (!result.success || !result.data) {
+      throw new Error(`Categoría con ID ${id} no encontrada`);
+    }
+    return result.data;
   }
 
   protected validateEntity(entity: any): void {
-    if (!entity.id || !entity.createdAt || !entity.updatedAt) {
+    if (!entity.id) {
       throw new Error(
-        'Persistencia inconsistente: la categoría no tiene id, createdAt o updatedAt'
+        'Persistencia inconsistente: la categoría no tiene id'
       );
     }
+    // Solo validar ID, no createdAt/updatedAt
   }
 
   protected mapToDTO(entity: any): CategoryResponseDTO {

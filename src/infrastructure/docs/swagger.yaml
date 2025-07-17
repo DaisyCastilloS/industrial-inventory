@@ -33,25 +33,50 @@ info:
     - **Presentation Layer**: Controladores y HTTP
     
     ### Sistema de Roles
-    El sistema implementa 3 niveles de acceso:
+    El sistema implementa 6 niveles de acceso con permisos específicos:
     
     1. **ADMIN** 👑
-       - Acceso total al sistema
+       - Acceso total al sistema (CRUD en todos los recursos)
        - Gestión de usuarios y roles
-       - Acceso a logs de auditoría
+       - Acceso completo a logs de auditoría
        - Operaciones críticas (eliminación)
+       - Creación y modificación de todos los recursos
     
-    2. **USER** 👤
-       - Operaciones CRUD básicas
+    2. **MANAGER** 🏢
+       - CRUD en productos, categorías, ubicaciones, proveedores
+       - CRUD en movimientos de productos
+       - Acceso de lectura a logs de auditoría
        - Sin acceso a gestión de usuarios
-       - Sin acceso a logs de auditoría
-       - Sin permisos de eliminación
+       - Sin acceso a eliminación de productos con stock
     
-    3. **VIEWER** 👀
-       - Solo operaciones de lectura
-       - Sin acceso a modificación
-       - Sin acceso a creación
-       - Sin acceso a eliminación
+    3. **SUPERVISOR** 👨‍💼
+       - Read en todos los recursos
+       - Update en productos, categorías, ubicaciones, proveedores
+       - Create y Read en movimientos de productos
+       - Acceso de lectura a logs de auditoría
+       - Sin acceso a gestión de usuarios
+       - Sin acceso a eliminación de recursos
+    
+    4. **USER** 👤
+       - Read en todos los recursos
+       - Create, Read, Update en productos
+       - Create y Read en movimientos de productos
+       - Acceso de lectura a logs de auditoría
+       - Sin acceso a gestión de usuarios
+       - Sin acceso a eliminación de recursos
+    
+    5. **AUDITOR** 📊
+       - Solo operaciones de lectura en todos los recursos
+       - Acceso completo a logs de auditoría
+       - Generación de reportes
+       - Sin acceso a modificación de recursos
+       - Sin acceso a gestión de usuarios
+    
+    6. **VIEWER** 👀
+       - Solo operaciones de lectura en productos, categorías, ubicaciones, proveedores
+       - Sin acceso a movimientos de productos
+       - Sin acceso a logs de auditoría
+       - Sin acceso a modificación, creación o eliminación
     
     ### Sistema de Caché
     Implementación de caché por endpoint:
@@ -215,6 +240,24 @@ tags:
       - Usuario responsable
       - Timestamps automáticos
 
+  - name: System
+    description: |
+      ⚙️ **Endpoints del Sistema**
+      
+      Endpoints para monitoreo y administración del sistema.
+      
+      ### Funcionalidades
+      - Health check del sistema
+      - Estado de servicios
+      - Información de versión
+      - Métricas de rendimiento
+      
+      ### Características
+      - Monitoreo en tiempo real
+      - Diagnóstico de problemas
+      - Información de sistema
+      - Logs de aplicación
+
   - name: Audit Logs
     description: |
       📊 **Logs de Auditoría del Sistema**
@@ -242,6 +285,57 @@ tags:
       - Auditorías internas
 
 paths:
+# --- HEALTH ---
+  /health:
+    get:
+      summary: 🏥 Health check
+      description: |
+        Verifica el estado de salud del sistema.
+        
+        ### Características
+        - Verificación de conexión a base de datos
+        - Estado de servicios críticos
+        - Tiempo de respuesta
+        - Información del sistema
+        
+        ### Roles Permitidos
+        - ✅ **Todos los roles**: Acceso público
+      tags:
+        - System
+      responses:
+        '200':
+          description: ✅ Sistema funcionando correctamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Sistema funcionando correctamente"
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: "2023-01-01T00:00:00.000Z"
+                  data:
+                    type: object
+                    properties:
+                      status:
+                        type: string
+                        example: "healthy"
+                      uptime:
+                        type: number
+                        example: 3600
+                      database:
+                        type: string
+                        example: "connected"
+                      version:
+                        type: string
+                        example: "1.0.0"
+
 # --- AUTH ---
   /auth/register:
     post:
@@ -309,7 +403,7 @@ paths:
                   example: "John Doe"
                 role:
                   type: string
-                  enum: [ADMIN, USER, VIEWER]
+                  enum: [ADMIN, USER, VIEWER, MANAGER, SUPERVISOR, AUDITOR]
                   example: "USER"
       responses:
         201:
@@ -522,6 +616,14 @@ paths:
       summary: 📋 List all users
       description: |
         Obtiene la lista de todos los usuarios.
+        
+        ### Roles Permitidos
+        - ✅ **ADMIN**: Acceso completo
+        - ❌ **MANAGER**: Sin acceso
+        - ❌ **SUPERVISOR**: Sin acceso
+        - ❌ **USER**: Sin acceso
+        - ❌ **AUDITOR**: Sin acceso
+        - ❌ **VIEWER**: Sin acceso
       tags:
         - Users
       security:
@@ -539,6 +641,14 @@ paths:
       summary: ➕ Create new user
       description: |
         Crea un nuevo usuario en el sistema.
+        
+        ### Roles Permitidos
+        - ✅ **ADMIN**: Acceso completo
+        - ❌ **MANAGER**: Sin acceso
+        - ❌ **SUPERVISOR**: Sin acceso
+        - ❌ **USER**: Sin acceso
+        - ❌ **AUDITOR**: Sin acceso
+        - ❌ **VIEWER**: Sin acceso
       tags:
         - Users
       security:
@@ -568,6 +678,14 @@ paths:
       summary: 🔍 Get user by ID
       description: |
         Obtiene los detalles de un usuario específico.
+        
+        ### Roles Permitidos
+        - ✅ **ADMIN**: Acceso completo
+        - ❌ **MANAGER**: Sin acceso
+        - ❌ **SUPERVISOR**: Sin acceso
+        - ❌ **USER**: Sin acceso
+        - ❌ **AUDITOR**: Sin acceso
+        - ❌ **VIEWER**: Sin acceso
       tags:
         - Users
       security:
@@ -593,6 +711,14 @@ paths:
       summary: ✏️ Update user
       description: |
         Actualiza los datos de un usuario existente.
+        
+        ### Roles Permitidos
+        - ✅ **ADMIN**: Acceso completo
+        - ❌ **MANAGER**: Sin acceso
+        - ❌ **SUPERVISOR**: Sin acceso
+        - ❌ **USER**: Sin acceso
+        - ❌ **AUDITOR**: Sin acceso
+        - ❌ **VIEWER**: Sin acceso
       tags:
         - Users
       security:
@@ -626,6 +752,14 @@ paths:
       summary: 🗑️ Delete user
       description: |
         Elimina un usuario del sistema.
+        
+        ### Roles Permitidos
+        - ✅ **ADMIN**: Acceso completo
+        - ❌ **MANAGER**: Sin acceso
+        - ❌ **SUPERVISOR**: Sin acceso
+        - ❌ **USER**: Sin acceso
+        - ❌ **AUDITOR**: Sin acceso
+        - ❌ **VIEWER**: Sin acceso
       tags:
         - Users
       security:
@@ -650,6 +784,14 @@ paths:
       summary: 📋 List all categories
       description: |
         Obtiene la lista de todas las categorías.
+        
+        ### Roles Permitidos
+        - ✅ **ADMIN**: Acceso completo
+        - ✅ **MANAGER**: Acceso completo
+        - ✅ **SUPERVISOR**: Acceso completo
+        - ✅ **USER**: Acceso completo
+        - ✅ **AUDITOR**: Acceso completo
+        - ✅ **VIEWER**: Acceso completo
       tags:
         - Categories
       security:
@@ -667,6 +809,14 @@ paths:
       summary: ➕ Create new category
       description: |
         Crea una nueva categoría.
+        
+        ### Roles Permitidos
+        - ✅ **ADMIN**: Acceso completo
+        - ✅ **MANAGER**: Acceso completo
+        - ✅ **USER**: Acceso completo
+        - ❌ **SUPERVISOR**: Sin acceso
+        - ❌ **AUDITOR**: Sin acceso
+        - ❌ **VIEWER**: Sin acceso
       tags:
         - Categories
       security:
@@ -696,6 +846,14 @@ paths:
       summary: 🔍 Get category by ID
       description: |
         Obtiene los detalles de una categoría específica.
+        
+        ### Roles Permitidos
+        - ✅ **ADMIN**: Acceso completo
+        - ✅ **MANAGER**: Acceso completo
+        - ✅ **SUPERVISOR**: Acceso completo
+        - ✅ **USER**: Acceso completo
+        - ✅ **AUDITOR**: Acceso completo
+        - ✅ **VIEWER**: Acceso completo
       tags:
         - Categories
       security:
@@ -721,6 +879,14 @@ paths:
       summary: ✏️ Update category
       description: |
         Actualiza los datos de una categoría existente.
+        
+        ### Roles Permitidos
+        - ✅ **ADMIN**: Acceso completo
+        - ✅ **MANAGER**: Acceso completo
+        - ✅ **USER**: Acceso completo
+        - ❌ **SUPERVISOR**: Sin acceso
+        - ❌ **AUDITOR**: Sin acceso
+        - ❌ **VIEWER**: Sin acceso
       tags:
         - Categories
       security:
@@ -754,6 +920,14 @@ paths:
       summary: 🗑️ Delete category
       description: |
         Elimina una categoría del sistema.
+        
+        ### Roles Permitidos
+        - ✅ **ADMIN**: Acceso completo
+        - ❌ **MANAGER**: Sin acceso
+        - ❌ **SUPERVISOR**: Sin acceso
+        - ❌ **USER**: Sin acceso
+        - ❌ **AUDITOR**: Sin acceso
+        - ❌ **VIEWER**: Sin acceso
       tags:
         - Categories
       security:
@@ -778,6 +952,14 @@ paths:
       summary: 📋 List all suppliers
       description: |
         Obtiene la lista de todos los proveedores.
+        
+        ### Roles Permitidos
+        - ✅ **ADMIN**: Acceso completo
+        - ✅ **MANAGER**: Acceso completo
+        - ✅ **SUPERVISOR**: Acceso completo
+        - ✅ **USER**: Acceso completo
+        - ✅ **AUDITOR**: Acceso completo
+        - ✅ **VIEWER**: Acceso completo
       tags:
         - Suppliers
       security:
@@ -795,6 +977,14 @@ paths:
       summary: ➕ Create new supplier
       description: |
         Crea un nuevo proveedor.
+        
+        ### Roles Permitidos
+        - ✅ **ADMIN**: Acceso completo
+        - ✅ **MANAGER**: Acceso completo
+        - ✅ **USER**: Acceso completo
+        - ❌ **SUPERVISOR**: Sin acceso
+        - ❌ **AUDITOR**: Sin acceso
+        - ❌ **VIEWER**: Sin acceso
       tags:
         - Suppliers
       security:
@@ -824,6 +1014,14 @@ paths:
       summary: 🔍 Get supplier by ID
       description: |
         Obtiene los detalles de un proveedor específico.
+        
+        ### Roles Permitidos
+        - ✅ **ADMIN**: Acceso completo
+        - ✅ **MANAGER**: Acceso completo
+        - ✅ **SUPERVISOR**: Acceso completo
+        - ✅ **USER**: Acceso completo
+        - ✅ **AUDITOR**: Acceso completo
+        - ✅ **VIEWER**: Acceso completo
       tags:
         - Suppliers
       security:
@@ -849,6 +1047,14 @@ paths:
       summary: ✏️ Update supplier
       description: |
         Actualiza los datos de un proveedor existente.
+        
+        ### Roles Permitidos
+        - ✅ **ADMIN**: Acceso completo
+        - ✅ **MANAGER**: Acceso completo
+        - ✅ **USER**: Acceso completo
+        - ❌ **SUPERVISOR**: Sin acceso
+        - ❌ **AUDITOR**: Sin acceso
+        - ❌ **VIEWER**: Sin acceso
       tags:
         - Suppliers
       security:
@@ -882,6 +1088,14 @@ paths:
       summary: 🗑️ Delete supplier
       description: |
         Elimina un proveedor del sistema.
+        
+        ### Roles Permitidos
+        - ✅ **ADMIN**: Acceso completo
+        - ❌ **MANAGER**: Sin acceso
+        - ❌ **SUPERVISOR**: Sin acceso
+        - ❌ **USER**: Sin acceso
+        - ❌ **AUDITOR**: Sin acceso
+        - ❌ **VIEWER**: Sin acceso
       tags:
         - Suppliers
       security:
@@ -906,6 +1120,14 @@ paths:
       summary: 📋 List all locations
       description: |
         Obtiene la lista de todas las ubicaciones.
+        
+        ### Roles Permitidos
+        - ✅ **ADMIN**: Acceso completo
+        - ✅ **MANAGER**: Acceso completo
+        - ✅ **SUPERVISOR**: Acceso completo
+        - ✅ **USER**: Acceso completo
+        - ✅ **AUDITOR**: Acceso completo
+        - ✅ **VIEWER**: Acceso completo
       tags:
         - Locations
       security:
@@ -923,6 +1145,14 @@ paths:
       summary: ➕ Create new location
       description: |
         Crea una nueva ubicación.
+        
+        ### Roles Permitidos
+        - ✅ **ADMIN**: Acceso completo
+        - ✅ **MANAGER**: Acceso completo
+        - ✅ **USER**: Acceso completo
+        - ❌ **SUPERVISOR**: Sin acceso
+        - ❌ **AUDITOR**: Sin acceso
+        - ❌ **VIEWER**: Sin acceso
       tags:
         - Locations
       security:
@@ -952,6 +1182,14 @@ paths:
       summary: 🔍 Get location by ID
       description: |
         Obtiene los detalles de una ubicación específica.
+        
+        ### Roles Permitidos
+        - ✅ **ADMIN**: Acceso completo
+        - ✅ **MANAGER**: Acceso completo
+        - ✅ **SUPERVISOR**: Acceso completo
+        - ✅ **USER**: Acceso completo
+        - ✅ **AUDITOR**: Acceso completo
+        - ✅ **VIEWER**: Acceso completo
       tags:
         - Locations
       security:
@@ -977,6 +1215,14 @@ paths:
       summary: ✏️ Update location
       description: |
         Actualiza los datos de una ubicación existente.
+        
+        ### Roles Permitidos
+        - ✅ **ADMIN**: Acceso completo
+        - ✅ **MANAGER**: Acceso completo
+        - ✅ **USER**: Acceso completo
+        - ❌ **SUPERVISOR**: Sin acceso
+        - ❌ **AUDITOR**: Sin acceso
+        - ❌ **VIEWER**: Sin acceso
       tags:
         - Locations
       security:
@@ -1010,6 +1256,14 @@ paths:
       summary: 🗑️ Delete location
       description: |
         Elimina una ubicación del sistema.
+        
+        ### Roles Permitidos
+        - ✅ **ADMIN**: Acceso completo
+        - ❌ **MANAGER**: Sin acceso
+        - ❌ **SUPERVISOR**: Sin acceso
+        - ❌ **USER**: Sin acceso
+        - ❌ **AUDITOR**: Sin acceso
+        - ❌ **VIEWER**: Sin acceso
       tags:
         - Locations
       security:
@@ -1034,6 +1288,14 @@ paths:
       summary: 📋 List all products
       description: |
         Obtiene la lista de todos los productos.
+        
+        ### Roles Permitidos
+        - ✅ **ADMIN**: Acceso completo
+        - ✅ **MANAGER**: Acceso completo
+        - ✅ **SUPERVISOR**: Acceso completo
+        - ✅ **USER**: Acceso completo
+        - ✅ **AUDITOR**: Acceso completo
+        - ✅ **VIEWER**: Acceso completo
       tags:
         - Products
       security:
@@ -1051,6 +1313,14 @@ paths:
       summary: ➕ Create new product
       description: |
         Crea un nuevo producto.
+        
+        ### Roles Permitidos
+        - ✅ **ADMIN**: Acceso completo
+        - ✅ **MANAGER**: Acceso completo
+        - ✅ **USER**: Acceso completo
+        - ❌ **SUPERVISOR**: Sin acceso
+        - ❌ **AUDITOR**: Sin acceso
+        - ❌ **VIEWER**: Sin acceso
       tags:
         - Products
       security:
@@ -1080,6 +1350,14 @@ paths:
       summary: 🔍 Get product by ID
       description: |
         Obtiene los detalles de un producto específico.
+        
+        ### Roles Permitidos
+        - ✅ **ADMIN**: Acceso completo
+        - ✅ **MANAGER**: Acceso completo
+        - ✅ **SUPERVISOR**: Acceso completo
+        - ✅ **USER**: Acceso completo
+        - ✅ **AUDITOR**: Acceso completo
+        - ✅ **VIEWER**: Acceso completo
       tags:
         - Products
       security:
@@ -1105,6 +1383,14 @@ paths:
       summary: ✏️ Update product
       description: |
         Actualiza los datos de un producto existente.
+        
+        ### Roles Permitidos
+        - ✅ **ADMIN**: Acceso completo
+        - ✅ **MANAGER**: Acceso completo
+        - ✅ **SUPERVISOR**: Acceso completo
+        - ✅ **USER**: Acceso completo
+        - ❌ **AUDITOR**: Sin acceso
+        - ❌ **VIEWER**: Sin acceso
       tags:
         - Products
       security:
@@ -1138,6 +1424,14 @@ paths:
       summary: 🗑️ Delete product
       description: |
         Elimina un producto del sistema.
+        
+        ### Roles Permitidos
+        - ✅ **ADMIN**: Acceso completo
+        - ❌ **MANAGER**: Sin acceso
+        - ❌ **SUPERVISOR**: Sin acceso
+        - ❌ **USER**: Sin acceso
+        - ❌ **AUDITOR**: Sin acceso
+        - ❌ **VIEWER**: Sin acceso
       tags:
         - Products
       security:
@@ -1162,6 +1456,14 @@ paths:
       summary: 📋 List all product movements
       description: |
         Obtiene la lista de todos los movimientos de productos.
+        
+        ### Roles Permitidos
+        - ✅ **ADMIN**: Acceso completo
+        - ✅ **MANAGER**: Acceso completo
+        - ✅ **SUPERVISOR**: Acceso completo
+        - ✅ **USER**: Acceso completo
+        - ✅ **AUDITOR**: Acceso completo
+        - ✅ **VIEWER**: Acceso completo
       tags:
         - Product Movements
       security:
@@ -1179,6 +1481,14 @@ paths:
       summary: ➕ Create new product movement
       description: |
         Registra un nuevo movimiento de producto.
+        
+        ### Roles Permitidos
+        - ✅ **ADMIN**: Acceso completo
+        - ✅ **MANAGER**: Acceso completo
+        - ✅ **USER**: Acceso completo
+        - ❌ **SUPERVISOR**: Sin acceso
+        - ❌ **AUDITOR**: Sin acceso
+        - ❌ **VIEWER**: Sin acceso
       tags:
         - Product Movements
       security:
@@ -1203,6 +1513,41 @@ paths:
         '409':
           description: ❌ Stock insuficiente
 
+  /product-movements/{id}:
+    get:
+      summary: 🔍 Get product movement by ID
+      description: |
+        Obtiene los detalles de un movimiento de producto específico.
+        
+        ### Roles Permitidos
+        - ✅ **ADMIN**: Acceso completo
+        - ✅ **MANAGER**: Acceso completo
+        - ✅ **SUPERVISOR**: Acceso completo
+        - ✅ **USER**: Acceso completo
+        - ✅ **AUDITOR**: Acceso completo
+        - ✅ **VIEWER**: Acceso completo
+      tags:
+        - Product Movements
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: ✅ Movimiento encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductMovementResponse'
+        '401':
+          description: ❌ No autorizado
+        '404':
+          description: ❌ Movimiento no encontrado
+
   /product-movements/by-product/{productId}:
     get:
       tags: [Product Movements]
@@ -1217,9 +1562,12 @@ paths:
         - Filtros por fecha
         
         ### Roles Permitidos
-        - ADMIN
-        - USER
-        - VIEWER
+        - ✅ **ADMIN**: Acceso completo
+        - ✅ **MANAGER**: Acceso completo
+        - ✅ **SUPERVISOR**: Acceso completo
+        - ✅ **USER**: Acceso completo
+        - ✅ **AUDITOR**: Acceso completo
+        - ✅ **VIEWER**: Acceso completo
       security:
         - BearerAuth: []
       parameters:
@@ -1289,9 +1637,12 @@ paths:
         - Filtros por fecha
         
         ### Roles Permitidos
-        - ADMIN
-        - USER
-        - VIEWER
+        - ✅ **ADMIN**: Acceso completo
+        - ✅ **MANAGER**: Acceso completo
+        - ✅ **SUPERVISOR**: Acceso completo
+        - ✅ **USER**: Acceso completo
+        - ✅ **AUDITOR**: Acceso completo
+        - ✅ **VIEWER**: Acceso completo
       security:
         - BearerAuth: []
       parameters:
@@ -1353,6 +1704,14 @@ paths:
       summary: 📋 List all audit logs
       description: |
         Obtiene la lista de todos los logs de auditoría.
+        
+        ### Roles Permitidos
+        - ✅ **ADMIN**: Acceso completo
+        - ❌ **MANAGER**: Sin acceso
+        - ❌ **SUPERVISOR**: Sin acceso
+        - ❌ **USER**: Sin acceso
+        - ✅ **AUDITOR**: Acceso completo
+        - ❌ **VIEWER**: Sin acceso
       tags:
         - Audit Logs
       security:
@@ -1529,7 +1888,7 @@ components:
           type: string
         role:
           type: string
-          enum: [ADMIN, USER, VIEWER]
+          enum: [ADMIN, USER, VIEWER, MANAGER, SUPERVISOR, AUDITOR]
         isActive:
           type: boolean
 
@@ -1984,40 +2343,66 @@ components:
     ListAuditLogsResponse:
       type: object
       properties:
-        success:
-          type: boolean
-        message:
-          type: string
-        timestamp:
-          type: string
-          format: date-time
-        data:
+        logs:
           type: array
           items:
             $ref: '#/components/schemas/AuditLogData'
+        total:
+          type: integer
+          example: 100
+        page:
+          type: integer
+          example: 1
+        limit:
+          type: integer
+          example: 10
+        totalPages:
+          type: integer
+          example: 10
 
     AuditLogData:
       type: object
       properties:
         id:
           type: integer
+          example: 1
         tableName:
           type: string
+          example: "products"
+        recordId:
+          type: integer
+          example: 123
         action:
           type: string
+          example: "CREATE"
         oldValues:
           type: object
+          nullable: true
         newValues:
           type: object
+          nullable: true
         userId:
           type: integer
+          nullable: true
+          example: 1
         ipAddress:
           type: string
+          nullable: true
+          example: "192.168.1.1"
         userAgent:
           type: string
+          nullable: true
+          example: "Mozilla/5.0..."
+        metadata:
+          type: object
+          nullable: true
         createdAt:
           type: string
           format: date-time
+          example: "2023-01-01T00:00:00.000Z"
+        reviewed:
+          type: boolean
+          example: false
 
     # Additional User Schemas
     CreateUserRequest:

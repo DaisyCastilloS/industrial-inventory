@@ -40,15 +40,20 @@ export class UpdateSupplierUseCase extends BaseUpdateUseCase<
   }
 
   protected async updateEntity(id: number, data: any): Promise<any> {
-    return this.supplierRepository.update(id, data);
+    const result = await this.supplierRepository.update(id, data);
+    if (!result.success || !result.data) {
+      throw new Error('Error al actualizar el proveedor');
+    }
+    return result.data;
   }
 
   protected validateUpdatedEntity(entity: any): void {
-    if (!entity.id || !entity.createdAt || !entity.updatedAt) {
+    if (!entity || !entity.id) {
       throw new Error(
-        'Persistencia inconsistente: el proveedor actualizado no tiene id, createdAt o updatedAt'
+        'Persistencia inconsistente: el proveedor actualizado no tiene id'
       );
     }
+    // Solo validar ID, no createdAt/updatedAt
   }
 
   protected mapToDTO(entity: any): SupplierResponseDTO {

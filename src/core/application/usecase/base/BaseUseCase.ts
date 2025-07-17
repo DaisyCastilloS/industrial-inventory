@@ -41,12 +41,10 @@ export abstract class BaseUseCase<TInput, TOutput> {
   }
 
   protected sanitizeInput(input: TInput): any {
-    // Override in subclasses to remove sensitive data
     return input;
   }
 
   protected sanitizeResult(result: TOutput): any {
-    // Override in subclasses to remove sensitive data
     return result;
   }
 }
@@ -88,29 +86,28 @@ export abstract class BaseListUseCase<TOutput> extends BaseUseCase<
     page?: number;
     limit?: number;
   }): Promise<TOutput> {
-    const entities = await this.findAll();
-    const validEntities = entities.filter(entity => this.isValidEntity(entity));
+    const result = await this.findAll();
+    if (!result.success || !result.data) {
+      throw new Error(result.error?.message || 'Error al obtener la lista');
+    }
 
-    if (validEntities.length !== entities.length) {
+    const { items, total, totalPages } = result.data;
+    const validEntities = items.filter((entity: unknown) => this.isValidEntity(entity));
+
+    if (validEntities.length !== items.length) {
       throw new Error(
         `Persistencia inconsistente: uno o más ${this.config.entityName}s no tienen campos obligatorios`
       );
     }
 
-    const total = validEntities.length;
-    const totalPages = Math.ceil(total / limit);
-    const startIndex = (page - 1) * limit;
-    const endIndex = startIndex + limit;
-    const paginated = validEntities.slice(startIndex, endIndex);
-
-    const dtos = paginated.map(entity => this.mapToDTO(entity));
+    const dtos = validEntities.map((entity: unknown) => this.mapToDTO(entity));
 
     return this.createListResponse(dtos, total, page, limit, totalPages);
   }
 
-  protected abstract findAll(): Promise<any[]>;
-  protected abstract isValidEntity(entity: any): boolean;
-  protected abstract mapToDTO(entity: any): any;
+  protected abstract findAll(): Promise<any>;
+  protected abstract isValidEntity(entity: unknown): boolean;
+  protected abstract mapToDTO(entity: unknown): any;
   protected abstract createListResponse(
     dtos: any[],
     total: number,
@@ -129,13 +126,13 @@ export abstract class BaseCreateUseCase<TInput, TOutput> extends BaseUseCase<
   }
 
   protected async executeInternal(input: TInput): Promise<TOutput> {
-    const validatedData = this.validateInput(input);
+    const validatedData = await this.validateInput(input);
     const entity = await this.createEntity(validatedData);
     this.validateCreatedEntity(entity);
     return this.mapToDTO(entity);
   }
 
-  protected abstract validateInput(input: TInput): any;
+  protected abstract validateInput(input: TInput): Promise<any>;
   protected abstract createEntity(data: any): Promise<any>;
   protected abstract validateCreatedEntity(entity: any): void;
   protected abstract mapToDTO(entity: any): TOutput;

@@ -1,5 +1,4 @@
 export const AuditLogQueries = {
-  // Queries CRUD básicas
   insert: `
     INSERT INTO audit_logs (table_name, record_id, action, old_values, new_values, user_id, ip_address, user_agent, created_at)
     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
@@ -10,7 +9,6 @@ export const AuditLogQueries = {
 
   findAll: `SELECT * FROM audit_logs ORDER BY created_at DESC`,
 
-  // Queries de búsqueda por criterios específicos
   findByTable: `SELECT * FROM audit_logs WHERE table_name = $1 ORDER BY created_at DESC`,
 
   findByRecord: `SELECT * FROM audit_logs WHERE table_name = $1 AND record_id = $2 ORDER BY created_at DESC`,
@@ -23,23 +21,19 @@ export const AuditLogQueries = {
 
   findByTableAndAction: `SELECT * FROM audit_logs WHERE table_name = $1 AND action = $2 ORDER BY created_at DESC`,
 
-  // Queries de búsqueda por rango de fechas
   findByDateRange: `SELECT * FROM audit_logs WHERE created_at BETWEEN $1 AND $2 ORDER BY created_at DESC`,
 
   findByDateRangeAndTable: `SELECT * FROM audit_logs WHERE table_name = $1 AND created_at BETWEEN $2 AND $3 ORDER BY created_at DESC`,
 
   findByDateRangeAndUser: `SELECT * FROM audit_logs WHERE user_id = $1 AND created_at BETWEEN $2 AND $3 ORDER BY created_at DESC`,
 
-  // Queries de logs recientes
   findRecent: `SELECT * FROM audit_logs ORDER BY created_at DESC LIMIT $1`,
 
   findRecentByTable: `SELECT * FROM audit_logs WHERE table_name = $1 ORDER BY created_at DESC LIMIT $2`,
 
   findRecentByUser: `SELECT * FROM audit_logs WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2`,
 
-  // Queries de estadísticas
   stats: {
-    // Estadísticas globales
     total: `SELECT COUNT(*) FROM audit_logs`,
 
     byTable: `
@@ -63,7 +57,6 @@ export const AuditLogQueries = {
       ORDER BY count DESC
     `,
 
-    // Estadísticas por período
     byDateRange: `
       SELECT 
         COUNT(*) as total_logs,
@@ -74,7 +67,6 @@ export const AuditLogQueries = {
       WHERE created_at BETWEEN $1 AND $2
     `,
 
-    // Estadísticas detalladas por tabla
     byTableAndAction: `
       SELECT 
         table_name,
@@ -86,7 +78,6 @@ export const AuditLogQueries = {
       ORDER BY table_name, count DESC
     `,
 
-    // Estadísticas por usuario
     byUserAndAction: `
       SELECT 
         user_id,
@@ -98,7 +89,6 @@ export const AuditLogQueries = {
       ORDER BY user_id, count DESC
     `,
 
-    // Estadísticas de actividad por hora
     byHour: `
       SELECT 
         EXTRACT(HOUR FROM created_at) as hour,
@@ -109,7 +99,6 @@ export const AuditLogQueries = {
       ORDER BY hour
     `,
 
-    // Estadísticas de actividad por día
     byDay: `
       SELECT 
         DATE(created_at) as day,
@@ -121,15 +110,11 @@ export const AuditLogQueries = {
     `,
   },
 
-  // Queries de limpieza y mantenimiento
   maintenance: {
-    // Eliminar logs antiguos
     deleteOldLogs: `DELETE FROM audit_logs WHERE created_at < $1`,
 
-    // Contar logs antiguos
     countOldLogs: `SELECT COUNT(*) FROM audit_logs WHERE created_at < $1`,
 
-    // Obtener logs por tamaño (para análisis de espacio)
     getLogsBySize: `
       SELECT 
         table_name,
@@ -140,20 +125,16 @@ export const AuditLogQueries = {
       ORDER BY total_size DESC
     `,
 
-    // Optimizar tabla (vacuum)
     optimizeTable: `VACUUM ANALYZE audit_logs`,
   },
 
-  // Queries de búsqueda avanzada
   search: {
-    // Búsqueda por texto en valores
     byTextInValues: `
       SELECT * FROM audit_logs 
       WHERE (old_values::text ILIKE $1 OR new_values::text ILIKE $1)
       ORDER BY created_at DESC
     `,
 
-    // Búsqueda por múltiples criterios
     byMultipleCriteria: `
       SELECT * FROM audit_logs 
       WHERE ($1::text IS NULL OR table_name = $1)
@@ -164,7 +145,6 @@ export const AuditLogQueries = {
       ORDER BY created_at DESC
     `,
 
-    // Búsqueda por cambios específicos
     bySpecificChange: `
       SELECT * FROM audit_logs 
       WHERE table_name = $1 
@@ -174,16 +154,13 @@ export const AuditLogQueries = {
     `,
   },
 
-  // Queries de auditoría específica
   audit: {
-    // Obtener historial completo de un registro
     getRecordHistory: `
       SELECT * FROM audit_logs 
       WHERE table_name = $1 AND record_id = $2 
       ORDER BY created_at ASC
     `,
 
-    // Obtener cambios recientes de un usuario
     getUserRecentActivity: `
       SELECT * FROM audit_logs 
       WHERE user_id = $1 
@@ -191,14 +168,12 @@ export const AuditLogQueries = {
       LIMIT $2
     `,
 
-    // Obtener actividad por IP
     getActivityByIp: `
       SELECT * FROM audit_logs 
       WHERE ip_address = $1 
       ORDER BY created_at DESC
     `,
 
-    // Obtener estadísticas de seguridad
     getSecurityStats: `
       SELECT 
         COUNT(DISTINCT ip_address) as unique_ips,
@@ -209,5 +184,18 @@ export const AuditLogQueries = {
       FROM audit_logs 
       WHERE created_at BETWEEN $1 AND $2
     `,
+  },
+
+  findByField: (field: string) => {
+    const allowedFields = [
+      'id', 'table_name', 'record_id', 'action', 'user_id', 
+      'ip_address', 'user_agent', 'created_at', 'old_values', 'new_values'
+    ];
+    
+    if (!allowedFields.includes(field)) {
+      throw new Error(`Campo no permitido: ${field}`);
+    }
+    
+    return `SELECT * FROM audit_logs WHERE ${field} = $1 ORDER BY created_at DESC`;
   },
 };

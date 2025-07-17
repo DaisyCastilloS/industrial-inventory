@@ -1,184 +1,149 @@
-import { ICategoryRepository } from '../../../domain/repository/CategoryRepository';
-import { LoggerWrapperInterface } from '../../interface/LoggerWrapperInterface';
-import { CategoryResponseDTO } from '../../dto/category/CategoryResponseDTO';
-import {
-  CreateCategoryDTO,
-  validateCreateCategory,
-} from '../../dto/category/CreateCategoryDTO';
-import {
-  UpdateCategoryDTO,
-  validateUpdateCategory,
-} from '../../dto/category/UpdateCategoryDTO';
-import { ListCategoriesResponseDTO } from '../../dto/category/ListCategoriesResponseDTO';
-import {
-  BaseGetByIdUseCase,
-  BaseListUseCase,
-  BaseCreateUseCase,
-  BaseUpdateUseCase,
-  BaseDeleteUseCase,
-} from '../base/BaseUseCase';
-import { DTOMapper } from '../../utils/DTOMapper';
+import { BaseGetByIdUseCase, BaseListUseCase, BaseCreateUseCase, BaseUpdateUseCase, BaseDeleteUseCase } from '../../base/BaseUseCase';
 import { Category } from '../../../domain/entity/Category';
+import { ICategoryRepository } from '../../../domain/repository/CategoryRepository';
+import { CreateCategoryDTO } from '../../dto/category/CreateCategoryDTO';
+import { UpdateCategoryDTO } from '../../dto/category/UpdateCategoryDTO';
+import { CategoryResponseDTO } from '../../dto/category/CategoryResponseDTO';
+import { DTOMapper } from '../../utils/DTOMapper';
+import { ServiceResult, PaginatedResult } from '../../../../infrastructure/services/base/ServiceTypes';
+import { LoggerWrapperInterface } from '../../interface/LoggerWrapperInterface';
 
-export class OptimizedGetCategoryByIdUseCase extends BaseGetByIdUseCase<CategoryResponseDTO> {
+export class OptimizedGetCategoryByIdUseCase extends BaseGetByIdUseCase<Category, CategoryResponseDTO> {
   constructor(
     private categoryRepository: ICategoryRepository,
     logger: LoggerWrapperInterface
   ) {
-    super(logger, { action: 'GET_CATEGORY_BY_ID', entityName: 'Categoría' });
+    super(logger, { action: 'GET_CATEGORY_BY_ID', entityName: 'Category' });
   }
 
-  protected async findById(id: number) {
+  protected async findById(id: number): Promise<ServiceResult<Category>> {
     return this.categoryRepository.findById(id);
   }
 
-  protected validateEntity(category: any): void {
-    if (!DTOMapper.validateEntity(category)) {
-      throw new Error(
-        'Persistencia inconsistente: la categoría no tiene campos obligatorios'
-      );
+  protected async validateEntity(entity: Category): Promise<void> {
+    if (!entity || !entity.name) {
+      throw new Error('Invalid category entity');
     }
   }
 
-  protected mapToDTO(category: any): CategoryResponseDTO {
-    return DTOMapper.mapBaseEntity(category, {
-      name: category.name,
-      description: category.description ?? null,
-      parentId: category.parentId ?? null,
-    });
-  }
-}
-
-export class OptimizedListCategoriesUseCase extends BaseListUseCase<ListCategoriesResponseDTO> {
-  constructor(
-    private categoryRepository: ICategoryRepository,
-    logger: LoggerWrapperInterface
-  ) {
-    super(logger, { action: 'LIST_CATEGORIES', entityName: 'Categoría' });
-  }
-
-  protected async findAll() {
-    return this.categoryRepository.findAll();
-  }
-
-  protected isValidEntity(category: any): boolean {
-    return DTOMapper.validateEntity(category);
-  }
-
-  protected mapToDTO(category: any): CategoryResponseDTO {
-    return DTOMapper.mapBaseEntity(category, {
-      name: category.name,
-      description: category.description ?? null,
-      parentId: category.parentId ?? null,
-    });
-  }
-
-  protected createListResponse(
-    dtos: CategoryResponseDTO[],
-    total: number,
-    page: number,
-    limit: number,
-    totalPages: number
-  ): ListCategoriesResponseDTO {
+  protected mapToDTO(entity: Category): CategoryResponseDTO {
     return {
-      categories: dtos,
-      total,
-      page,
-      limit,
-      totalPages,
+      id: entity.id || 0,
+      name: entity.name,
+      description: entity.description || null,
+      isActive: entity.isActive,
+      parentId: entity.parentId || null,
+      createdAt: entity.createdAt || new Date(),
+      updatedAt: entity.updatedAt || new Date()
     };
   }
 }
 
-export class OptimizedCreateCategoryUseCase extends BaseCreateUseCase<
-  CreateCategoryDTO,
-  CategoryResponseDTO
-> {
+export class OptimizedListCategoriesUseCase extends BaseListUseCase<Category, CategoryResponseDTO> {
   constructor(
     private categoryRepository: ICategoryRepository,
     logger: LoggerWrapperInterface
   ) {
-    super(logger, { action: 'CREATE_CATEGORY', entityName: 'Categoría' });
+    super(logger, { action: 'LIST_CATEGORIES', entityName: 'Category' });
   }
 
-  protected validateInput(input: CreateCategoryDTO) {
-    return validateCreateCategory(input);
+  protected async findAll(filters?: Record<string, any>): Promise<ServiceResult<PaginatedResult<Category>>> {
+    return this.categoryRepository.findAll(filters);
   }
 
-  protected async createEntity(data: any) {
-    return this.categoryRepository.create(data);
-  }
-
-  protected validateCreatedEntity(category: any): void {
-    if (!DTOMapper.validateEntity(category)) {
-      throw new Error(
-        'Persistencia inconsistente: la categoría creada no tiene campos obligatorios'
-      );
-    }
-  }
-
-  protected mapToDTO(category: any): CategoryResponseDTO {
-    return DTOMapper.mapBaseEntity(category, {
-      name: category.name,
-      description: category.description ?? null,
-      parentId: category.parentId ?? null,
-    });
+  protected mapToDTO(entity: Category): CategoryResponseDTO {
+    return {
+      id: entity.id || 0,
+      name: entity.name,
+      description: entity.description || null,
+      isActive: entity.isActive,
+      parentId: entity.parentId || null,
+      createdAt: entity.createdAt || new Date(),
+      updatedAt: entity.updatedAt || new Date()
+    };
   }
 }
 
-export class OptimizedUpdateCategoryUseCase extends BaseUpdateUseCase<
-  UpdateCategoryDTO,
-  CategoryResponseDTO
-> {
+export class OptimizedCreateCategoryUseCase extends BaseCreateUseCase<CreateCategoryDTO, Category> {
   constructor(
     private categoryRepository: ICategoryRepository,
     logger: LoggerWrapperInterface
   ) {
-    super(logger, { action: 'UPDATE_CATEGORY', entityName: 'Categoría' });
+    super(logger, { action: 'CREATE_CATEGORY', entityName: 'Category' });
   }
 
-  protected async findById(id: number) {
-    return this.categoryRepository.findById(id);
-  }
-
-  protected validateInput(input: UpdateCategoryDTO) {
-    return validateUpdateCategory(input);
-  }
-
-  protected async updateEntity(id: number, data: any) {
-    return this.categoryRepository.update(id, data);
-  }
-
-  protected validateUpdatedEntity(category: any): void {
-    if (!DTOMapper.validateEntity(category)) {
-      throw new Error(
-        'Persistencia inconsistente: la categoría actualizada no tiene campos obligatorios'
-      );
+  protected async validateCreateInput(input: CreateCategoryDTO): Promise<void> {
+    if (!input.name) {
+      throw new Error('Category name is required');
     }
   }
 
-  protected mapToDTO(category: any): CategoryResponseDTO {
-    return DTOMapper.mapBaseEntity(category, {
-      name: category.name,
-      description: category.description ?? null,
-      parentId: category.parentId ?? null,
+  protected async performCreate(data: CreateCategoryDTO): Promise<ServiceResult<Category>> {
+    const category = new Category({
+      name: data.name,
+      description: data.description,
+      isActive: data.isActive ?? true,
+      parentId: data.parentId ?? undefined,
     });
+    return this.categoryRepository.create(category);
+  }
+
+  protected async validateCreatedEntity(entity: Category): Promise<void> {
+    if (!entity || !entity.name) {
+      throw new Error('Invalid category entity');
+    }
   }
 }
 
-export class OptimizedDeleteCategoryUseCase extends BaseDeleteUseCase {
+export class OptimizedUpdateCategoryUseCase extends BaseUpdateUseCase<UpdateCategoryDTO & { id: number }, Category> {
   constructor(
     private categoryRepository: ICategoryRepository,
     logger: LoggerWrapperInterface
   ) {
-    super(logger, { action: 'DELETE_CATEGORY', entityName: 'Categoría' });
+    super(logger, { action: 'UPDATE_CATEGORY', entityName: 'Category' });
   }
 
-  protected async findById(id: number) {
+  protected async validateUpdateInput(input: UpdateCategoryDTO & { id: number }): Promise<void> {
+    if (input.name !== undefined && input.name.trim() === '') {
+      throw new Error('Category name cannot be empty');
+    }
+  }
+
+  protected async findEntityById(id: number): Promise<ServiceResult<Category>> {
     return this.categoryRepository.findById(id);
   }
 
-  protected async deleteEntity(id: number): Promise<void> {
-    await this.categoryRepository.delete(id);
+  protected async performUpdate(current: Category, input: UpdateCategoryDTO & { id: number }): Promise<ServiceResult<Category>> {
+    const updatedCategory = new Category({
+      ...current,
+      name: input.name ?? current.name,
+      description: input.description ?? current.description,
+      isActive: input.isActive ?? current.isActive,
+      parentId: input.parentId ?? current.parentId
+    });
+    return this.categoryRepository.update(input.id, updatedCategory);
+  }
+
+  protected async validateUpdatedEntity(entity: Category): Promise<void> {
+    if (!entity || !entity.name) {
+      throw new Error('Invalid category entity');
+    }
+  }
+}
+
+export class OptimizedDeleteCategoryUseCase extends BaseDeleteUseCase<Category> {
+  constructor(
+    private categoryRepository: ICategoryRepository,
+    logger: LoggerWrapperInterface
+  ) {
+    super(logger, { action: 'DELETE_CATEGORY', entityName: 'Category' });
+  }
+
+  protected async findEntityById(id: number): Promise<ServiceResult<Category>> {
+    return this.categoryRepository.findById(id);
+  }
+
+  protected async performDelete(id: number): Promise<ServiceResult<void>> {
+    return this.categoryRepository.delete(id);
   }
 }

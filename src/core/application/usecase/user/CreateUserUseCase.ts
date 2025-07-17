@@ -5,7 +5,7 @@
  */
 
 import { BaseCreateUseCase } from '../base/BaseUseCase';
-import { IUserRepository } from '../../../domain/repository/UserRepository';
+import { UserRepositoryImpl } from '../../../../infrastructure/services/UserRepositoryImpl';
 import { LoggerWrapperInterface } from '../../interface/LoggerWrapperInterface';
 import { EncryptionInterface } from '../../interface/EncryptionInterface';
 import {
@@ -21,7 +21,7 @@ export default class CreateUserUseCase extends BaseCreateUseCase<
   UserResponseDTO
 > {
   constructor(
-    private userRepository: IUserRepository,
+    private userRepository: UserRepositoryImpl,
     protected logger: LoggerWrapperInterface,
     private encryptionService: EncryptionInterface
   ) {
@@ -36,6 +36,10 @@ export default class CreateUserUseCase extends BaseCreateUseCase<
   }
 
   protected async createEntity(data: any): Promise<any> {
+    console.log('DEBUG: createEntity data:', data);
+    console.log('DEBUG: password type:', typeof data.password);
+    console.log('DEBUG: password value:', data.password);
+    
     // Verificar si el email ya existe
     const existingUserResult = await this.userRepository.findByEmail(
       data.email
@@ -51,6 +55,7 @@ export default class CreateUserUseCase extends BaseCreateUseCase<
       ...data,
       password: hashedPassword,
     };
+    console.log('DEBUG: userData to create:', userData);
     const result = await this.userRepository.create(userData);
     if (!result.success || !result.data) {
       throw new Error(result.error?.message || 'Error al crear el usuario');
@@ -59,11 +64,12 @@ export default class CreateUserUseCase extends BaseCreateUseCase<
   }
 
   protected validateCreatedEntity(entity: any): void {
-    if (!entity.id || !entity.createdAt || !entity.updatedAt) {
+    if (!entity.id) {
       throw new Error(
-        'Persistencia inconsistente: el usuario creado no tiene id, createdAt o updatedAt'
+        'Persistencia inconsistente: el usuario creado no tiene id'
       );
     }
+    // Solo validar ID, no createdAt/updatedAt
   }
 
   protected mapToDTO(entity: any): UserResponseDTO {

@@ -1,95 +1,71 @@
-/**
- * @fileoverview Controlador para productos
- * @author Daisy Castillo
- * @version 1.0.0
- */
-
 import { Request, Response } from 'express';
-import { BaseController } from './base/BaseController';
-import { CreateProductUseCase } from '../../core/application/usecase/product/CreateProductUseCase';
+import { BaseController, BaseControllerConfig } from './base/BaseController';
 import { GetProductByIdUseCase } from '../../core/application/usecase/product/GetProductByIdUseCase';
 import { ListProductsUseCase } from '../../core/application/usecase/product/ListProductsUseCase';
+import { CreateProductUseCase } from '../../core/application/usecase/product/CreateProductUseCase';
 import { UpdateProductUseCase } from '../../core/application/usecase/product/UpdateProductUseCase';
 import { DeleteProductUseCase } from '../../core/application/usecase/product/DeleteProductUseCase';
-import { ProductRepositoryImpl } from '../../infrastructure/services/ProductRepositoryImpl';
-import { WinstonLogger } from '../../infrastructure/logger/WinstonLogger';
 import { validateCreateProduct } from '../../core/application/dto/product/CreateProductDTO';
 import { validateUpdateProduct } from '../../core/application/dto/product/UpdateProductDTO';
 
 export class ProductController extends BaseController {
-  private readonly createProductUseCase: CreateProductUseCase;
-  private readonly getProductByIdUseCase: GetProductByIdUseCase;
-  private readonly listProductsUseCase: ListProductsUseCase;
-  private readonly updateProductUseCase: UpdateProductUseCase;
-  private readonly deleteProductUseCase: DeleteProductUseCase;
-
-  constructor() {
+  constructor(
+    private getProductByIdUseCase: GetProductByIdUseCase,
+    private listProductsUseCase: ListProductsUseCase,
+    private createProductUseCase: CreateProductUseCase,
+    private updateProductUseCase: UpdateProductUseCase,
+    private deleteProductUseCase: DeleteProductUseCase
+  ) {
     super({
       entityName: 'Product',
       successMessages: {
-        created: 'Producto creado exitosamente',
-        found: 'Producto encontrado',
-        listed: 'Lista de productos',
-        updated: 'Producto actualizado',
-        deleted: 'Producto eliminado',
-      },
+        created: 'Product created successfully',
+        found: 'Product found',
+        listed: 'Products list',
+        updated: 'Product updated',
+        deleted: 'Product deleted'
+      }
     });
+    this.getById = this.getById.bind(this);
+    this.list = this.list.bind(this);
+    this.create = this.create.bind(this);
+    this.update = this.update.bind(this);
+    this.delete = this.delete.bind(this);
+  }
 
-    const productRepository = new ProductRepositoryImpl();
-    const logger = new WinstonLogger();
-
-    this.createProductUseCase = new CreateProductUseCase(
-      productRepository,
-      logger
-    );
-    this.getProductByIdUseCase = new GetProductByIdUseCase(
-      productRepository,
-      logger
-    );
-    this.listProductsUseCase = new ListProductsUseCase(
-      productRepository,
-      logger
-    );
-    this.updateProductUseCase = new UpdateProductUseCase(
-      productRepository,
-      logger
-    );
-    this.deleteProductUseCase = new DeleteProductUseCase(
-      productRepository,
-      logger
+  async getById(req: Request, res: Response): Promise<void> {
+    await this.handleGetById(req, res, (id) => 
+      this.getProductByIdUseCase.execute(id)
     );
   }
 
-  createProduct = async (req: Request, res: Response): Promise<void> => {
-    await this.handleCreate(req, res, validateCreateProduct, data =>
-      this.createProductUseCase.execute(data)
+  async list(req: Request, res: Response): Promise<void> {
+    await this.handleList(req, res, (params) => 
+      this.listProductsUseCase.execute(params)
     );
-  };
+  }
 
-  getProductById = async (req: Request, res: Response): Promise<void> => {
-    await this.handleGetById(req, res, id =>
-      this.getProductByIdUseCase.execute(id)
+  async create(req: Request, res: Response): Promise<void> {
+    await this.handleCreate(
+      req,
+      res,
+      validateCreateProduct,
+      (data) => this.createProductUseCase.execute(data)
     );
-  };
+  }
 
-  listProducts = async (req: Request, res: Response): Promise<void> => {
-    await this.handleList(req, res, params =>
-      this.listProductsUseCase.execute({
-        page: params.page,
-        limit: params.limit,
-      })
+  async update(req: Request, res: Response): Promise<void> {
+    await this.handleUpdate(
+      req,
+      res,
+      validateUpdateProduct,
+      (id, data) => this.updateProductUseCase.execute({ id, ...data })
     );
-  };
+  }
 
-  updateProduct = async (req: Request, res: Response): Promise<void> => {
-    await this.handleUpdate(req, res, validateUpdateProduct, (id, data) =>
-      this.updateProductUseCase.execute({ id, data })
-    );
-  };
-
-  deleteProduct = async (req: Request, res: Response): Promise<void> => {
-    await this.handleDelete(req, res, id =>
+  async delete(req: Request, res: Response): Promise<void> {
+    await this.handleDelete(req, res, (id) => 
       this.deleteProductUseCase.execute(id)
     );
-  };
+  }
 }

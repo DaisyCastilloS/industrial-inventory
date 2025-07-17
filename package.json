@@ -1,7 +1,6 @@
 {
   "name": "industrial-inventory-api",
   "version": "1.0.0",
-  "type": "module",
   "description": "API REST para sistema de inventario industrial con Clean Architecture",
   "main": "dist/presentation/expressServer/index.js",
   "scripts": {
@@ -35,15 +34,9 @@
     "test:coverage": "jest --coverage",
     "test:integration": "jest --testPathPattern=integration",
     "test:watch": "jest --watch",
-    "// 5. Verificación de tipos (pre-commit)": "",
-    "type-check": "tsc --noEmit",
-    "// 6. Mantenimiento de auditoría": "",
-    "audit:cleanup": "tsx scripts/audit-maintenance.ts cleanup",
-    "audit:optimize": "tsx scripts/audit-maintenance.ts optimize",
-    "audit:report": "tsx scripts/audit-maintenance.ts report",
-    "audit:clear-cache": "tsx scripts/audit-maintenance.ts clear-cache",
-    "audit:maintenance": "tsx scripts/audit-maintenance.ts maintenance",
-    "audit:indexes": "psql -d inventory_db -f scripts/create-audit-log-indexes.sql"
+    "test:endpoints:sh": "./scripts/test-endpoints.sh",
+    "test:endpoints:quick": "node scripts/quick-test.js",
+    "test:endpoints:api": "node scripts/test-api.js"
   },
   "keywords": [
     "typescript",

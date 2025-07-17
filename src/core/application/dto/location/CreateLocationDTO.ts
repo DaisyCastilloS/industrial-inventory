@@ -21,11 +21,11 @@ export const CreateLocationSchema = z.object({
     .number()
     .positive('El ID de padre debe ser un número positivo')
     .optional(),
-  zone: z.string().max(50, 'La zona no puede exceder 50 caracteres').optional(),
+  zone: z.string().max(50, 'La zona no puede exceder 50 caracteres').nullable().optional(),
   shelf: z
     .string()
     .max(50, 'El estante no puede exceder 50 caracteres')
-    .optional(),
+    .nullable().optional(),
   isActive: z.boolean().optional().default(true),
 });
 

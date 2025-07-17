@@ -5,7 +5,7 @@
  */
 
 import { BaseGetByIdUseCase } from '../base/BaseUseCase';
-import { IUserRepository } from '../../../domain/repository/UserRepository';
+import { UserRepositoryImpl } from '../../../../infrastructure/services/UserRepositoryImpl';
 import { LoggerWrapperInterface } from '../../interface/LoggerWrapperInterface';
 import { UserResponseDTO } from '../../dto/user/UserResponseDTO';
 import { DTOMapper } from '../../utils/DTOMapper';
@@ -13,7 +13,7 @@ import { ServiceResult } from '../../../../infrastructure/services/base/ServiceT
 
 export default class GetUserByIdUseCase extends BaseGetByIdUseCase<UserResponseDTO> {
   constructor(
-    private userRepository: IUserRepository,
+    private userRepository: UserRepositoryImpl,
     protected logger: LoggerWrapperInterface
   ) {
     super(logger, {
@@ -33,11 +33,12 @@ export default class GetUserByIdUseCase extends BaseGetByIdUseCase<UserResponseD
   }
 
   protected validateEntity(entity: any): void {
-    if (!entity.id || !entity.createdAt || !entity.updatedAt) {
+    if (!entity.id) {
       throw new Error(
-        'Persistencia inconsistente: el usuario no tiene id, createdAt o updatedAt'
+        'Persistencia inconsistente: el usuario no tiene id'
       );
     }
+    // Solo validar ID, no createdAt/updatedAt
   }
 
   protected mapToDTO(entity: any): UserResponseDTO {

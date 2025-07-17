@@ -1,13 +1,8 @@
-/**
- * Implementación base para repositorios
- * @author Daisy Castillo
- */
-
 import { pool } from '../../db/database';
 import {
   IBaseRepository,
   BaseEntity,
-} from '../../../domain/repository/base/BaseRepository';
+} from '../../../core/domain/repository/base/BaseRepository';
 import {
   QueryResult,
   DatabaseError,
@@ -22,22 +17,132 @@ export abstract class BaseRepositoryImpl<T extends BaseEntity>
   protected abstract tableName: string;
   protected abstract entityClass: new (data: any) => T;
 
-  /**
-   * Crea una nueva entidad
-   */
+  protected getAllowedFields(): string[] {
+    return [
+      'id', 'created_at', 'updated_at', 'is_active'
+    ];
+  }
+
+  protected validateField(field: string): string {
+    const allowedFields = this.getAllowedFields();
+    if (!allowedFields.includes(field)) {
+      throw new Error(`Campo no permitido: ${field}`);
+    }
+    return this.mapFieldName(field);
+  }
+
+  protected mapRowToEntity(row: any): T {
+    // Convert snake_case database fields to private entity fields with underscore prefix
+    const entityData: any = {};
+    for (const [key, value] of Object.entries(row)) {
+      // Special handling for common fields
+      switch (key) {
+        case 'is_active':
+          entityData.isActive = value;
+          break;
+        case 'created_at':
+          entityData.createdAt = value;
+          break;
+        case 'updated_at':
+          entityData.updatedAt = value;
+          break;
+        default:
+          // Convert snake_case to camelCase for other fields
+          const camelKey = key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+          entityData[camelKey] = value;
+      }
+    }
+    
+    return new this.entityClass(entityData);
+  }
+
+  protected mapEntityToDbFields(entity: Partial<T>): { fields: string[], values: any[] } {
+    const fields: string[] = [];
+    const values: any[] = [];
+
+    // Get the public representation of the entity using toJSON with includePassword=true for User entities
+    const entityData = entity instanceof this.entityClass 
+      ? (entity as any).toJSON?.(true) || (entity as any).toJSON()
+      : entity;
+
+    // Map entity fields to database fields
+    Object.entries(entityData).forEach(([key, value]) => {
+      if (value !== undefined) {
+        // Special handling for common fields
+        let dbField: string;
+        switch (key) {
+          case 'isActive':
+            dbField = 'is_active';
+            break;
+          case 'createdAt':
+            dbField = 'created_at';
+            break;
+          case 'updatedAt':
+            dbField = 'updated_at';
+            break;
+          default:
+            // Convert camelCase to snake_case for other fields
+            dbField = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
+        }
+        fields.push(dbField);
+        values.push(value);
+      }
+    });
+
+    return { fields, values };
+  }
+
+  protected mapFieldName(field: string): string {
+    // Handle special cases first
+    switch (field) {
+      case 'isActive':
+        return 'is_active';
+      case 'createdAt':
+        return 'created_at';
+      case 'updatedAt':
+        return 'updated_at';
+      default:
+        // Convert camelCase to snake_case for database fields
+        return field.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
+    }
+  }
+
+  protected addRelations(query: string): string {
+    return query;
+  }
+
+  protected async executeQuery<R>(
+    query: string,
+    params: any[] = []
+  ): Promise<ServiceResult<R[]>> {
+    try {
+      const result = await pool.query(query, params);
+      return {
+        success: true,
+        data: result.rows,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error as Error,
+      };
+    }
+  }
+
   async create(entity: Partial<T>): Promise<ServiceResult<T>> {
     try {
-      const fields = Object.keys(entity).filter(
-        key => (entity as any)[key] !== undefined
-      );
-      const values = fields.map(field => (entity as any)[field]);
-      const placeholders = fields.map((_, index) => `$${index + 1}`);
+      const { fields, values } = this.mapEntityToDbFields(entity);
+      const placeholders = values.map((_, index) => `$${index + 1}`);
 
       const query = `
         INSERT INTO ${this.tableName} (${fields.join(', ')}, created_at, updated_at)
         VALUES (${placeholders.join(', ')}, NOW(), NOW())
         RETURNING *
       `;
+
+      console.log('DEBUG: Create query:', query);
+      console.log('DEBUG: Create values:', values);
+      console.log('DEBUG: Create fields:', fields);
 
       const result = await pool.query(query, values);
       if (result.rows.length > 0) {
@@ -51,6 +156,7 @@ export abstract class BaseRepositoryImpl<T extends BaseEntity>
         error: new Error(`Error al crear ${this.tableName}`),
       };
     } catch (error) {
+      console.log('DEBUG: Create error:', error);
       return {
         success: false,
         error: error as Error,
@@ -58,9 +164,6 @@ export abstract class BaseRepositoryImpl<T extends BaseEntity>
     }
   }
 
-  /**
-   * Busca una entidad por ID
-   */
   async findById(
     id: number,
     options?: RepositoryOptions
@@ -95,9 +198,6 @@ export abstract class BaseRepositoryImpl<T extends BaseEntity>
     }
   }
 
-  /**
-   * Obtiene todas las entidades con paginación
-   */
   async findAll(
     options?: RepositoryOptions
   ): Promise<ServiceResult<PaginatedResult<T>>> {
@@ -120,7 +220,12 @@ export abstract class BaseRepositoryImpl<T extends BaseEntity>
       }
 
       if (options?.orderBy) {
-        query += ` ORDER BY ${options.orderBy} ${options.orderDirection || 'ASC'}`;
+        const allowedOrderFields = this.getAllowedFields();
+        if (!allowedOrderFields.includes(options.orderBy)) {
+          throw new Error(`Campo de ordenamiento no permitido: ${options.orderBy}`);
+        }
+        const orderDirection = options.orderDirection === 'DESC' ? 'DESC' : 'ASC';
+        query += ` ORDER BY ${this.mapFieldName(options.orderBy)} ${orderDirection}`;
       } else {
         query += ' ORDER BY created_at DESC';
       }
@@ -153,9 +258,6 @@ export abstract class BaseRepositoryImpl<T extends BaseEntity>
     }
   }
 
-  /**
-   * Actualiza una entidad
-   */
   async update(id: number, entityData: Partial<T>): Promise<ServiceResult<T>> {
     try {
       const existingResult = await this.findById(id);
@@ -163,31 +265,21 @@ export abstract class BaseRepositoryImpl<T extends BaseEntity>
         return existingResult;
       }
 
-      const updateFields: string[] = [];
-      const values: any[] = [];
-      let paramIndex = 1;
-
-      Object.keys(entityData).forEach(key => {
-        if ((entityData as any)[key] !== undefined) {
-          updateFields.push(`${this.mapFieldName(key)} = $${paramIndex++}`);
-          values.push((entityData as any)[key]);
-        }
-      });
-
-      if (updateFields.length === 0) {
+      const { fields, values } = this.mapEntityToDbFields(entityData);
+      if (fields.length === 0) {
         return {
           success: true,
           data: existingResult.data,
         };
       }
 
-      updateFields.push('updated_at = NOW()');
+      const updateFields = fields.map((field, index) => `${field} = $${index + 1}`);
       values.push(id);
 
       const query = `
         UPDATE ${this.tableName} 
-        SET ${updateFields.join(', ')} 
-        WHERE id = $${paramIndex}
+        SET ${updateFields.join(', ')}, updated_at = NOW()
+        WHERE id = $${values.length}
         RETURNING *
       `;
 
@@ -204,12 +296,9 @@ export abstract class BaseRepositoryImpl<T extends BaseEntity>
     }
   }
 
-  /**
-   * Elimina una entidad (soft delete)
-   */
   async delete(id: number): Promise<ServiceResult<void>> {
     try {
-      const query = `UPDATE ${this.tableName} SET is_active = false, updated_at = NOW() WHERE id = $1`;
+      const query = `UPDATE ${this.tableName} SET is_active = false, updated_at = NOW() WHERE id = $1 AND is_active = true`;
       const result = await pool.query(query, [id]);
       if (result.rowCount === 0) {
         return {
@@ -221,14 +310,11 @@ export abstract class BaseRepositoryImpl<T extends BaseEntity>
     } catch (error) {
       return {
         success: false,
-        error: error as Error,
+        error: error instanceof Error ? error : new Error(String(error)),
       };
     }
   }
 
-  /**
-   * Activa una entidad
-   */
   async activate(id: number): Promise<ServiceResult<T>> {
     try {
       const query = `UPDATE ${this.tableName} SET is_active = true, updated_at = NOW() WHERE id = $1 RETURNING *`;
@@ -251,9 +337,6 @@ export abstract class BaseRepositoryImpl<T extends BaseEntity>
     }
   }
 
-  /**
-   * Desactiva una entidad
-   */
   async deactivate(id: number): Promise<ServiceResult<T>> {
     try {
       const query = `UPDATE ${this.tableName} SET is_active = false, updated_at = NOW() WHERE id = $1 RETURNING *`;
@@ -276,25 +359,19 @@ export abstract class BaseRepositoryImpl<T extends BaseEntity>
     }
   }
 
-  /**
-   * Verifica si existe una entidad con el ID dado
-   */
   async exists(id: number): Promise<boolean> {
     const query = `SELECT EXISTS(SELECT 1 FROM ${this.tableName} WHERE id = $1)`;
     const result = await pool.query(query, [id]);
     return result.rows[0]?.exists || false;
   }
 
-  /**
-   * Busca entidades por un campo específico
-   */
   async findByField(
     field: string,
     value: any,
     options?: RepositoryOptions
   ): Promise<ServiceResult<T[]>> {
     try {
-      const mappedField = this.mapFieldName(field);
+      const mappedField = this.validateField(field);
       let query = `SELECT * FROM ${this.tableName} WHERE ${mappedField} = $1`;
 
       if (!options?.withDeleted) {
@@ -320,56 +397,10 @@ export abstract class BaseRepositoryImpl<T extends BaseEntity>
     }
   }
 
-  /**
-   * Verifica si existe una entidad con el valor dado en el campo especificado
-   */
   async existsByField(field: string, value: any): Promise<boolean> {
-    const mappedField = this.mapFieldName(field);
+    const mappedField = this.validateField(field);
     const query = `SELECT EXISTS(SELECT 1 FROM ${this.tableName} WHERE ${mappedField} = $1)`;
     const result = await pool.query(query, [value]);
     return result.rows[0]?.exists || false;
-  }
-
-  /**
-   * Mapea una fila de la base de datos a la entidad
-   */
-  protected mapRowToEntity(row: any): T {
-    return new this.entityClass(row);
-  }
-
-  /**
-   * Mapea nombres de campos de camelCase a snake_case
-   */
-  protected mapFieldName(field: string): string {
-    return field.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
-  }
-
-  /**
-   * Añade relaciones a la consulta
-   */
-  protected addRelations(query: string): string {
-    // Implementar en clases hijas si es necesario
-    return query;
-  }
-
-  /**
-   * Ejecuta una consulta personalizada
-   */
-  protected async executeQuery<R>(
-    query: string,
-    params: any[] = []
-  ): Promise<ServiceResult<R[]>> {
-    try {
-      const result = await pool.query(query, params);
-      return {
-        success: true,
-        data: result.rows,
-      };
-    } catch (error) {
-      return {
-        success: false,
-        error: error as Error,
-      };
-    }
   }
 }

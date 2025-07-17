@@ -9,7 +9,7 @@ export const CreateCategorySchema = z.object({
     .string()
     .max(255, 'La descripción no puede exceder 255 caracteres')
     .optional(),
-  parentId: z.number().int().positive('parentId debe ser positivo').optional(),
+  parentId: z.number().int().positive('parentId debe ser positivo').nullable().optional(),
   isActive: z.boolean().optional().default(true),
 });
 

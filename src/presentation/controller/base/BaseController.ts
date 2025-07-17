@@ -29,8 +29,10 @@ export abstract class BaseController {
     validateFn: (data: any) => TInput,
     executeFn: (data: TInput) => Promise<TOutput>
   ): Promise<void> {
+    console.log('DEBUG: BaseController.handleCreate - req.body:', JSON.stringify(req.body, null, 2));
     try {
       const validatedData = validateFn(req.body);
+      console.log('DEBUG: BaseController.handleCreate - validatedData:', JSON.stringify(validatedData, null, 2));
       const result = await executeFn(validatedData);
       res
         .status(201)
@@ -38,6 +40,7 @@ export abstract class BaseController {
           buildCreatedResponse(result, this.config.successMessages.created)
         );
     } catch (error) {
+      console.log('DEBUG: BaseController.handleCreate - error:', error);
       this.handleError(error, req, res, 'create');
     }
   }
@@ -49,6 +52,13 @@ export abstract class BaseController {
   ): Promise<void> {
     try {
       const id = Number(req.params.id);
+      if (isNaN(id)) {
+        res.status(400).json(
+          buildErrorResponse('ID inválido', 'El ID debe ser un número válido')
+        );
+        return;
+      }
+      
       const result = await executeFn(id);
       res
         .status(200)
@@ -82,6 +92,13 @@ export abstract class BaseController {
   ): Promise<void> {
     try {
       const id = Number(req.params.id);
+      if (isNaN(id)) {
+        res.status(400).json(
+          buildErrorResponse('ID inválido', 'El ID debe ser un número válido')
+        );
+        return;
+      }
+      
       const validatedData = validateFn(req.body);
       const result = await executeFn(id, validatedData);
       res
@@ -97,17 +114,39 @@ export abstract class BaseController {
   protected async handleDelete(
     req: Request,
     res: Response,
-    executeFn: (id: number) => Promise<void>
+    executeFn: (id: number) => Promise<any>
   ): Promise<void> {
     try {
-      const id = Number(req.params.id);
-      await executeFn(id);
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        res.status(400).json(
+          buildErrorResponse('ID inválido', 'El ID debe ser un número válido')
+        );
+        return;
+      }
+
+      const result = await executeFn(id);
+      
+      if (!result) {
+        res.status(404).json(
+          buildErrorResponse('Recurso no encontrado', `No se encontró el recurso con ID ${id}`)
+        );
+        return;
+      }
+
       res
         .status(200)
-        .json(
-          buildSuccessResponse(this.config.successMessages.deleted, { id })
-        );
+        .json(buildSuccessResponse(this.config.successMessages.deleted, result));
     } catch (error) {
+      // Si el error indica que no se encontró el recurso, devolver 404
+      if (error instanceof Error && error.message.includes('not found')) {
+        const id = parseInt(req.params.id);
+        res.status(404).json(
+          buildErrorResponse('Recurso no encontrado', `No se encontró el recurso con ID ${id}`)
+        );
+        return;
+      }
+      
       this.handleError(error, req, res, 'delete');
     }
   }
@@ -124,8 +163,26 @@ export abstract class BaseController {
     res: Response,
     method: string
   ): void {
-    const message =
-      error instanceof Error ? error.message : 'Error desconocido';
-    res.status(400).json(buildErrorResponse(`Error en ${method}`, message));
+    let statusCode = 400;
+    let message = 'Error desconocido';
+    
+    if (error instanceof Error) {
+      message = error.message;
+      
+      // Determinar el código de estado basado en el tipo de error
+      if (message.includes('not found') || message.includes('no encontrado')) {
+        statusCode = 404;
+      } else if (message.includes('validation') || message.includes('Validation error')) {
+        statusCode = 400;
+      } else if (message.includes('unauthorized') || message.includes('permission')) {
+        statusCode = 403;
+      } else if (message.includes('conflict') || message.includes('duplicate')) {
+        statusCode = 409;
+      } else if (message.includes('internal') || message.includes('database')) {
+        statusCode = 500;
+      }
+    }
+    
+    res.status(statusCode).json(buildErrorResponse(`Error en ${method}`, message));
   }
 }

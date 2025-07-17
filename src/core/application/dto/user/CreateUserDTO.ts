@@ -16,14 +16,7 @@ export const CreateUserSchema = z.object({
     .email('Email inválido')
     .min(1, 'Email es requerido')
     .max(100, 'Email no puede exceder 100 caracteres'),
-  password: z
-    .string()
-    .min(6, 'La contraseña debe tener al menos 6 caracteres')
-    .max(255, 'La contraseña no puede exceder 255 caracteres')
-    .regex(
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-      'La contraseña debe contener al menos una minúscula, una mayúscula y un número'
-    ),
+  password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres'),
   name: z
     .string()
     .min(2, 'El nombre debe tener al menos 2 caracteres')
@@ -50,7 +43,22 @@ export type CreateUserDTO = z.infer<typeof CreateUserSchema>;
  * @throws {Error} Si los datos son inválidos
  */
 export function validateCreateUser(data: unknown): CreateUserDTO {
-  return CreateUserSchema.parse(data);
+  console.log('DEBUG: validateCreateUser input:', JSON.stringify(data, null, 2));
+  console.log('DEBUG: password type:', typeof (data as any)?.password);
+  console.log('DEBUG: password value:', (data as any)?.password);
+  console.log('DEBUG: password length:', (data as any)?.password?.length);
+  
+  try {
+    const result = CreateUserSchema.parse(data);
+    console.log('DEBUG: validation successful:', result);
+    return result;
+  } catch (error) {
+    console.log('DEBUG: validation error:', error);
+    if (error instanceof z.ZodError) {
+      console.log('DEBUG: zod errors:', error.errors);
+    }
+    throw error;
+  }
 }
 
 /**

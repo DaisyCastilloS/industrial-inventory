@@ -1,9 +1,3 @@
-/**
- * @fileoverview Implementación del repositorio de productos
- * @author Daisy Castillo
- * @version 1.0.0
- */
-
 import { BaseRepositoryImpl } from './base/BaseRepositoryImpl';
 import { Product, IProduct, SKU } from '../../core/domain/entity/Product';
 import { IProductRepository } from '../../core/domain/repository/ProductRepository';
@@ -20,9 +14,6 @@ export class ProductRepositoryImpl
   protected tableName = 'products';
   protected entityClass = Product;
 
-  /**
-   * Añade relaciones a la consulta
-   */
   protected addRelations(query: string): string {
     return query.replace(
       'FROM products',
@@ -33,21 +24,24 @@ export class ProductRepositoryImpl
     );
   }
 
-  /**
-   * Busca un producto por SKU
-   */
   async findBySku(sku: SKU | string): Promise<ServiceResult<Product | null>> {
-    const result = await this.findByField('sku', sku);
-    if (!result.success) return result;
-    return {
-      success: true,
-      data: result.data[0] || null,
-    };
+    try {
+      const result = await pool.query(
+        'SELECT * FROM products WHERE sku = $1 AND is_active = true',
+        [sku]
+      );
+      return {
+        success: true,
+        data: result.rows.length > 0 ? this.mapRowToEntity(result.rows[0]) : null,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error as Error,
+      };
+    }
   }
 
-  /**
-   * Busca productos por categoría
-   */
   async findByCategory(
     categoryId: number,
     options?: RepositoryOptions
@@ -55,9 +49,6 @@ export class ProductRepositoryImpl
     return this.findByField('categoryId', categoryId, options);
   }
 
-  /**
-   * Busca productos por ubicación
-   */
   async findByLocation(
     locationId: number,
     options?: RepositoryOptions
@@ -65,9 +56,6 @@ export class ProductRepositoryImpl
     return this.findByField('locationId', locationId, options);
   }
 
-  /**
-   * Busca productos por proveedor
-   */
   async findBySupplier(
     supplierId: number,
     options?: RepositoryOptions
@@ -75,27 +63,27 @@ export class ProductRepositoryImpl
     return this.findByField('supplierId', supplierId, options);
   }
 
-  /**
-   * Busca productos por estado de stock
-   */
-  async findByStockStatus(
-    status: StockStatus
-  ): Promise<ServiceResult<Product[]>> {
+  async findCriticalStock(): Promise<ServiceResult<Product[]>> {
+    return this.findByStockStatus(StockStatus.CRITICAL);
+  }
+
+  async findByStockStatus(status: StockStatus): Promise<ServiceResult<Product[]>> {
     try {
-      let query: string;
+      let query = '';
       switch (status) {
         case StockStatus.CRITICAL:
-          query = ProductQueries.findCriticalStock;
+          query = 'SELECT * FROM products WHERE quantity <= critical_stock AND is_active = true';
           break;
         case StockStatus.OUT_OF_STOCK:
-          query = ProductQueries.findOutOfStock;
-          break;
-        case StockStatus.NORMAL:
-          query = ProductQueries.findNormalStock;
+          query = 'SELECT * FROM products WHERE quantity = 0 AND is_active = true';
           break;
         default:
-          return { success: true, data: [] };
+          return {
+            success: false,
+            error: new Error('Estado de stock no válido'),
+          };
       }
+      
       const result = await pool.query(query);
       return {
         success: true,
@@ -109,23 +97,10 @@ export class ProductRepositoryImpl
     }
   }
 
-  /**
-   * Busca productos en stock crítico
-   */
-  async findCriticalStock(): Promise<ServiceResult<Product[]>> {
-    return this.findByStockStatus(StockStatus.CRITICAL);
-  }
-
-  /**
-   * Busca productos sin stock
-   */
   async findOutOfStock(): Promise<ServiceResult<Product[]>> {
     return this.findByStockStatus(StockStatus.OUT_OF_STOCK);
   }
 
-  /**
-   * Busca productos por nombre
-   */
   async searchByName(name: string): Promise<ServiceResult<Product[]>> {
     try {
       const result = await pool.query(ProductQueries.searchByName, [
@@ -143,9 +118,6 @@ export class ProductRepositoryImpl
     }
   }
 
-  /**
-   * Actualiza el stock de un producto
-   */
   async updateStock(
     id: number,
     quantity: number
@@ -153,9 +125,6 @@ export class ProductRepositoryImpl
     return this.update(id, { quantity } as Partial<Product>);
   }
 
-  /**
-   * Añade stock a un producto
-   */
   async addStock(
     id: number,
     quantity: number
@@ -164,13 +133,16 @@ export class ProductRepositoryImpl
     if (!existingResult.success) return existingResult;
 
     const product = existingResult.data;
+    if (!product) {
+      return {
+        success: false,
+        error: new Error('Producto no encontrado'),
+      };
+    }
     const newQuantity = product.quantity + quantity;
     return this.update(id, { quantity: newQuantity } as Partial<Product>);
   }
 
-  /**
-   * Reduce stock de un producto
-   */
   async reduceStock(
     id: number,
     quantity: number
@@ -179,6 +151,12 @@ export class ProductRepositoryImpl
     if (!existingResult.success) return existingResult;
 
     const product = existingResult.data;
+    if (!product) {
+      return {
+        success: false,
+        error: new Error('Producto no encontrado'),
+      };
+    }
     if (product.quantity < quantity) {
       return {
         success: false,
@@ -189,16 +167,10 @@ export class ProductRepositoryImpl
     return this.update(id, { quantity: newQuantity } as Partial<Product>);
   }
 
-  /**
-   * Verifica si existe un producto con el SKU dado
-   */
   async existsBySku(sku: SKU | string): Promise<boolean> {
     return this.existsByField('sku', sku);
   }
 
-  /**
-   * Obtiene estadísticas de inventario
-   */
   async getInventoryStats(): Promise<
     ServiceResult<{
       totalProducts: number;
@@ -228,19 +200,16 @@ export class ProductRepositoryImpl
     }
   }
 
-  /**
-   * Obtiene el historial de auditoría de un producto
-   */
   async getAuditTrail(
     productId: number
-  ): Promise<ServiceResult<AuditLog<IProduct>[]>> {
+  ): Promise<ServiceResult<AuditLog<Product>[]>> {
     try {
       const result = await pool.query(ProductQueries.getAuditTrail, [
         productId,
       ]);
       return {
         success: true,
-        data: result.rows.map((row: any) => new AuditLog<IProduct>(row)),
+        data: result.rows.map((row: any) => new AuditLog<Product>(row)),
       };
     } catch (error) {
       return {
@@ -250,9 +219,6 @@ export class ProductRepositoryImpl
     }
   }
 
-  /**
-   * Obtiene productos con información completa
-   */
   async getProductsFullInfo(
     options?: RepositoryOptions
   ): Promise<ServiceResult<any[]>> {
@@ -284,9 +250,6 @@ export class ProductRepositoryImpl
     }
   }
 
-  /**
-   * Obtiene productos en stock crítico
-   */
   async getCriticalStockProducts(
     options?: RepositoryOptions
   ): Promise<ServiceResult<any[]>> {

@@ -19,7 +19,20 @@ export const CategoryQueries = {
   findRoot: `SELECT * FROM categories WHERE parent_id IS NULL AND is_active = true`,
   findByDescription: `SELECT * FROM categories WHERE description ILIKE $1`,
   existsByName: `SELECT COUNT(*) FROM categories WHERE name = $1`,
-  findByField: field => `SELECT * FROM categories WHERE ${field} = $1`,
+  
+  findByField: (field: string) => {
+    const allowedFields = [
+      'id', 'name', 'description', 'parent_id', 'is_active', 
+      'created_at', 'updated_at'
+    ];
+    
+    if (!allowedFields.includes(field)) {
+      throw new Error(`Campo no permitido: ${field}`);
+    }
+    
+    return `SELECT * FROM categories WHERE ${field} = $1`;
+  },
+  
   stats: {
     total: `SELECT COUNT(*) FROM categories`,
     active: `SELECT COUNT(*) FROM categories WHERE is_active = true`,

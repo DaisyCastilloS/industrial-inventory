@@ -1,9 +1,3 @@
-/**
- * @fileoverview Controlador para categorías
- * @author Daisy Castillo
- * @version 1.0.0
- */
-
 import { Request, Response } from 'express';
 import { BaseController } from './base/BaseController';
 import { CreateCategoryUseCase } from '../../core/application/usecase/category/CreateCategoryUseCase';

@@ -1,22 +1,13 @@
-/**
- * @fileoverview Caso de uso para listar logs de auditoría
- * @author Daisy Castillo
- * @version 1.0.0
- */
-
 import { BaseListUseCase } from '../base/BaseUseCase';
-import { IAuditLogRepository } from '../../../domain/repository/AuditLogRepository';
+import { AuditLogRepositoryImpl } from '../../../../infrastructure/services/AuditLogRepositoryImpl';
 import { LoggerWrapperInterface } from '../../interface/LoggerWrapperInterface';
 import { ListAuditLogsResponseDTO } from '../../dto/auditLog/ListAuditLogsResponseDTO';
 import { AuditLogResponseDTO } from '../../dto/auditLog/AuditLogResponseDTO';
 import { DTOMapper } from '../../utils/DTOMapper';
 
-/**
- * Caso de uso para listar logs de auditoría
- */
 export class ListAuditLogsUseCase extends BaseListUseCase<ListAuditLogsResponseDTO> {
   constructor(
-    private auditLogRepository: IAuditLogRepository,
+    private auditLogRepository: AuditLogRepositoryImpl,
     logger: LoggerWrapperInterface
   ) {
     super(logger, {
@@ -25,8 +16,25 @@ export class ListAuditLogsUseCase extends BaseListUseCase<ListAuditLogsResponseD
     });
   }
 
-  protected async findAll(): Promise<any[]> {
-    return this.auditLogRepository.findAll();
+  protected async findAll({ page = 1, limit = 10 } = {}): Promise<any> {
+    // Simulate pagination for audit logs
+    const result = await this.auditLogRepository.findAll();
+    const allLogs = result.data || [];
+    const total = allLogs.length;
+    const totalPages = Math.ceil(total / limit);
+    const start = (page - 1) * limit;
+    const end = start + limit;
+    const paginatedLogs = allLogs.slice(start, end);
+    return {
+      success: true,
+      data: {
+        items: paginatedLogs,
+        total,
+        page,
+        limit,
+        totalPages,
+      },
+    };
   }
 
   protected isValidEntity(entity: any): boolean {

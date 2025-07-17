@@ -1,13 +1,8 @@
-/**
- * @fileoverview Interfaz base para repositorios
- * @author Daisy Castillo
- */
-
 import {
   ServiceResult,
   PaginatedResult,
   RepositoryOptions,
-} from '../../../infrastructure/services/base/ServiceTypes';
+} from '../../../../infrastructure/services/base/ServiceTypes';
 
 export interface BaseEntity {
   id?: number;
@@ -35,9 +30,6 @@ export interface IBaseRepository<T extends BaseEntity> {
   existsByField(field: string, value: any): Promise<boolean>;
 }
 
-/**
- * Interfaz base para repositorios con búsqueda
- */
 export interface IBaseRepositoryWithSearch<T extends BaseEntity>
   extends IBaseRepository<T> {
   search(
@@ -51,15 +43,7 @@ export interface IBaseRepositoryWithSearch<T extends BaseEntity>
   ): Promise<ServiceResult<T[]>>;
 }
 
-/**
- * Interfaz para repositorios con auditoría
- */
 export interface IBaseRepositoryWithAudit<T extends BaseEntity>
   extends IBaseRepository<T> {
-  /**
-   * Obtiene el historial de auditoría de una entidad
-   * @param entityId - ID de la entidad
-   * @returns Lista de logs de auditoría
-   */
   getAuditTrail(entityId: number): Promise<any[]>;
 }

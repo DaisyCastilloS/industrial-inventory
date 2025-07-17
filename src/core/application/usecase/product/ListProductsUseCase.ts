@@ -7,26 +7,20 @@
 import { BaseListUseCase } from '../../base/BaseUseCase';
 import { IProductRepository } from '../../../domain/repository/ProductRepository';
 import { LoggerWrapperInterface } from '../../interface/LoggerWrapperInterface';
-import {
-  ProductFullResponseDTO,
-  ProductListResponseDTO,
-} from '../../dto/product/ProductResponseDTO';
+import { ProductFullResponseDTO } from '../../dto/product/ProductResponseDTO';
 import { Product } from '../../../domain/entity/Product';
+import { ServiceResult, PaginatedResult } from '../../../../infrastructure/services/base/ServiceTypes';
 
-export class ListProductsUseCase extends BaseListUseCase<ProductListResponseDTO> {
+export class ListProductsUseCase extends BaseListUseCase<Product, ProductFullResponseDTO> {
   constructor(
     private productRepository: IProductRepository,
     logger: LoggerWrapperInterface
   ) {
-    super(logger, { action: 'LIST_PRODUCTS', entityName: 'Producto' });
+    super(logger, { action: 'LIST_PRODUCTS', entityName: 'Product' });
   }
 
-  protected async findAll(): Promise<Product[]> {
-    return this.productRepository.findAll();
-  }
-
-  protected isValidEntity(product: Product): boolean {
-    return !!product;
+  protected async findAll(filters?: Record<string, any>): Promise<ServiceResult<PaginatedResult<Product>>> {
+    return this.productRepository.findAll(filters);
   }
 
   protected mapToDTO(product: Product): ProductFullResponseDTO {
@@ -49,22 +43,6 @@ export class ListProductsUseCase extends BaseListUseCase<ProductListResponseDTO>
       categoryName: null,
       locationName: null,
       supplierName: null,
-    };
-  }
-
-  protected createListResponse(
-    products: ProductFullResponseDTO[],
-    total: number,
-    page: number,
-    limit: number,
-    totalPages: number
-  ): ProductListResponseDTO {
-    return {
-      products,
-      total,
-      page,
-      limit,
-      totalPages,
     };
   }
 }

@@ -17,7 +17,20 @@ export const SupplierQueries = {
   findByName: `SELECT * FROM suppliers WHERE name = $1`,
   findActive: `SELECT * FROM suppliers WHERE is_active = true`,
   existsByName: `SELECT COUNT(*) FROM suppliers WHERE name = $1`,
-  findByField: field => `SELECT * FROM suppliers WHERE ${field} = $1`,
+  
+  findByField: (field: string) => {
+    const allowedFields = [
+      'id', 'name', 'contact_name', 'contact_email', 'phone', 
+      'address', 'is_active', 'created_at', 'updated_at'
+    ];
+    
+    if (!allowedFields.includes(field)) {
+      throw new Error(`Campo no permitido: ${field}`);
+    }
+    
+    return `SELECT * FROM suppliers WHERE ${field} = $1`;
+  },
+  
   stats: {
     total: `SELECT COUNT(*) FROM suppliers`,
     active: `SELECT COUNT(*) FROM suppliers WHERE is_active = true`,

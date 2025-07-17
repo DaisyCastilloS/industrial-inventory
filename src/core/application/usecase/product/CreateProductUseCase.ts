@@ -7,79 +7,53 @@
 import { BaseCreateUseCase } from '../../base/BaseUseCase';
 import { IProductRepository } from '../../../domain/repository/ProductRepository';
 import { LoggerWrapperInterface } from '../../interface/LoggerWrapperInterface';
-import {
-  CreateProductDTO,
-  validateCreateProduct,
-} from '../../dto/product/CreateProductDTO';
-import { ProductFullResponseDTO } from '../../dto/product/ProductResponseDTO';
-import { Product, IProduct, SKU } from '../../../domain/entity/Product';
+import { CreateProductDTO } from '../../dto/product/CreateProductDTO';
+import { Product } from '../../../domain/entity/Product';
+import { ServiceResult } from '../../../../infrastructure/services/base/ServiceTypes';
 
-export class CreateProductUseCase extends BaseCreateUseCase<
-  CreateProductDTO,
-  ProductFullResponseDTO
-> {
+export class CreateProductUseCase extends BaseCreateUseCase<CreateProductDTO, Product> {
   constructor(
     private productRepository: IProductRepository,
     logger: LoggerWrapperInterface
   ) {
-    super(logger, { action: 'CREATE_PRODUCT', entityName: 'Producto' });
+    super(logger, { action: 'CREATE_PRODUCT', entityName: 'Product' });
   }
 
-  protected validateInput(input: CreateProductDTO): void {
-    validateCreateProduct(input);
-  }
-
-  protected async createEntity(data: CreateProductDTO): Promise<Product> {
-    const existingProduct = await this.productRepository.findBySku(
-      data.sku as SKU
-    );
-    if (existingProduct) {
-      throw new Error('Ya existe un producto con este SKU');
+  protected async validateCreateInput(input: CreateProductDTO): Promise<void> {
+    if (!input.name || !input.sku) {
+      throw new Error('Product name and SKU are required');
     }
+    
+    const existingProduct = await this.productRepository.findBySku(input.sku);
+    if (existingProduct.success && existingProduct.data) {
+      throw new Error('A product with this SKU already exists');
+    }
+  }
 
-    const productData: IProduct = {
-      name: data.name,
-      description: data.description,
-      sku: data.sku as SKU,
-      price: data.price,
-      quantity: data.quantity,
-      criticalStock: data.criticalStock,
-      categoryId: data.categoryId,
-      locationId: data.locationId,
-      supplierId: data.supplierId,
-      isActive: data.isActive,
-    };
+  protected async performCreate(input: CreateProductDTO): Promise<ServiceResult<Product>> {
+    const product = new Product({
+      name: input.name,
+      description: input.description,
+      isActive: input.is_active ?? true,
+      sku: input.sku,
+      price: input.price,
+      quantity: input.quantity,
+      criticalStock: input.critical_stock,
+      categoryId: input.category_id,
+      locationId: input.location_id,
+      supplierId: input.supplier_id
+    });
 
-    const product = new Product(productData);
     return this.productRepository.create(product);
   }
 
-  protected validateCreatedEntity(product: Product): void {
-    if (!product) {
-      throw new Error('Error al crear el producto');
+  protected async validateCreatedEntity(entity: Product): Promise<void> {
+    if (!entity || !entity.name || !entity.sku) {
+      throw new Error('Invalid product entity');
     }
-  }
-
-  protected mapToDTO(product: Product): ProductFullResponseDTO {
-    return {
-      id: product.id || 0,
-      name: product.name,
-      description: product.description || null,
-      sku: product.sku,
-      price: product.price,
-      quantity: product.quantity,
-      criticalStock: product.criticalStock,
-      categoryId: product.categoryId,
-      locationId: product.locationId || null,
-      supplierId: product.supplierId || null,
-      isActive: product.isActive,
-      stockStatus: product.getStockStatus(),
-      inventoryValue: product.getInventoryValue(),
-      createdAt: product.createdAt || new Date(),
-      updatedAt: product.updatedAt || new Date(),
-      categoryName: null,
-      locationName: null,
-      supplierName: null,
-    };
+    // Validar solo que tenga ID, no createdAt/updatedAt
+    if (!entity.id) {
+      throw new Error('Product entity must have an ID after creation');
+    }
   }
 }

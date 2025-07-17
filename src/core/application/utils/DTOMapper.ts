@@ -3,11 +3,10 @@
  * @author Daisy Castillo
  */
 
-export interface BaseEntity {
-  id?: number;
-  createdAt?: Date;
-  updatedAt?: Date;
-  isActive?: boolean;
+import { BaseEntity as DomainBaseEntity } from '../../domain/entity/base/BaseEntity';
+
+export interface BaseEntity extends DomainBaseEntity {
+  toJSON(): any;
 }
 
 export interface BaseResponseDTO {
@@ -26,17 +25,20 @@ export class DTOMapper {
     entity: T,
     additionalFields: Partial<R> = {}
   ): R {
-    if (!entity.id || !entity.createdAt || !entity.updatedAt) {
+    // Use toJSON to get the public representation
+    const entityData = entity.toJSON();
+
+    if (!entityData.id) {
       throw new Error(
-        'Entity missing required fields: id, createdAt, or updatedAt'
+        'Entity missing required field: id'
       );
     }
 
     return {
-      id: entity.id,
-      createdAt: entity.createdAt,
-      updatedAt: entity.updatedAt,
-      isActive: entity.isActive ?? true,
+      id: entityData.id,
+      createdAt: entityData.createdAt,
+      updatedAt: entityData.updatedAt,
+      isActive: entityData.isActive ?? true,
       ...additionalFields,
     } as R;
   }
@@ -57,8 +59,8 @@ export class DTOMapper {
   static createPaginatedResponse<T>(
     items: T[],
     total: number,
-    page: number,
-    limit: number
+    page: number = 1,
+    limit: number = 10
   ) {
     const totalPages = Math.ceil(total / limit);
     return {
@@ -74,7 +76,8 @@ export class DTOMapper {
    * Validates entity has required fields
    */
   static validateEntity(entity: BaseEntity): boolean {
-    return !!(entity.id && entity.createdAt && entity.updatedAt);
+    const entityData = entity.toJSON();
+    return !!entityData.id;
   }
 
   /**
@@ -85,40 +88,53 @@ export class DTOMapper {
   }
 
   /**
+   * Maps any entity to a response DTO
+   */
+  static mapToResponseDTO<T extends BaseEntity, R extends BaseResponseDTO>(
+    entity: T,
+    dtoClass: new () => R
+  ): R {
+    const dto = new dtoClass();
+    const entityData = entity.toJSON();
+    return { ...dto, ...entityData };
+  }
+
+  /**
    * Maps a Supplier entity to SupplierResponseDTO
    */
-  static mapSupplierToResponseDTO(supplier: any): any {
+  static mapSupplierToResponseDTO(supplier: BaseEntity): any {
     return this.mapBaseEntity(supplier, {
-      name: supplier.name,
-      description: supplier.description ?? null,
-      contactPerson: supplier.contactPerson ?? null,
-      email: supplier.email ?? null,
-      phone: supplier.phone ?? null,
-      address: supplier.address ?? null,
+      name: supplier.toJSON().name,
+      description: supplier.toJSON().description ?? null,
+      contactPerson: supplier.toJSON().contactPerson ?? null,
+      email: supplier.toJSON().email ?? null,
+      phone: supplier.toJSON().phone ?? null,
+      address: supplier.toJSON().address ?? null,
     });
   }
 
   /**
    * Maps a Location entity to LocationResponseDTO
    */
-  static mapLocationToResponseDTO(location: any): any {
+  static mapLocationToResponseDTO(location: BaseEntity): any {
     return this.mapBaseEntity(location, {
-      name: location.name,
-      description: location.description ?? null,
-      code: location.code ?? null,
-      type: location.type ?? null,
-      parentId: location.parentId ?? null,
+      name: location.toJSON().name,
+      description: location.toJSON().description ?? null,
+      zone: location.toJSON().zone ?? null,
+      shelf: location.toJSON().shelf ?? null,
+      capacity: location.toJSON().capacity ?? null,
+      currentUsage: location.toJSON().currentUsage ?? null,
     });
   }
 
   /**
    * Maps a User entity to UserResponseDTO
    */
-  static mapUserToResponseDTO(user: any): any {
+  static mapUserToResponseDTO(user: BaseEntity): any {
     return this.mapBaseEntity(user, {
-      email: user.email,
-      name: user.name,
-      role: user.role,
+      email: user.toJSON().email,
+      name: user.toJSON().name,
+      role: user.toJSON().role,
       // No incluir password
     });
   }
@@ -126,28 +142,29 @@ export class DTOMapper {
   /**
    * Maps a Category entity to CategoryResponseDTO
    */
-  static mapCategoryToResponseDTO(category: any): any {
+  static mapCategoryToResponseDTO(category: BaseEntity): any {
     return this.mapBaseEntity(category, {
-      name: category.name,
-      description: category.description ?? null,
-      parentId: category.parentId ?? null,
+      name: category.toJSON().name,
+      description: category.toJSON().description ?? null,
+      parentId: category.toJSON().parentId ?? null,
     });
   }
 
   /**
    * Maps a ProductMovement entity to ProductMovementResponseDTO
    */
-  static mapProductMovementToResponseDTO(movement: any): any {
+  static mapProductMovementToResponseDTO(movement: BaseEntity): any {
+    const data = movement.toJSON();
     return {
-      id: movement.id,
-      productId: movement.productId,
-      movementType: String(movement.movementType),
-      quantity: movement.quantity,
-      previousQuantity: movement.previousQuantity,
-      newQuantity: movement.newQuantity,
-      reason: movement.reason ?? null,
-      userId: movement.userId,
-      createdAt: movement.createdAt,
+      id: data.id,
+      productId: data.productId,
+      movementType: String(data.movementType),
+      quantity: data.quantity,
+      previousQuantity: data.previousQuantity,
+      newQuantity: data.newQuantity,
+      reason: data.reason ?? null,
+      userId: data.userId,
+      createdAt: data.createdAt,
     };
   }
 }

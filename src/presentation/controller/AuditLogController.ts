@@ -35,6 +35,9 @@ export class AuditLogController extends BaseController {
       auditLogRepository,
       logger
     );
+    
+    // Bind the method to preserve 'this' context
+    this.listAuditLogs = this.listAuditLogs.bind(this);
   }
 
   listAuditLogs = async (req: Request, res: Response): Promise<void> => {

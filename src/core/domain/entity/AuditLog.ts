@@ -1,25 +1,11 @@
-/**
- * @fileoverview Entidad de dominio para logs de auditoría
- * @author Daisy Castillo
- * @version 1.0.0
- */
-
 import { AuditAction } from '../../../shared/constants/RoleTypes';
 
-/**
- * Tipos semánticos para mayor claridad y robustez
- */
 type TableName = string & { readonly table: unique symbol };
 type IpAddress = string & { readonly ip: unique symbol };
-
 type UserAgent = string & { readonly ua: unique symbol };
 
 export type { TableName, IpAddress };
 
-/**
- * Interfaz para datos de log de auditoría alineada a la tabla 'audit_logs'
- * Permite parametrizar los tipos de oldValues y newValues para mayor seguridad de tipos.
- */
 export interface IAuditLog<T = unknown> {
   id?: number;
   tableName: string;
@@ -35,16 +21,6 @@ export interface IAuditLog<T = unknown> {
   metadata?: Record<string, unknown>;
 }
 
-/**
- * Entidad de dominio para logs de auditoría
- *
- * - Solo se puede modificar el estado mediante métodos de dominio.
- * - Validación centralizada y exhaustiva.
- * - Getters públicos para todos los campos relevantes.
- *
- * @class AuditLog
- * @template T - Tipo de los valores antiguos y nuevos (por defecto unknown)
- */
 export class AuditLog<T = unknown> {
   private readonly _id?: number;
   private _tableName: TableName;
@@ -59,11 +35,6 @@ export class AuditLog<T = unknown> {
   private _oldValues?: T;
   private _newValues?: T;
 
-  /**
-   * Crea una nueva instancia de AuditLog
-   * @param data - Datos del log de auditoría
-   * @throws {Error} Si los datos son inválidos
-   */
   constructor(data: IAuditLog<T>) {
     this.validateAuditLogData(data);
     this._id = data.id;
@@ -80,7 +51,6 @@ export class AuditLog<T = unknown> {
     this._newValues = data.newValues;
   }
 
-  // --- Getters públicos ---
   get id(): number | undefined {
     return this._id;
   }
@@ -118,31 +88,18 @@ export class AuditLog<T = unknown> {
     return this._newValues;
   }
 
-  /**
-   * Indica si el log ha sido revisado
-   */
   public isReviewed(): boolean {
     return this._reviewed;
   }
 
-  // --- Métodos de dominio para cambios de estado ---
-
-  /**
-   * Marca el log como revisado
-   */
   public markReviewed(): void {
     this._reviewed = true;
   }
 
-  /**
-   * Actualiza la metadata del log
-   * @param newMetadata - nueva metadata
-   */
   public updateMetadata(newMetadata: Record<string, unknown>): void {
     this._metadata = newMetadata;
   }
 
-  // --- Validación centralizada y granular ---
   private validateAuditLogData(data: IAuditLog<T>): void {
     this.validateTableName(data.tableName);
     this.validateRecordId(data.recordId);
@@ -151,6 +108,7 @@ export class AuditLog<T = unknown> {
     this.validateIpAddress(data.ipAddress);
     this.validateUserAgent(data.userAgent);
   }
+
   private validateTableName(tableName: string): void {
     if (!tableName || typeof tableName !== 'string') {
       throw new Error('El nombre de la tabla es obligatorio');
@@ -159,6 +117,7 @@ export class AuditLog<T = unknown> {
       throw new Error('El nombre de la tabla no puede exceder 100 caracteres');
     }
   }
+
   private validateRecordId(recordId?: number): void {
     if (recordId === undefined || recordId === null) {
       throw new Error('El ID de registro es obligatorio');
@@ -167,6 +126,7 @@ export class AuditLog<T = unknown> {
       throw new Error('El ID de registro debe ser positivo');
     }
   }
+
   private validateAction(action: AuditAction): void {
     if (!action || typeof action !== 'string') {
       throw new Error('La acción es obligatoria');
@@ -178,26 +138,25 @@ export class AuditLog<T = unknown> {
       throw new Error('La acción no puede exceder 50 caracteres');
     }
   }
+
   private validateUserId(userId?: number): void {
     if (userId !== undefined && userId <= 0) {
       throw new Error('El ID de usuario debe ser positivo');
     }
   }
+
   private validateIpAddress(ip?: string): void {
     if (ip && ip.length > 50) {
       throw new Error('La IP no puede exceder 50 caracteres');
     }
   }
+
   private validateUserAgent(ua?: string): void {
     if (ua && ua.length > 255) {
       throw new Error('El user agent no puede exceder 255 caracteres');
     }
   }
 
-  /**
-   * Convierte la entidad a objeto plano
-   * @returns Objeto con los datos del log de auditoría
-   */
   public toJSON(): IAuditLog<T> {
     return {
       id: this._id,

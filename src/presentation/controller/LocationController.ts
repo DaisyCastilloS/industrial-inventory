@@ -1,9 +1,3 @@
-/**
- * @fileoverview Controlador para ubicaciones
- * @author Daisy Castillo
- * @version 1.0.0
- */
-
 import { Request, Response } from 'express';
 import { BaseController } from './base/BaseController';
 import { CreateLocationUseCase } from '../../core/application/usecase/location/CreateLocationUseCase';

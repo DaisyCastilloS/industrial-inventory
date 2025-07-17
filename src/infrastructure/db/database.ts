@@ -1,9 +1,3 @@
-/**
- * @fileoverview Configuración optimizada de base de datos
- * @author Daisy Castillo
- * @version 1.0.0
- */
-
 import { Pool, PoolConfig, PoolClient } from 'pg';
 import { LoggerWrapperInterface } from '../../core/application/interface/LoggerWrapperInterface';
 import { WinstonLogger } from '../logger/WinstonLogger';
@@ -58,14 +52,10 @@ class DatabasePool {
       user: process.env.DB_USER,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
-
-      // Pool configuration
       max: maxConnections,
-      min: Math.floor(maxConnections * 0.2), // Mantener al menos 20% de conexiones
+      min: Math.floor(maxConnections * 0.2),
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 2000,
-
-      // Production SSL
       ssl:
         process.env.NODE_ENV === 'production'
           ? {
@@ -75,16 +65,10 @@ class DatabasePool {
               cert: process.env.DB_SSL_CERT,
             }
           : undefined,
-
-      // Query configuration
       statement_timeout: 30000,
       query_timeout: 30000,
-
-      // Connection maintenance
       keepAlive: true,
       keepAliveInitialDelayMillis: 10000,
-
-      // Application name for monitoring
       application_name: process.env.APP_NAME || 'industrial-inventory',
     };
   }
@@ -95,7 +79,6 @@ class DatabasePool {
       this.metrics.totalConnections++;
       this.metrics.activeConnections++;
 
-      // Setup client-specific error handler
       client.on('error', (err: Error) => {
         this.handleError('Client error:', err);
       });
@@ -140,7 +123,6 @@ class DatabasePool {
           metrics,
         });
 
-        // Auto-healing: reiniciar pool si hay demasiados errores
         if (metrics.connectionTimeouts > 5 || metrics.queryTimeouts > 10) {
           await this.restartPool();
         }
@@ -268,8 +250,5 @@ class DatabasePool {
   }
 }
 
-// Exportar instancia única del pool
 export const pool = DatabasePool.getInstance().getPool();
-
-// Exportar clase para casos especiales
 export default DatabasePool;

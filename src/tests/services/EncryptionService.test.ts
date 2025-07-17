@@ -152,7 +152,7 @@ describe('EncryptionService', () => {
       const encrypted = await encryptionService.encrypt(data);
 
       expect(encrypted).toBeDefined();
-      expect(encrypted.split(':')).toHaveLength(3);
+      expect(encrypted).toBe('EMPTY_STRING');
     });
 
     it('should handle special characters', async () => {

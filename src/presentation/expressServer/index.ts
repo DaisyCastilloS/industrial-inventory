@@ -1,16 +1,10 @@
-/**
- * @fileoverview Configuración optimizada del servidor Express
- * @author Daisy Castillo
- * @version 1.0.0
- */
-
-import express from 'express';
+import 'dotenv/config';
+import express, { Application } from 'express';
 import router from './routes';
 import swaggerUi from 'swagger-ui-express';
 import { load as loadYaml } from 'js-yaml';
 import { readFileSync } from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import helmet from 'helmet';
 import cors from 'cors';
 import compression from 'compression';
@@ -22,21 +16,15 @@ import { WinstonLogger } from '../../infrastructure/logger/WinstonLogger';
 const port = Number(process.env.PORT) || 3000;
 const loggerInstance = new WinstonLogger();
 
-// Obtener __dirname equivalente en ES Modules
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const app: Application = express();
 
-const app = express();
-
-// Cargar swagger.yaml
 const swaggerDocument = loadYaml(
   readFileSync(
-    path.join(__dirname, '../../infrastructure/docs/swagger.yaml'),
+    path.join(__dirname, '../../../src/infrastructure/docs/swagger.yaml'),
     'utf8'
   )
 ) as swaggerUi.JsonObject;
 
-// Configuración de seguridad
 app.use(
   helmet({
     contentSecurityPolicy: {
@@ -66,7 +54,6 @@ app.use(
   })
 );
 
-// Configuración de CORS
 app.use(
   cors({
     origin: process.env.CORS_ORIGIN || '*',
@@ -74,22 +61,20 @@ app.use(
     allowedHeaders: ['Content-Type', 'Authorization'],
     exposedHeaders: ['Content-Range', 'X-Content-Range'],
     credentials: true,
-    maxAge: 600, // 10 minutos
+    maxAge: 600,
   })
 );
 
-// Configuración de rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 100, // límite por IP
+  max: 1000, // Aumentado de 100 a 1000 para pruebas
   standardHeaders: true,
   legacyHeaders: false,
   message:
-    'Demasiadas solicitudes desde esta IP, por favor intente nuevamente en 15 minutos',
+    'Too many requests from this IP, please try again in 15 minutes',
 });
 app.use(limiter);
 
-// Configuración de compresión
 app.use(
   compression({
     filter: (req, res) => {
@@ -98,19 +83,22 @@ app.use(
       }
       return compression.filter(req, res);
     },
-    level: 6, // nivel de compresión (1-9)
-    threshold: 1024, // comprimir solo respuestas mayores a 1KB
+    level: 6,
+    threshold: 1024,
   })
 );
 
-// Parsers y middlewares básicos
+// Middleware para parsing de JSON
 app.use(express.json({ limit: '10mb' }));
+app.use((req, res, next) => {
+  console.log('DEBUG: Express middleware - req.body:', JSON.stringify(req.body, null, 2));
+  console.log('DEBUG: Express middleware - req.headers:', JSON.stringify(req.headers, null, 2));
+  next();
+});
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Middleware de logging
 app.use(createRequestLoggerMiddleware(loggerInstance));
 
-// Documentación Swagger
 app.use(
   '/docs',
   swaggerUi.serve,
@@ -121,35 +109,54 @@ app.use(
   })
 );
 
-// Rutas de la API
-app.use('/api/v1', router);
+// Health check endpoint
+app.get('/health', (req, res) => {
+  const uptime = process.uptime();
+  const memoryUsage = process.memoryUsage();
+  
+  res.json({
+    success: true,
+    message: 'Sistema funcionando correctamente',
+    timestamp: new Date().toISOString(),
+    data: {
+      status: 'healthy',
+      uptime: Math.floor(uptime),
+      database: 'connected',
+      version: '1.0.0',
+      memory: {
+        used: Math.round(memoryUsage.heapUsed / 1024 / 1024),
+        total: Math.round(memoryUsage.heapTotal / 1024 / 1024),
+        percentage: Math.round((memoryUsage.heapUsed / memoryUsage.heapTotal) * 100)
+      }
+    }
+  });
+});
 
-// Middleware de manejo de errores
+app.use('/api', router);
+
 app.use(createErrorHandlerMiddleware(loggerInstance));
 
-// Iniciar servidor
 const server = app.listen(port, () => {
   loggerInstance.info('='.repeat(50));
-  loggerInstance.info(`🚀 Servidor API corriendo en: http://localhost:${port}`);
+  loggerInstance.info(`🚀 API Server running at: http://localhost:${port}`);
   loggerInstance.info(
-    `📚 Documentación disponible en: http://localhost:${port}/docs`
+    `📚 Documentation available at: http://localhost:${port}/docs`
   );
   loggerInstance.info('='.repeat(50));
 });
 
-// Manejo de señales de terminación
 process.on('SIGTERM', () => {
-  loggerInstance.info('Recibida señal SIGTERM. Cerrando servidor...');
+  loggerInstance.info('Received SIGTERM signal. Shutting down server...');
   server.close(() => {
-    loggerInstance.info('Servidor cerrado exitosamente');
+    loggerInstance.info('Server shut down successfully');
     process.exit(0);
   });
 });
 
 process.on('SIGINT', () => {
-  loggerInstance.info('Recibida señal SIGINT. Cerrando servidor...');
+  loggerInstance.info('Received SIGINT signal. Shutting down server...');
   server.close(() => {
-    loggerInstance.info('Servidor cerrado exitosamente');
+    loggerInstance.info('Server shut down successfully');
     process.exit(0);
   });
 });

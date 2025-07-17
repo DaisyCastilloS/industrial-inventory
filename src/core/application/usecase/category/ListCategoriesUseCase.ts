@@ -4,49 +4,34 @@
  * @version 1.0.0
  */
 
-import { BaseListUseCase } from '../base/BaseUseCase';
+import { BaseListUseCase } from '../../base/BaseUseCase';
+import { Category } from '../../../domain/entity/Category';
 import { ICategoryRepository } from '../../../domain/repository/CategoryRepository';
-import { LoggerWrapperInterface } from '../../interface/LoggerWrapperInterface';
-import { ListCategoriesResponseDTO } from '../../dto/category/ListCategoriesResponseDTO';
 import { CategoryResponseDTO } from '../../dto/category/CategoryResponseDTO';
-import { DTOMapper } from '../../utils/DTOMapper';
+import { ServiceResult, PaginatedResult } from '../../../../infrastructure/services/base/ServiceTypes';
+import { LoggerWrapperInterface } from '../../interface/LoggerWrapperInterface';
 
-export class ListCategoriesUseCase extends BaseListUseCase<ListCategoriesResponseDTO> {
+export class ListCategoriesUseCase extends BaseListUseCase<Category, CategoryResponseDTO> {
   constructor(
     private categoryRepository: ICategoryRepository,
     logger: LoggerWrapperInterface
   ) {
-    super(logger, {
-      action: 'LIST_CATEGORIES',
-      entityName: 'Category',
-    });
+    super(logger, { action: 'LIST_CATEGORIES', entityName: 'Category' });
   }
 
-  protected async findAll(): Promise<any[]> {
-    return this.categoryRepository.findAll();
+  protected async findAll(filters?: Record<string, any>): Promise<ServiceResult<PaginatedResult<Category>>> {
+    return this.categoryRepository.findAll(filters);
   }
 
-  protected isValidEntity(entity: any): boolean {
-    return !!(entity.id && entity.createdAt && entity.updatedAt);
-  }
-
-  protected mapToDTO(entity: any): CategoryResponseDTO {
-    return DTOMapper.mapCategoryToResponseDTO(entity);
-  }
-
-  protected createListResponse(
-    dtos: CategoryResponseDTO[],
-    total: number,
-    page: number,
-    limit: number,
-    totalPages: number
-  ): ListCategoriesResponseDTO {
+  protected mapToDTO(entity: Category): CategoryResponseDTO {
     return {
-      categories: dtos,
-      total,
-      page,
-      limit,
-      totalPages,
+      id: entity.id || 0,
+      name: entity.name,
+      description: entity.description || null,
+      isActive: entity.isActive,
+      parentId: entity.parentId || null,
+      createdAt: entity.createdAt || new Date(),
+      updatedAt: entity.updatedAt || new Date()
     };
   }
 }

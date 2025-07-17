@@ -5,7 +5,7 @@
  */
 
 import { BaseListUseCase } from '../base/BaseUseCase';
-import { IUserRepository } from '../../../domain/repository/UserRepository';
+import { UserRepositoryImpl } from '../../../../infrastructure/services/UserRepositoryImpl';
 import { LoggerWrapperInterface } from '../../interface/LoggerWrapperInterface';
 import {
   UserListResponseDTO,
@@ -16,7 +16,7 @@ import { ServiceResult } from '../../../../infrastructure/services/base/ServiceT
 
 export default class ListUsersUseCase extends BaseListUseCase<UserListResponseDTO> {
   constructor(
-    private userRepository: IUserRepository,
+    private userRepository: UserRepositoryImpl,
     protected logger: LoggerWrapperInterface
   ) {
     super(logger, {
@@ -25,18 +25,18 @@ export default class ListUsersUseCase extends BaseListUseCase<UserListResponseDT
     });
   }
 
-  protected async findAll(): Promise<any[]> {
+  protected async findAll(): Promise<ServiceResult<any>> {
     const result = await this.userRepository.findAll();
     if (!result.success || !result.data) {
       throw new Error(
         result.error?.message || 'Error al obtener la lista de usuarios'
       );
     }
-    return result.data.items;
+    return result;
   }
 
   protected isValidEntity(entity: any): boolean {
-    return !!(entity.id && entity.createdAt && entity.updatedAt);
+    return !!(entity.id && entity.email && entity.name && entity.role);
   }
 
   protected mapToDTO(entity: any): UserResponseDTO {

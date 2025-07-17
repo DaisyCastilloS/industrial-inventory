@@ -1,11 +1,7 @@
-/**
- * @fileoverview Caso de uso optimizado para crear ubicaciones
- * @author Daisy Castillo
- * @version 1.0.0
- */
+
 
 import { BaseCreateUseCase } from '../base/BaseUseCase';
-import { ILocationRepository } from '../../../domain/repository/LocationRepository';
+import { LocationRepositoryImpl } from '../../../../infrastructure/services/LocationRepositoryImpl';
 import { LoggerWrapperInterface } from '../../interface/LoggerWrapperInterface';
 import {
   CreateLocationDTO,
@@ -19,7 +15,7 @@ export class CreateLocationUseCase extends BaseCreateUseCase<
   LocationResponseDTO
 > {
   constructor(
-    private locationRepository: ILocationRepository,
+    private locationRepository: LocationRepositoryImpl,
     logger: LoggerWrapperInterface
   ) {
     super(logger, {
@@ -33,15 +29,20 @@ export class CreateLocationUseCase extends BaseCreateUseCase<
   }
 
   protected async createEntity(data: any): Promise<any> {
-    return this.locationRepository.create(data);
+    const result = await this.locationRepository.create(data);
+    if (!result.success || !result.data) {
+      throw new Error('Error al crear la ubicación');
+    }
+    return result.data;
   }
 
   protected validateCreatedEntity(entity: any): void {
-    if (!entity.id || !entity.createdAt || !entity.updatedAt) {
+    if (!entity || !entity.id) {
       throw new Error(
-        'Persistencia inconsistente: la ubicación creada no tiene id, createdAt o updatedAt'
+        'Persistencia inconsistente: la ubicación creada no tiene id'
       );
     }
+    // Solo validar ID, no createdAt/updatedAt
   }
 
   protected mapToDTO(entity: any): LocationResponseDTO {

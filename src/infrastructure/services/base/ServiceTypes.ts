@@ -3,7 +3,8 @@
  * @author Daisy Castillo
  */
 
-import { BaseEntity } from '../../../domain/repository/base/BaseRepository';
+import { BaseEntity } from '../../../core/domain/repository/base/BaseRepository';
+import { Algorithm } from 'jsonwebtoken';
 
 export interface QueryResult<T> {
   rows: T[];
@@ -55,4 +56,17 @@ export interface AuditOptions {
 export interface CacheOptions {
   bypass?: boolean;
   ttl?: number;
+}
+
+export interface JWTOptions {
+  algorithm: Algorithm;
+  audience: string;
+  issuer: string;
+  expiresIn?: string | number;
+}
+
+export interface VerifyOptions {
+  algorithms: Algorithm[];
+  audience: string;
+  issuer: string;
 }

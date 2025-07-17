@@ -100,9 +100,9 @@ export abstract class BaseEntity implements IBaseEntity {
    * Validates that the entity has been properly persisted
    */
   public validatePersistence(): void {
-    if (!this._id || !this._createdAt || !this._updatedAt) {
+    if (!this._id) {
       throw new Error(
-        'Persistencia inconsistente: la entidad no tiene id, createdAt o updatedAt'
+        'Persistencia inconsistente: la entidad no tiene id'
       );
     }
   }

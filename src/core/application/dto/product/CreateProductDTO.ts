@@ -1,14 +1,5 @@
-/**
- * @fileoverview DTO para crear productos
- * @author Industrial Inventory System
- * @version 1.0.0
- */
-
 import { z } from 'zod';
 
-/**
- * Schema de validación para crear productos
- */
 export const CreateProductSchema = z.object({
   name: z
     .string()
@@ -39,48 +30,34 @@ export const CreateProductSchema = z.object({
     .int('La cantidad debe ser un número entero')
     .min(0, 'La cantidad no puede ser negativa')
     .default(0),
-  criticalStock: z
+  critical_stock: z
     .number()
     .int('El stock crítico debe ser un número entero')
     .min(0, 'El stock crítico no puede ser negativo')
     .default(0),
-  categoryId: z
+  category_id: z
     .number()
     .int('El ID de categoría debe ser un número entero')
     .positive('El ID de categoría debe ser mayor a 0'),
-  locationId: z
+  location_id: z
     .number()
     .int('El ID de ubicación debe ser un número entero')
     .positive('El ID de ubicación debe ser mayor a 0')
     .optional(),
-  supplierId: z
+  supplier_id: z
     .number()
     .int('El ID de proveedor debe ser un número entero')
     .positive('El ID de proveedor debe ser mayor a 0')
     .optional(),
-  isActive: z.boolean().optional().default(true),
+  is_active: z.boolean().optional().default(true),
 });
 
-/**
- * Tipo TypeScript para crear productos
- */
 export type CreateProductDTO = z.infer<typeof CreateProductSchema>;
 
-/**
- * Valida los datos para crear un producto
- * @param data - Datos a validar
- * @returns Datos validados
- * @throws {Error} Si los datos son inválidos
- */
 export function validateCreateProduct(data: unknown): CreateProductDTO {
   return CreateProductSchema.parse(data);
 }
 
-/**
- * Valida los datos para crear un producto de forma segura
- * @param data - Datos a validar
- * @returns Resultado de la validación
- */
 export function safeValidateCreateProduct(
   data: unknown
 ):

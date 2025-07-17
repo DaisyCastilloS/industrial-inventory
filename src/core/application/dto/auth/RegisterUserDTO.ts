@@ -1,6 +1,5 @@
 import { z } from 'zod';
 
-// Schema de validación para registro de usuario
 export const RegisterUserSchema = z.object({
   email: z
     .string()
@@ -10,11 +9,7 @@ export const RegisterUserSchema = z.object({
   password: z
     .string()
     .min(6, 'Contraseña debe tener al menos 6 caracteres')
-    .max(50, 'Contraseña debe tener menos de 50 caracteres')
-    .regex(
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-      'Contraseña debe contener al menos una minúscula, una mayúscula y un número'
-    ),
+    .max(50, 'Contraseña debe tener menos de 50 caracteres'),
   name: z
     .string()
     .min(1, 'Nombre es requerido')
@@ -23,26 +18,24 @@ export const RegisterUserSchema = z.object({
       /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/,
       'Nombre solo puede contener letras y espacios'
     ),
-  role: z.enum(['ADMIN', 'USER', 'VIEWER']).default('USER'),
+  role: z.enum(['ADMIN', 'USER', 'VIEWER', 'MANAGER', 'SUPERVISOR', 'AUDITOR']).default('USER'),
 });
 
 export type RegisterUserDTO = z.infer<typeof RegisterUserSchema>;
 
-/**
- * Valida los datos de entrada para registro de usuario
- * @param data - Datos a validar
- * @returns Datos validados
- * @throws UserValidationError si la validación falla
- */
 export function validateRegisterUserDTO(data: unknown): RegisterUserDTO {
+  console.log('DEBUG: validateRegisterUserDTO input:', JSON.stringify(data, null, 2));
+  console.log('DEBUG: password type:', typeof (data as any)?.password);
+  console.log('DEBUG: password value:', (data as any)?.password);
+  
   try {
-    return RegisterUserSchema.parse(data);
+    const result = RegisterUserSchema.parse(data);
+    console.log('DEBUG: validation successful:', result);
+    return result;
   } catch (error) {
+    console.log('DEBUG: validation error:', error);
     if (error instanceof z.ZodError) {
-      const errorMessage = error.issues
-        .map((issue: any) => issue.message)
-        .join(', ');
-      throw new Error(`Validation error: ${errorMessage}`);
+      console.log('DEBUG: zod errors:', error.errors);
     }
     throw error;
   }

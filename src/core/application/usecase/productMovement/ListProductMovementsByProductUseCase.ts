@@ -5,7 +5,7 @@
  */
 
 import { BaseUseCase } from '../../base/BaseUseCase';
-import { IProductMovementRepository } from '../../../domain/repository/ProductMovementRepository';
+import { ProductMovementRepositoryImpl } from '../../../../infrastructure/services/ProductMovementRepositoryImpl';
 import { LoggerWrapperInterface } from '../../interface/LoggerWrapperInterface';
 import { ProductMovementResponseDTO } from '../../dto/productMovement/ProductMovementResponseDTO';
 import { ProductMovement } from '../../../domain/entity/ProductMovement';
@@ -15,7 +15,7 @@ export class ListProductMovementsByProductUseCase extends BaseUseCase<
   ProductMovementResponseDTO[]
 > {
   constructor(
-    private productMovementRepository: IProductMovementRepository,
+    private productMovementRepository: ProductMovementRepositoryImpl,
     logger: LoggerWrapperInterface
   ) {
     super(logger, {
@@ -41,10 +41,8 @@ export class ListProductMovementsByProductUseCase extends BaseUseCase<
       quantity: movement.quantity,
       previousQuantity: movement.previousQuantity,
       newQuantity: movement.newQuantity,
-      reason: movement.reason,
-      notes: movement.notes || null,
+      reason: movement.reason || null,
       createdAt: movement.createdAt || new Date(),
-      updatedAt: movement.updatedAt || new Date(),
     };
   }
 }

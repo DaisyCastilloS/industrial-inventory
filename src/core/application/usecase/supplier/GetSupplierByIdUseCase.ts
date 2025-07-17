@@ -25,15 +25,20 @@ export class GetSupplierByIdUseCase extends BaseGetByIdUseCase<SupplierResponseD
   }
 
   protected async findById(id: number): Promise<any> {
-    return this.supplierRepository.findById(id);
+    const result = await this.supplierRepository.findById(id);
+    if (!result.success || !result.data) {
+      throw new Error(`Proveedor con ID ${id} no encontrado`);
+    }
+    return result.data;
   }
 
   protected validateEntity(entity: any): void {
-    if (!entity.id || !entity.createdAt || !entity.updatedAt) {
+    if (!entity.id) {
       throw new Error(
-        'Persistencia inconsistente: el proveedor no tiene id, createdAt o updatedAt'
+        'Persistencia inconsistente: el proveedor no tiene id'
       );
     }
+    // Solo validar ID, no createdAt/updatedAt
   }
 
   protected mapToDTO(entity: any): SupplierResponseDTO {

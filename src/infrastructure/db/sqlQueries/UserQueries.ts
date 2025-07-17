@@ -18,7 +18,20 @@ export const UserQueries = {
   findByRole: `SELECT * FROM users WHERE role = $1`,
   findActive: `SELECT * FROM users WHERE is_active = true`,
   existsByEmail: `SELECT COUNT(*) FROM users WHERE email = $1`,
-  findByField: field => `SELECT * FROM users WHERE ${field} = $1`,
+  
+  findByField: (field: string) => {
+    const allowedFields = [
+      'id', 'email', 'password', 'name', 'role', 'is_active', 
+      'created_at', 'updated_at'
+    ];
+    
+    if (!allowedFields.includes(field)) {
+      throw new Error(`Campo no permitido: ${field}`);
+    }
+    
+    return `SELECT * FROM users WHERE ${field} = $1`;
+  },
+  
   stats: {
     total: `SELECT COUNT(*) FROM users`,
     active: `SELECT COUNT(*) FROM users WHERE is_active = true`,

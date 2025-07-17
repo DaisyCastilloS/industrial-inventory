@@ -5,7 +5,7 @@
  */
 
 import { BaseUpdateUseCase } from '../base/BaseUseCase';
-import { IUserRepository } from '../../../domain/repository/UserRepository';
+import { UserRepositoryImpl } from '../../../../infrastructure/services/UserRepositoryImpl';
 import { LoggerWrapperInterface } from '../../interface/LoggerWrapperInterface';
 import { EncryptionInterface } from '../../interface/EncryptionInterface';
 import {
@@ -21,7 +21,7 @@ export default class UpdateUserUseCase extends BaseUpdateUseCase<
   UserResponseDTO
 > {
   constructor(
-    private userRepository: IUserRepository,
+    private userRepository: UserRepositoryImpl,
     private encryptionService: EncryptionInterface,
     protected logger: LoggerWrapperInterface
   ) {
@@ -76,11 +76,12 @@ export default class UpdateUserUseCase extends BaseUpdateUseCase<
   }
 
   protected validateUpdatedEntity(entity: any): void {
-    if (!entity.id || !entity.createdAt || !entity.updatedAt) {
+    if (!entity.id) {
       throw new Error(
-        'Persistencia inconsistente: el usuario actualizado no tiene id, createdAt o updatedAt'
+        'Persistencia inconsistente: el usuario actualizado no tiene id'
       );
     }
+    // Solo validar ID, no createdAt/updatedAt
   }
 
   protected mapToDTO(entity: any): UserResponseDTO {

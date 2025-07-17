@@ -4,8 +4,8 @@
  * @version 1.0.0
  */
 
-import { UserRole } from '../../shared/constants/RoleTypes';
-import { TokenPurpose } from '../../shared/constants/TokenPurpose';
+import { UserRole } from '../../../shared/constants/RoleTypes';
+import { TokenPurpose } from '../../../shared/constants/TokenPurpose';
 
 /**
  * Payload personalizado para tokens JWT

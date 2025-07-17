@@ -5,12 +5,12 @@
  */
 
 import { BaseDeleteUseCase } from '../base/BaseUseCase';
-import { ILocationRepository } from '../../../domain/repository/LocationRepository';
+import { LocationRepositoryImpl } from '../../../../infrastructure/services/LocationRepositoryImpl';
 import { LoggerWrapperInterface } from '../../interface/LoggerWrapperInterface';
 
 export class DeleteLocationUseCase extends BaseDeleteUseCase {
   constructor(
-    private locationRepository: ILocationRepository,
+    private locationRepository: LocationRepositoryImpl,
     logger: LoggerWrapperInterface
   ) {
     super(logger, {

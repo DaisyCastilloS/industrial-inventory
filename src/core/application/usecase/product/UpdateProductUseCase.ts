@@ -7,68 +7,67 @@
 import { BaseUpdateUseCase } from '../../base/BaseUseCase';
 import { IProductRepository } from '../../../domain/repository/ProductRepository';
 import { LoggerWrapperInterface } from '../../interface/LoggerWrapperInterface';
-import {
-  UpdateProductDTO,
-  validateUpdateProduct,
-} from '../../dto/product/UpdateProductDTO';
-import { ProductFullResponseDTO } from '../../dto/product/ProductResponseDTO';
+import { UpdateProductDTO } from '../../dto/product/UpdateProductDTO';
 import { Product } from '../../../domain/entity/Product';
+import { ServiceResult } from '../../../../infrastructure/services/base/ServiceTypes';
 
-export class UpdateProductUseCase extends BaseUpdateUseCase<
-  UpdateProductDTO,
-  ProductFullResponseDTO
-> {
+export interface UpdateProductInput extends UpdateProductDTO {
+  id: number;
+}
+
+export class UpdateProductUseCase extends BaseUpdateUseCase<UpdateProductInput, Product> {
   constructor(
     private productRepository: IProductRepository,
     logger: LoggerWrapperInterface
   ) {
-    super(logger, { action: 'UPDATE_PRODUCT', entityName: 'Producto' });
+    super(logger, { action: 'UPDATE_PRODUCT', entityName: 'Product' });
   }
 
-  protected validateInput(input: UpdateProductDTO): void {
-    validateUpdateProduct(input);
+  protected async validateUpdateInput(input: UpdateProductInput): Promise<void> {
+    if (input.name !== undefined && input.name.trim() === '') {
+      throw new Error('Product name cannot be empty');
+    }
+    if (input.sku !== undefined && input.sku.trim() === '') {
+      throw new Error('Product SKU cannot be empty');
+    }
+
+    if (input.sku) {
+      const existingProduct = await this.productRepository.findBySku(input.sku);
+      if (existingProduct.success && existingProduct.data && existingProduct.data.id !== input.id) {
+        throw new Error('A product with this SKU already exists');
+      }
+    }
   }
 
-  protected async findById(id: number): Promise<Product | null> {
+  protected async findEntityById(id: number): Promise<ServiceResult<Product>> {
     return this.productRepository.findById(id);
   }
 
-  protected async updateEntity(
-    id: number,
-    data: UpdateProductDTO
-  ): Promise<Product> {
-    if (data.sku) {
-      const existingProduct = await this.productRepository.findById(id);
-      if (existingProduct && data.sku !== existingProduct.sku) {
-        const productWithSku = await this.productRepository.findBySku(data.sku);
-        if (productWithSku) {
-          throw new Error('Ya existe un producto con este SKU');
-        }
-      }
-    }
-    return this.productRepository.update(id, data);
+  protected async performUpdate(current: Product, input: UpdateProductInput): Promise<ServiceResult<Product>> {
+    const updatedProduct = new Product({
+      ...current,
+      name: input.name ?? current.name,
+      description: input.description ?? current.description,
+      isActive: input.isActive ?? current.isActive,
+      sku: input.sku ?? current.sku,
+      price: input.price ?? current.price,
+      quantity: input.quantity ?? current.quantity,
+      criticalStock: input.criticalStock ?? current.criticalStock,
+      categoryId: input.categoryId ?? current.categoryId,
+      locationId: input.locationId ?? current.locationId,
+      supplierId: input.supplierId ?? current.supplierId
+    });
+
+    return this.productRepository.update(input.id, updatedProduct);
   }
 
-  protected mapToDTO(product: Product): ProductFullResponseDTO {
-    return {
-      id: product.id || 0,
-      name: product.name,
-      description: product.description || null,
-      sku: product.sku,
-      price: product.price,
-      quantity: product.quantity,
-      criticalStock: product.criticalStock,
-      categoryId: product.categoryId,
-      locationId: product.locationId || null,
-      supplierId: product.supplierId || null,
-      isActive: product.isActive,
-      stockStatus: product.getStockStatus(),
-      inventoryValue: product.getInventoryValue(),
-      createdAt: product.createdAt || new Date(),
-      updatedAt: product.updatedAt || new Date(),
-      categoryName: null,
-      locationName: null,
-      supplierName: null,
-    };
+  protected async validateUpdatedEntity(entity: Product): Promise<void> {
+    if (!entity || !entity.name || !entity.sku) {
+      throw new Error('Invalid product entity');
+    }
+    // Validar solo que tenga ID, no createdAt/updatedAt
+    if (!entity.id) {
+      throw new Error('Product entity must have an ID after update');
+    }
   }
 }

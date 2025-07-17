@@ -4,52 +4,36 @@
  * @version 1.0.0
  */
 
-import { BaseListUseCase } from '../base/BaseUseCase';
+import { BaseListUseCase } from '../../base/BaseUseCase';
 import { ISupplierRepository } from '../../../domain/repository/SupplierRepository';
 import { LoggerWrapperInterface } from '../../interface/LoggerWrapperInterface';
-import { ListSuppliersResponseDTO } from '../../dto/supplier/ListSuppliersResponseDTO';
 import { SupplierResponseDTO } from '../../dto/supplier/SupplierResponseDTO';
-import { DTOMapper } from '../../utils/DTOMapper';
+import { Supplier } from '../../../domain/entity/Supplier';
+import { ServiceResult, PaginatedResult } from '../../../../infrastructure/services/base/ServiceTypes';
 
-/**
- * Caso de uso optimizado para listar proveedores
- */
-export class ListSuppliersUseCase extends BaseListUseCase<ListSuppliersResponseDTO> {
+export class ListSuppliersUseCase extends BaseListUseCase<Supplier, SupplierResponseDTO> {
   constructor(
     private supplierRepository: ISupplierRepository,
     logger: LoggerWrapperInterface
   ) {
-    super(logger, {
-      action: 'LIST_SUPPLIERS',
-      entityName: 'Supplier',
-    });
+    super(logger, { action: 'LIST_SUPPLIERS', entityName: 'Supplier' });
   }
 
-  protected async findAll(): Promise<any[]> {
-    return this.supplierRepository.findAll();
+  protected async findAll(filters?: Record<string, any>): Promise<ServiceResult<PaginatedResult<Supplier>>> {
+    return this.supplierRepository.findAll(filters);
   }
 
-  protected isValidEntity(entity: any): boolean {
-    return !!(entity.id && entity.createdAt && entity.updatedAt);
-  }
-
-  protected mapToDTO(entity: any): SupplierResponseDTO {
-    return DTOMapper.mapSupplierToResponseDTO(entity);
-  }
-
-  protected createListResponse(
-    dtos: SupplierResponseDTO[],
-    total: number,
-    page: number,
-    limit: number,
-    totalPages: number
-  ): ListSuppliersResponseDTO {
+  protected mapToDTO(supplier: Supplier): SupplierResponseDTO {
     return {
-      suppliers: dtos,
-      total,
-      page,
-      limit,
-      totalPages,
+      id: supplier.id || 0,
+      name: supplier.name,
+      description: supplier.description || null,
+      isActive: supplier.isActive,
+      email: supplier.email,
+      phone: supplier.phone || null,
+      address: supplier.address || null,
+      createdAt: supplier.createdAt || new Date(),
+      updatedAt: supplier.updatedAt || new Date()
     };
   }
 }

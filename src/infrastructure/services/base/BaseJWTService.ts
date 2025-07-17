@@ -1,21 +1,19 @@
-/**
- * @fileoverview Servicio base para manejo de JWT
- * @author Daisy Castillo
- * @version 1.0.0
- */
-
-import jwt, { SignOptions, VerifyOptions, JwtHeader } from 'jsonwebtoken';
 import { randomBytes } from 'crypto';
-import { WinstonLogger } from '../../logger/WinstonLogger';
+import jwt, { SignOptions, Secret } from 'jsonwebtoken';
 import { JWTInterface, JWTPayload } from '../../../core/application/interface/JWTInterface';
-import { CustomJWTPayload } from '../../../core/application/interface/CustomJWTPayload';
-import { TokenPurpose, TokenExpiration } from '../../../shared/constants/TokenPurpose';
-import { ApplicationError, ErrorCode, ErrorType } from '../../../core/application/error/ApplicationError';
 import { LoggerWrapperInterface } from '../../../core/application/interface/LoggerWrapperInterface';
+import { WinstonLogger } from '../../logger/WinstonLogger';
+import { JWTOptions, VerifyOptions } from './ServiceTypes';
+import { TokenPurpose } from '../../../shared/constants/TokenPurpose';
+import { ApplicationError, ErrorType, ErrorCode } from '../../../core/application/error/ApplicationError';
 
-interface JWTOptions extends SignOptions {
-  header?: JwtHeader;
-}
+type CustomSignOptions = {
+  algorithm: jwt.Algorithm;
+  audience: string;
+  issuer: string;
+  jwtid?: string;
+  expiresIn?: string | number;
+};
 
 export abstract class BaseJWTService implements JWTInterface {
   protected readonly secretKey: Buffer;
@@ -29,11 +27,9 @@ export abstract class BaseJWTService implements JWTInterface {
     this.validateEnvironmentVariables();
     this.logger = new WinstonLogger();
 
-    // Initialize secret keys with proper length
     const defaultSecret = randomBytes(32).toString('hex');
     const defaultRefreshSecret = randomBytes(32).toString('hex');
 
-    // Convert secret keys to Buffer
     this.secretKey = Buffer.from(process.env.JWT_SECRET_KEY || defaultSecret, 'hex');
     this.refreshSecretKey = Buffer.from(process.env.JWT_REFRESH_SECRET_KEY || defaultRefreshSecret, 'hex');
 
@@ -41,318 +37,303 @@ export abstract class BaseJWTService implements JWTInterface {
     const issuer = 'industrial-inventory-api';
 
     this.defaultOptions = {
-      algorithm: 'HS256', // Changed from HS512 to HS256 for better compatibility
+      algorithm: 'HS256' as const,
       audience,
       issuer,
     };
 
     this.defaultVerifyOptions = {
-      algorithms: ['HS256'], // Changed from HS512 to HS256 for better compatibility
+      algorithms: ['HS256'],
       audience,
       issuer,
     };
 
-    // Limpiar tokens revocados periódicamente
-    const cleanupInterval = setInterval(() => this.cleanupRevokedTokens(), 60 * 60 * 1000); // Cada hora
-    cleanupInterval.unref(); // Allow the process to exit even if interval is running
+    const cleanupInterval = setInterval(() => this.cleanupRevokedTokens(), 60 * 60 * 1000);
+    cleanupInterval.unref();
   }
 
   private validateEnvironmentVariables(): void {
     if (process.env.NODE_ENV === 'production') {
       if (!process.env.JWT_SECRET_KEY) {
-        throw new ApplicationError(
-          'JWT_SECRET_KEY no está configurada en producción',
-          {
-            type: ErrorType.INTERNAL,
-            code: ErrorCode.INVALID_CONFIG,
-            httpStatus: 500,
-            isOperational: false,
-          }
-        );
+        throw new ApplicationError('JWT_SECRET_KEY not set in production', {
+          type: ErrorType.INTERNAL,
+          code: ErrorCode.INVALID_CONFIG,
+          httpStatus: 500,
+          isOperational: false,
+        });
       }
       if (!process.env.JWT_REFRESH_SECRET_KEY) {
-        throw new ApplicationError(
-          'JWT_REFRESH_SECRET_KEY no está configurada en producción',
-          {
-            type: ErrorType.INTERNAL,
-            code: ErrorCode.INVALID_CONFIG,
-            httpStatus: 500,
-            isOperational: false,
-          }
-        );
+        throw new ApplicationError('JWT_REFRESH_SECRET_KEY not set in production', {
+          type: ErrorType.INTERNAL,
+          code: ErrorCode.INVALID_CONFIG,
+          httpStatus: 500,
+          isOperational: false,
+        });
       }
     }
   }
 
   private cleanupRevokedTokens(): void {
     const now = Date.now();
-    for (const [token, expirationTime] of this.revokedTokens.entries()) {
-      if (now >= expirationTime) {
+    for (const [token, expiry] of this.revokedTokens.entries()) {
+      if (now > expiry) {
         this.revokedTokens.delete(token);
       }
     }
   }
 
-  private validateTokenPayload(payload: any): void {
-    if (!payload.userId || !payload.email || !payload.role) {
+  private getSecretForPurpose(purpose: TokenPurpose): string {
+    return purpose === TokenPurpose.REFRESH
+      ? process.env.JWT_REFRESH_SECRET || 'your_jwt_secret'
+      : process.env.JWT_SECRET || 'your_jwt_secret';
+  }
+
+  private getExpiryForPurpose(purpose: TokenPurpose): number {
+    return purpose === TokenPurpose.REFRESH ? 7 * 24 * 60 * 60 : 60 * 60; // 7 days or 1 hour in seconds
+  }
+
+  private validatePayload(payload: any): asserts payload is Omit<JWTPayload, 'iat' | 'exp'> {
+    if (!payload || typeof payload !== 'object') {
       throw new ApplicationError('Payload del token inválido', {
         type: ErrorType.VALIDATION,
-        code: ErrorCode.INVALID_INPUT,
+        code: ErrorCode.INVALID_TOKEN,
+        httpStatus: 400,
+        isOperational: true,
+      });
+    }
+
+    if (typeof payload.userId !== 'number') {
+      throw new ApplicationError('Payload del token inválido: userId debe ser un número', {
+        type: ErrorType.VALIDATION,
+        code: ErrorCode.INVALID_TOKEN,
+        httpStatus: 400,
+        isOperational: true,
+      });
+    }
+
+    if (typeof payload.email !== 'string') {
+      throw new ApplicationError('Payload del token inválido: email debe ser una cadena', {
+        type: ErrorType.VALIDATION,
+        code: ErrorCode.INVALID_TOKEN,
+        httpStatus: 400,
+        isOperational: true,
+      });
+    }
+
+    if (typeof payload.role !== 'string') {
+      throw new ApplicationError('Payload del token inválido: role debe ser una cadena', {
+        type: ErrorType.VALIDATION,
+        code: ErrorCode.INVALID_TOKEN,
         httpStatus: 400,
         isOperational: true,
       });
     }
   }
 
-  /**
-   * Genera un token JWT
-   */
+  private validateTokenPurpose(purpose: any): asserts purpose is TokenPurpose {
+    if (!Object.values(TokenPurpose).includes(purpose)) {
+      throw new ApplicationError('Propósito de token inválido', {
+        type: ErrorType.VALIDATION,
+        code: ErrorCode.INVALID_TOKEN_PURPOSE,
+        httpStatus: 400,
+        isOperational: true,
+      });
+    }
+  }
+
   async generateToken(
     payload: Omit<JWTPayload, 'iat' | 'exp'>,
     purpose: TokenPurpose
   ): Promise<string> {
     try {
-      this.validateTokenPayload(payload);
+      this.validatePayload(payload);
+      this.validateTokenPurpose(purpose);
 
-      // Validar que el propósito sea válido
-      if (!Object.values(TokenPurpose).includes(purpose)) {
-        throw new ApplicationError('Propósito de token inválido', {
-          type: ErrorType.VALIDATION,
-          code: ErrorCode.INVALID_INPUT,
-          httpStatus: 400,
-          isOperational: true,
-        });
-      }
+      const secret = this.getSecretForPurpose(purpose);
+      const expiresIn = this.getExpiryForPurpose(purpose);
 
-      const secret =
-        purpose === TokenPurpose.REFRESH ? this.refreshSecretKey : this.secretKey;
-      const expiration = this.getExpirationTime(purpose);
-
-      const tokenPayload: CustomJWTPayload = {
-        userId: payload.userId,
-        email: payload.email,
-        role: payload.role,
-        purpose,
-        iat: Math.floor(Date.now() / 1000),
-        // Remove exp property - let the library handle it with expiresIn option
-      };
-
-      const options: JWTOptions = {
+      const signOptions: CustomSignOptions = {
         ...this.defaultOptions,
-        expiresIn: expiration,
         jwtid: randomBytes(16).toString('hex'),
       };
 
-      try {
-        console.log('=== DEBUG JWT ===');
-        console.log('Payload:', JSON.stringify(tokenPayload, null, 2));
-        console.log('Secret length:', secret.length);
-        console.log('Options:', JSON.stringify(options, null, 2));
-        console.log('Purpose:', purpose);
-        console.log('==================');
-
-        this.logger.error('Intentando generar token JWT', {
-          payload: tokenPayload,
-          secretLength: secret.length,
-          options,
-          purpose,
-        });
-
-        const token = jwt.sign(tokenPayload, secret, options);
-
-        console.log('=== TOKEN GENERATED ===');
-        console.log('Token length:', token.length);
-        console.log('=======================');
-
-        this.logger.error('Token JWT generado exitosamente', {
-          userId: payload.userId,
-          purpose,
-          expiresIn: expiration,
-          tokenLength: token.length,
-        });
-
-        return token;
-      } catch (signError) {
-        console.log('=== JWT ERROR ===');
-        console.log('Error:', signError);
-        console.log('Error message:', signError instanceof Error ? signError.message : 'Unknown error');
-        console.log('Error stack:', signError instanceof Error ? signError.stack : 'No stack');
-        console.log('==================');
-
-        this.logger.error('Error al firmar token JWT', {
-          error: signError instanceof Error ? signError.message : 'Error desconocido',
-          errorStack: signError instanceof Error ? signError.stack : undefined,
-          userId: payload.userId,
-          purpose,
-          payload: tokenPayload,
-          secretLength: secret.length,
-          options,
-        });
-        throw new ApplicationError(
-          'Error al generar token JWT',
-          {
-            type: ErrorType.INTERNAL,
-            code: ErrorCode.TOKEN_GENERATION_ERROR,
-            httpStatus: 500,
-            isOperational: true,
-          },
-          { error: signError instanceof Error ? signError.message : 'Error desconocido' }
-        );
+      // Only set expiresIn if exp is not already in the payload
+      if (!('exp' in payload)) {
+        signOptions.expiresIn = expiresIn;
       }
+
+      const token = jwt.sign(
+        { ...payload, purpose },
+        secret,
+        signOptions as SignOptions
+      );
+
+      this.logger.info('Token generated', { 
+        type: 'token_generation',
+        purpose, 
+        userId: payload.userId,
+        metadata: { email: payload.email }
+      });
+      return token;
     } catch (error) {
+      this.logger.error('Error generating token', { 
+        type: 'token_generation_error',
+        error: error instanceof Error ? error.message : 'Unknown error',
+        metadata: { userId: payload.userId }
+      });
       if (error instanceof ApplicationError) {
         throw error;
       }
-      this.logger.error('Error inesperado al generar token JWT', {
-        error: error instanceof Error ? error.message : 'Error desconocido',
+      throw new ApplicationError('Error al generar token', {
+        type: ErrorType.INTERNAL,
+        code: ErrorCode.TOKEN_GENERATION_ERROR,
+        httpStatus: 500,
+        isOperational: true,
       });
-      throw new ApplicationError(
-        'Error al generar token JWT',
-        {
-          type: ErrorType.INTERNAL,
-          code: ErrorCode.TOKEN_GENERATION_ERROR,
-          httpStatus: 500,
-          isOperational: true,
-        },
-        { error: error instanceof Error ? error.message : 'Error desconocido' }
-      );
     }
   }
 
-  /**
-   * Verifica y decodifica un token JWT
-   */
   async verifyToken(token: string, purpose: TokenPurpose): Promise<JWTPayload> {
     try {
+      this.validateTokenPurpose(purpose);
+
       if (this.revokedTokens.has(token)) {
         throw new ApplicationError('Token revocado', {
-          type: ErrorType.UNAUTHORIZED,
+          type: ErrorType.VALIDATION,
           code: ErrorCode.TOKEN_REVOKED,
           httpStatus: 401,
           isOperational: true,
         });
       }
 
-      const secret =
-        purpose === TokenPurpose.REFRESH ? this.refreshSecretKey : this.secretKey;
+      const secret = this.getSecretForPurpose(purpose);
+      let decoded: any;
 
-      const decoded = jwt.verify(
-        token,
-        secret,
-        this.defaultVerifyOptions
-      ) as unknown as CustomJWTPayload;
-
-      if (decoded.purpose !== purpose) {
-        throw new ApplicationError('Propósito del token no coincide', {
-          type: ErrorType.UNAUTHORIZED,
-          code: ErrorCode.INVALID_TOKEN,
-          httpStatus: 401,
-          isOperational: true,
-        });
-      }
-
-      if (!decoded.exp) {
-        throw new ApplicationError(
-          'Token inválido: falta fecha de expiración',
-          {
-            type: ErrorType.UNAUTHORIZED,
+      try {
+        // Primero decodificamos sin verificar la firma
+        decoded = jwt.decode(token);
+        
+        if (!decoded || typeof decoded !== 'object') {
+          throw new ApplicationError('Token inválido', {
+            type: ErrorType.VALIDATION,
             code: ErrorCode.INVALID_TOKEN,
             httpStatus: 401,
             isOperational: true,
-          }
-        );
-      }
+          });
+        }
 
-      this.logger.debug('Token JWT verificado', {
-        userId: decoded.userId,
-        purpose,
-        expiresIn: decoded.exp - Math.floor(Date.now() / 1000),
-      });
+        // Verificamos el propósito antes de la firma
+        if (decoded.purpose !== purpose) {
+          throw new ApplicationError('Propósito del token no coincide', {
+            type: ErrorType.VALIDATION,
+            code: ErrorCode.INVALID_TOKEN_PURPOSE,
+            httpStatus: 401,
+            isOperational: true,
+          });
+        }
 
-      return {
-        userId: decoded.userId,
-        email: decoded.email,
-        role: decoded.role,
-        purpose: decoded.purpose,
-        iat: decoded.iat,
-        exp: decoded.exp,
-      };
-    } catch (error) {
-      if (error instanceof ApplicationError) {
-        throw error;
-      }
-      if (error instanceof jwt.TokenExpiredError) {
-        throw new ApplicationError('Token expirado', {
-          type: ErrorType.UNAUTHORIZED,
-          code: ErrorCode.TOKEN_EXPIRED,
-          httpStatus: 401,
-          isOperational: true,
-        });
-      }
-      if (error instanceof jwt.JsonWebTokenError) {
+        // Ahora verificamos la firma
+        decoded = jwt.verify(token, secret, this.defaultVerifyOptions);
+
+        if (!this.isJWTPayload(decoded)) {
+          throw new ApplicationError('Token inválido', {
+            type: ErrorType.VALIDATION,
+            code: ErrorCode.INVALID_TOKEN,
+            httpStatus: 401,
+            isOperational: true,
+          });
+        }
+
+      } catch (error) {
+        if (error instanceof ApplicationError) {
+          throw error;
+        }
+        
+        // Handle JWT errors
+        const errorMessage = error instanceof Error ? error.message : 'Unknown JWT error';
+        if (errorMessage.includes('expired') || errorMessage.includes('exp')) {
+          throw new ApplicationError('Token expirado', {
+            type: ErrorType.VALIDATION,
+            code: ErrorCode.TOKEN_EXPIRED,
+            httpStatus: 401,
+            isOperational: true,
+          });
+        }
         throw new ApplicationError('Token inválido', {
-          type: ErrorType.UNAUTHORIZED,
+          type: ErrorType.VALIDATION,
           code: ErrorCode.INVALID_TOKEN,
           httpStatus: 401,
           isOperational: true,
         });
       }
-      throw new ApplicationError(
-        'Error al verificar token JWT',
-        {
-          type: ErrorType.INTERNAL,
-          code: ErrorCode.TOKEN_VERIFICATION_ERROR,
-          httpStatus: 500,
-          isOperational: true,
-        },
-        { error: error instanceof Error ? error.message : 'Error desconocido' }
-      );
-    }
-  }
 
-  /**
-   * Refresca un token JWT
-   */
-  async refreshToken(refreshToken: string): Promise<string> {
-    try {
-      const payload = await this.verifyToken(refreshToken, TokenPurpose.REFRESH);
+      return decoded;
 
-      // Revocar el token de refresco usado
-      await this.revokeToken(refreshToken);
-
-      return await this.generateToken(
-        {
-          userId: payload.userId,
-          email: payload.email,
-          role: payload.role,
-          purpose: TokenPurpose.ACCESS,
-        },
-        TokenPurpose.ACCESS
-      );
     } catch (error) {
       if (error instanceof ApplicationError) {
         throw error;
       }
-      throw new ApplicationError(
-        'Error al refrescar token',
-        {
-          type: ErrorType.INTERNAL,
-          code: ErrorCode.TOKEN_REFRESH_ERROR,
-          httpStatus: 500,
-          isOperational: true,
-        },
-        { error: error instanceof Error ? error.message : 'Error desconocido' }
-      );
+      throw new ApplicationError('Error al verificar token', {
+        type: ErrorType.INTERNAL,
+        code: ErrorCode.TOKEN_VERIFICATION_ERROR,
+        httpStatus: 500,
+        isOperational: true,
+      });
     }
   }
 
-  /**
-   * Revoca un token JWT
-   */
+  private isJWTPayload(decoded: any): decoded is JWTPayload {
+    return (
+      typeof decoded === 'object' &&
+      decoded !== null &&
+      typeof decoded.userId === 'number' &&
+      typeof decoded.email === 'string' &&
+      typeof decoded.role === 'string' &&
+      typeof decoded.purpose === 'string'
+    );
+  }
+
+  async refreshToken(refreshToken: string): Promise<string> {
+    try {
+      const decoded = await this.verifyToken(refreshToken, TokenPurpose.REFRESH);
+      const { userId, email, role } = decoded;
+
+      const newToken = await this.generateToken(
+        { userId, email, role, purpose: TokenPurpose.ACCESS },
+        TokenPurpose.ACCESS
+      );
+
+      // Revoke the used refresh token
+      await this.revokeToken(refreshToken);
+
+      await this.logger.info('Token refreshed', {
+        type: 'token_refresh',
+        userId,
+        metadata: { email }
+      });
+
+      return newToken;
+    } catch (error) {
+      await this.logger.error('Error refreshing token', {
+        type: 'token_refresh_error',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+      if (error instanceof ApplicationError) {
+        throw error;
+      }
+      throw new ApplicationError('Error al refrescar token', {
+        type: ErrorType.INTERNAL,
+        code: ErrorCode.TOKEN_REFRESH_ERROR,
+        httpStatus: 500,
+        isOperational: true,
+      });
+    }
+  }
+
   async revokeToken(token: string): Promise<void> {
     try {
-      const decoded = jwt.decode(token) as CustomJWTPayload;
-      if (!decoded || !decoded.exp) {
+      const decoded = jwt.decode(token);
+      if (!this.isJWTPayload(decoded)) {
         throw new ApplicationError('Token inválido', {
           type: ErrorType.VALIDATION,
           code: ErrorCode.INVALID_TOKEN,
@@ -361,92 +342,63 @@ export abstract class BaseJWTService implements JWTInterface {
         });
       }
 
-      const expirationTime = decoded.exp * 1000; // Convertir a milisegundos
-      this.revokedTokens.set(token, expirationTime);
+      const expiryMs = decoded.exp ? decoded.exp * 1000 : Date.now() + 3600000;
+      this.revokedTokens.set(token, expiryMs);
 
-      this.logger.debug('Token JWT revocado', {
+      await this.logger.info('Token revoked', {
+        type: 'token_revocation',
         userId: decoded.userId,
-        purpose: decoded.purpose,
-        expiresAt: new Date(expirationTime).toISOString(),
+        metadata: { email: decoded.email }
       });
     } catch (error) {
+      await this.logger.error('Error revoking token', {
+        type: 'token_revocation_error',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
       if (error instanceof ApplicationError) {
         throw error;
       }
-      throw new ApplicationError(
-        'Error al revocar token',
-        {
-          type: ErrorType.INTERNAL,
-          code: ErrorCode.TOKEN_REVOCATION_ERROR,
-          httpStatus: 500,
-          isOperational: true,
-        },
-        { error: error instanceof Error ? error.message : 'Error desconocido' }
-      );
+      throw new ApplicationError('Error al revocar token', {
+        type: ErrorType.INTERNAL,
+        code: ErrorCode.TOKEN_REVOCATION_ERROR,
+        httpStatus: 500,
+        isOperational: true,
+      });
     }
   }
 
-  /**
-   * Verifica si un token está expirado
-   */
   async isTokenExpired(token: string): Promise<boolean> {
     try {
-      const decoded = jwt.decode(token) as CustomJWTPayload;
-      if (!decoded || !decoded.exp) {
+      const decoded = jwt.decode(token);
+      if (!this.isJWTPayload(decoded)) {
         return true;
       }
 
-      const currentTime = Math.floor(Date.now() / 1000);
-      return decoded.exp < currentTime;
+      return !decoded.exp || Date.now() >= decoded.exp * 1000;
     } catch (error) {
-      this.logger.debug('Error al verificar expiración del token', {
-        error: error instanceof Error ? error.message : 'Error desconocido',
+      await this.logger.error('Error checking token expiration', {
+        type: 'token_expiration_check_error',
+        error: error instanceof Error ? error.message : 'Unknown error'
       });
       return true;
     }
   }
 
-  /**
-   * Obtiene el tiempo restante de un token
-   */
   async getTokenTimeRemaining(token: string): Promise<number> {
     try {
-      const decoded = jwt.decode(token) as CustomJWTPayload;
-      if (!decoded || !decoded.exp) {
+      const decoded = jwt.decode(token);
+      if (!this.isJWTPayload(decoded) || !decoded.exp) {
         return 0;
       }
 
-      const currentTime = Math.floor(Date.now() / 1000);
-      return Math.max(0, decoded.exp - currentTime);
+      const remaining = (decoded.exp * 1000) - Date.now();
+      return Math.max(0, Math.floor(remaining / 1000));
     } catch (error) {
-      this.logger.debug('Error al obtener tiempo restante del token', {
-        error: error instanceof Error ? error.message : 'Error desconocido',
+      await this.logger.error('Error getting token time remaining', {
+        type: 'token_time_remaining_error',
+        error: error instanceof Error ? error.message : 'Unknown error'
       });
       return 0;
-    }
-  }
-
-  /**
-   * Obtiene el tiempo de expiración según el propósito
-   */
-  protected getExpirationTime(purpose: TokenPurpose): number {
-    switch (purpose) {
-      case TokenPurpose.ACCESS:
-        return TokenExpiration.ACCESS_TOKEN;
-      case TokenPurpose.REFRESH:
-        return TokenExpiration.REFRESH_TOKEN;
-      case TokenPurpose.RESET_PASSWORD:
-        return TokenExpiration.RESET_PASSWORD;
-      case TokenPurpose.VERIFY_EMAIL:
-        return TokenExpiration.VERIFY_EMAIL;
-      case TokenPurpose.API_KEY:
-        return TokenExpiration.API_KEY;
-      case TokenPurpose.TEMPORARY_ACCESS:
-        return TokenExpiration.TEMPORARY_ACCESS;
-      case TokenPurpose.IMPERSONATION:
-        return TokenExpiration.IMPERSONATION;
-      default:
-        return TokenExpiration.ACCESS_TOKEN;
     }
   }
 }

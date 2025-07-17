@@ -18,7 +18,20 @@ export const ProductMovementQueries = {
   findByUser: `SELECT * FROM product_movements WHERE user_id = $1`,
   findByType: `SELECT * FROM product_movements WHERE movement_type = $1`,
   findAll: `SELECT * FROM product_movements`,
-  findByField: field => `SELECT * FROM product_movements WHERE ${field} = $1`,
+  
+  findByField: (field: string) => {
+    const allowedFields = [
+      'id', 'product_id', 'user_id', 'quantity', 'movement_type', 
+      'movement_date', 'notes', 'created_at', 'updated_at'
+    ];
+    
+    if (!allowedFields.includes(field)) {
+      throw new Error(`Campo no permitido: ${field}`);
+    }
+    
+    return `SELECT * FROM product_movements WHERE ${field} = $1`;
+  },
+  
   stats: {
     total: `SELECT COUNT(*) FROM product_movements`,
     byType: `SELECT movement_type, COUNT(*) FROM product_movements GROUP BY movement_type`,

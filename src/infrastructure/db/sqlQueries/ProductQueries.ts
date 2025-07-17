@@ -1,8 +1,3 @@
-/**
- * @fileoverview Consultas SQL optimizadas para productos
- * @author Daisy Castillo
- */
-
 export const ProductQueries = {
   findCriticalStock: `
     SELECT p.*, 
@@ -83,7 +78,6 @@ export const ProductQueries = {
     ORDER BY al.created_at DESC
   `,
 
-  // Vista materializada para productos con información completa
   createProductsFullInfoView: `
     CREATE MATERIALIZED VIEW IF NOT EXISTS products_full_info AS
     SELECT 
@@ -104,7 +98,6 @@ export const ProductQueries = {
     WITH DATA;
   `,
 
-  // Vista materializada para productos en stock crítico
   createCriticalStockView: `
     CREATE MATERIALIZED VIEW IF NOT EXISTS critical_stock_products AS
     SELECT 
@@ -122,7 +115,6 @@ export const ProductQueries = {
     WITH DATA;
   `,
 
-  // Índices para optimizar consultas frecuentes
   createIndexes: `
     CREATE INDEX IF NOT EXISTS idx_products_sku ON products(sku);
     CREATE INDEX IF NOT EXISTS idx_products_name ON products(name);
@@ -133,7 +125,6 @@ export const ProductQueries = {
     CREATE INDEX IF NOT EXISTS idx_products_active ON products(is_active);
   `,
 
-  // Refrescar vistas materializadas
   refreshViews: `
     REFRESH MATERIALIZED VIEW products_full_info;
     REFRESH MATERIALIZED VIEW critical_stock_products;

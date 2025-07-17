@@ -1,9 +1,3 @@
-/**
- * @fileoverview Servidor Express optimizado
- * @author Daisy Castillo
- * @version 1.0.0
- */
-
 import express, {
   Express,
   RequestHandler,
@@ -84,10 +78,8 @@ export class ExpressServer implements ServerWrapperInterface {
   }
 
   private setupBaseMiddleware(): void {
-    // Seguridad
     this.app.use(helmet());
 
-    // CORS
     this.app.use(
       cors({
         origin: process.env.CORS_ORIGIN || '*',
@@ -97,23 +89,28 @@ export class ExpressServer implements ServerWrapperInterface {
       })
     );
 
-    // Rate limiting
     this.app.use(
       rateLimit({
         windowMs: 15 * 60 * 1000, // 15 minutos
-        max: 100, // límite por IP
+        max: 1000, // Aumentado de 100 a 1000 para pruebas
         message: 'Demasiadas solicitudes, por favor intente más tarde',
       })
     );
 
-    // Compresión
     this.app.use(compression());
 
-    // Body parsing
     this.app.use(express.json({ limit: '10mb' }));
     this.app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-    // Request logging
+    // Debug middleware for POST requests
+    this.app.use((req: Request, res: Response, next: NextFunction) => {
+      if (req.method === 'POST') {
+        console.log('DEBUG: Express middleware - req.body:', JSON.stringify(req.body, null, 2));
+        console.log('DEBUG: Express middleware - req.headers:', JSON.stringify(req.headers, null, 2));
+      }
+      next();
+    });
+
     this.app.use((req: Request, res: Response, next: NextFunction) => {
       const start = Date.now();
 
@@ -136,7 +133,6 @@ export class ExpressServer implements ServerWrapperInterface {
   }
 
   private setupMonitoring(): void {
-    // Actualizar estadísticas cada minuto
     setInterval(() => {
       const used = process.memoryUsage();
       this.stats.memory = {
@@ -146,10 +142,8 @@ export class ExpressServer implements ServerWrapperInterface {
       };
       this.stats.uptime = process.uptime();
 
-      // Log de métricas
       this.logger.info('Server metrics', { stats: this.stats });
 
-      // Alerta si el uso de memoria es alto
       if (this.stats.memory.percentage > 85) {
         this.logger.warn('High memory usage detected', {
           memoryUsage: this.stats.memory,
@@ -157,7 +151,6 @@ export class ExpressServer implements ServerWrapperInterface {
       }
     }, 60000);
 
-    // Endpoint de health check
     this.app.get('/health', (req: Request, res: Response) => {
       res.json({
         status: 'UP',
@@ -168,7 +161,6 @@ export class ExpressServer implements ServerWrapperInterface {
   }
 
   private updateStats(statusCode: number, duration: number): void {
-    // Actualizar contadores de requests
     this.stats.requests.total++;
     if (statusCode >= 500) {
       this.stats.requests.error++;
@@ -178,7 +170,6 @@ export class ExpressServer implements ServerWrapperInterface {
       this.stats.requests.success++;
     }
 
-    // Actualizar tiempos de respuesta
     const { responseTime } = this.stats;
     responseTime.min = Math.min(responseTime.min, duration);
     responseTime.max = Math.max(responseTime.max, duration);
@@ -201,7 +192,6 @@ export class ExpressServer implements ServerWrapperInterface {
           resolve();
         });
 
-        // Manejo de errores del servidor
         this.server.on('error', (error: Error) => {
           this.logger.error('Server error', { error });
           throw new ApplicationError(
@@ -216,7 +206,6 @@ export class ExpressServer implements ServerWrapperInterface {
           );
         });
 
-        // Tracking de conexiones activas
         this.server.on('connection', () => {
           this.stats.activeConnections++;
         });
@@ -245,13 +234,12 @@ export class ExpressServer implements ServerWrapperInterface {
           resolve();
         });
 
-        // Cerrar conexiones existentes después de 10 segundos
         setTimeout(() => {
           if (this.stats.activeConnections > 0) {
             this.logger.warn(
-              `Forcing close of ${this.stats.activeConnections} connections`
+              `Forcing server shutdown with ${this.stats.activeConnections} active connections`
             );
-            this.server.forceShutdown();
+            process.exit(1);
           }
         }, 10000);
       } else {
@@ -319,7 +307,7 @@ export class ExpressServer implements ServerWrapperInterface {
   }
 
   setNotFoundHandler(handler: (req: Request, res: Response) => void): void {
-    this.app.use('*', handler);
+    this.app.use(handler);
   }
 
   async getStats(): Promise<{
@@ -344,7 +332,6 @@ export class ExpressServer implements ServerWrapperInterface {
     return `http://localhost:${this.port}`;
   }
 
-  // Métodos de conveniencia para compatibilidad
   registerRoute(
     method: 'get' | 'post' | 'put' | 'delete',
     path: string,

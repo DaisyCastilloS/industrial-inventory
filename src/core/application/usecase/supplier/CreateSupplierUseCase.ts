@@ -36,15 +36,20 @@ export class CreateSupplierUseCase extends BaseCreateUseCase<
   }
 
   protected async createEntity(data: any): Promise<any> {
-    return this.supplierRepository.create(data);
+    const result = await this.supplierRepository.create(data);
+    if (!result.success || !result.data) {
+      throw new Error('Error al crear el proveedor');
+    }
+    return result.data;
   }
 
   protected validateCreatedEntity(entity: any): void {
-    if (!entity.id || !entity.createdAt || !entity.updatedAt) {
+    if (!entity || !entity.id) {
       throw new Error(
-        'Persistencia inconsistente: el proveedor creado no tiene id, createdAt o updatedAt'
+        'Persistencia inconsistente: el proveedor creado no tiene id'
       );
     }
+    // Solo validar ID, no createdAt/updatedAt
   }
 
   protected mapToDTO(entity: any): SupplierResponseDTO {

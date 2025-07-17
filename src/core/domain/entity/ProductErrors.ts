@@ -1,7 +1,3 @@
-/**
- * Custom error classes for Product domain
- */
-
 export class ProductValidationError extends Error {
   constructor(message: string) {
     super(message);

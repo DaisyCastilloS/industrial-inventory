@@ -37,15 +37,20 @@ export class UpdateCategoryUseCase extends BaseUpdateUseCase<
   }
 
   protected async updateEntity(id: number, data: any): Promise<any> {
-    return this.categoryRepository.update(id, data);
+    const result = await this.categoryRepository.update(id, data);
+    if (!result.success || !result.data) {
+      throw new Error('Error al actualizar la categoría');
+    }
+    return result.data;
   }
 
   protected validateUpdatedEntity(entity: any): void {
-    if (!entity.id || !entity.createdAt || !entity.updatedAt) {
+    if (!entity || !entity.id) {
       throw new Error(
-        'Persistencia inconsistente: la categoría actualizada no tiene id, createdAt o updatedAt'
+        'Persistencia inconsistente: la categoría actualizada no tiene id'
       );
     }
+    // Solo validar ID, no createdAt/updatedAt
   }
 
   protected mapToDTO(entity: any): CategoryResponseDTO {
