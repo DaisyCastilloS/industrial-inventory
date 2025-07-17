@@ -412,9 +412,66 @@ curl -H "Authorization: Bearer <TOKEN>" \
 
 ## 🧪 Testing
 
+### Tests Unitarios y de Integración
 ```bash
+# Ejecutar todos los tests
 pnpm run test
+
+# Ejecutar tests con coverage
+pnpm run test:coverage
+
+# Ejecutar tests en modo watch
+pnpm run test:watch
 ```
+
+### Test Exhaustivo de Endpoints
+El proyecto incluye un test exhaustivo que valida todos los endpoints de la API con diferentes roles de usuario:
+
+```bash
+# Ejecutar test exhaustivo de endpoints
+pnpm run test src/tests/exhaustive-endpoints.test.ts
+```
+
+**Características del test exhaustivo:**
+- ✅ Prueba todos los roles: `ADMIN`, `MANAGER`, `SUPERVISOR`, `USER`, `AUDITOR`, `VIEWER`
+- ✅ Valida endpoints de autenticación (register/login)
+- ✅ Prueba operaciones CRUD para todos los recursos
+- ✅ Verifica permisos y autorizaciones por rol
+- ✅ Incluye health checks y endpoints de auditoría
+- ✅ Genera reporte detallado de resultados
+- ✅ Timeout de5nutos por rol para tests completos
+
+**Ejemplo de salida:**
+```
+🚀 Iniciando test exhaustivo completo de TODOS los endpoints
+================================================================================
+
+🎭 Probando rol: ADMIN
+==================================================
+🔐 Registrando usuario ADMIN...
+
+✅ [202403-15:3000DMIN - GET /health (20)
+✅ [202403-15:3000] ADMIN - GET /api/products (20)
+✅ [202403-15:3000 ADMIN - POST /api/categories (201...
+
+📊 RESUMEN EXHAUSTIVO COMPLETO
+================================================================================
+👤 ADMIN:
+   ✅ Exitosos: 25/25 (100)
+👤 MANAGER:
+   ✅ Exitosos:200(100.
+```
+
+**Endpoints probados:**
+- Health Check (`/health`)
+- Autenticación (`/auth/register`, `/auth/login`)
+- Productos (`/api/products`)
+- Categorías (`/api/categories`)
+- Ubicaciones (`/api/locations`)
+- Proveedores (`/api/suppliers`)
+- Movimientos (`/api/product-movements`)
+- Usuarios (`/api/users`) - solo ADMIN
+- Auditoría (`/api/audit-logs`) - solo ADMIN/AUDITOR
 
 ---
 
