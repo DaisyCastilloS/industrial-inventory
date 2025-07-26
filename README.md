@@ -444,7 +444,8 @@ Este proyecto está bajo la Licencia MIT. Ver el archivo [LICENSE](LICENSE) para
 
 - **Swagger UI:** [http://localhost:3000/docs](http://localhost:3000/docs)
 - **Scripts SQL:** Ver [scripts/README.md](scripts/README.md)
-- **Estructura de Base de Datos:** Consultar `scripts/init.sql`
+- **Esquema de Base de Datos:** Ver [docs/database-schema.md](docs/database-schema.md)
+- **Diagrama UML:** Ver [docs/database-uml-diagram.puml](docs/database-uml-diagram.puml)
 - **Estructura de Tests:** Ver directorio `tests/` organizado por Clean Architecture
 
 ---

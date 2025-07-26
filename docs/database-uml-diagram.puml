@@ -1,0 +1,304 @@
+@startuml Industrial Inventory Database Schema
+
+!define TABLE(name,desc) class name as "desc" << (T,#FFAAAA) >>
+!define PK primary key
+!define FK foreign key
+!define INDEX index
+!define TRIGGER trigger
+
+title Sistema de Inventario Industrial - Esquema de Base de Datos
+
+' =====================================================
+' ENTIDADES PRINCIPALES
+' =====================================================
+
+TABLE(users, "users") {
+  PK id : SERIAL
+  email : VARCHAR(100) <<UNIQUE>>
+  password : VARCHAR(255)
+  name : VARCHAR(100)
+  role : VARCHAR(20) <<CHECK>>
+  is_active : BOOLEAN
+  created_at : TIMESTAMP
+  updated_at : TIMESTAMP
+  last_login : TIMESTAMP
+  failed_attempts : SMALLINT
+  --
+  <<constraints>>
+  role IN ('ADMIN', 'USER', 'VIEWER', 'MANAGER', 'SUPERVISOR', 'AUDITOR')
+  failed_attempts >= 0 AND <= 5
+}
+
+TABLE(categories, "categories") {
+  PK id : SERIAL
+  name : VARCHAR(100) <<UNIQUE>>
+  description : TEXT
+  FK parent_id : INTEGER
+  is_active : BOOLEAN
+  created_at : TIMESTAMP
+  updated_at : TIMESTAMP
+  level : INTEGER
+  --
+  <<constraints>>
+  id != parent_id (prevent self reference)
+}
+
+TABLE(locations, "locations") {
+  PK id : SERIAL
+  name : VARCHAR(100) <<UNIQUE>>
+  description : TEXT
+  code : VARCHAR(20)
+  type : VARCHAR(50)
+  zone : VARCHAR(50)
+  shelf : VARCHAR(50)
+  capacity : INTEGER
+  current_usage : INTEGER
+  is_active : BOOLEAN
+  created_at : TIMESTAMP
+  updated_at : TIMESTAMP
+  --
+  <<constraints>>
+  capacity > 0
+  current_usage >= 0 AND <= capacity
+}
+
+TABLE(suppliers, "suppliers") {
+  PK id : SERIAL
+  name : VARCHAR(200) <<UNIQUE>>
+  description : TEXT
+  contact_person : VARCHAR(100)
+  email : VARCHAR(100)
+  phone : VARCHAR(20)
+  address : TEXT
+  rating : DECIMAL(2,1)
+  last_delivery_date : TIMESTAMP
+  is_active : BOOLEAN
+  created_at : TIMESTAMP
+  updated_at : TIMESTAMP
+  --
+  <<constraints>>
+  email format validation
+  rating >= 0 AND <= 5
+}
+
+TABLE(products, "products") {
+  PK id : SERIAL
+  name : VARCHAR(255)
+  description : TEXT
+  sku : VARCHAR(50) <<UNIQUE>>
+  price : NUMERIC(10,2)
+  quantity : INTEGER
+  critical_stock : INTEGER
+  FK category_id : INTEGER
+  FK location_id : INTEGER
+  FK supplier_id : INTEGER
+  last_restock_date : TIMESTAMP
+  last_movement_date : TIMESTAMP
+  is_active : BOOLEAN
+  created_at : TIMESTAMP
+  updated_at : TIMESTAMP
+  --
+  <<constraints>>
+  price >= 0
+  quantity >= 0
+  critical_stock >= 0
+}
+
+TABLE(product_movements, "product_movements") {
+  PK id : SERIAL
+  FK product_id : INTEGER
+  movement_type : VARCHAR(20)
+  quantity : INTEGER
+  previous_quantity : INTEGER
+  new_quantity : INTEGER
+  reason : VARCHAR(200)
+  FK user_id : INTEGER
+  is_active : BOOLEAN
+  created_at : TIMESTAMP
+  --
+  <<constraints>>
+  movement_type IN ('IN', 'OUT', 'ADJUSTMENT')
+  quantity > 0
+  Quantity validation logic
+}
+
+TABLE(audit_logs, "audit_logs") {
+  PK id : SERIAL
+  table_name : VARCHAR(50)
+  record_id : INTEGER
+  action : VARCHAR(20)
+  old_values : JSONB
+  new_values : JSONB
+  FK user_id : INTEGER
+  ip_address : INET
+  user_agent : TEXT
+  created_at : TIMESTAMP
+  --
+  <<constraints>>
+  action IN ('CREATE', 'UPDATE', 'DELETE')
+  table_name validation
+}
+
+' =====================================================
+' VISTAS MATERIALIZADAS
+' =====================================================
+
+TABLE(mv_critical_stock_products, "mv_critical_stock_products") {
+  id : INTEGER
+  name : VARCHAR(255)
+  sku : VARCHAR(50)
+  quantity : INTEGER
+  critical_stock : INTEGER
+  category_name : VARCHAR(100)
+  supplier_name : VARCHAR(200)
+  location_name : VARCHAR(100)
+  last_restock_date : TIMESTAMP
+  last_movement_date : TIMESTAMP
+  --
+  <<materialized view>>
+  Products with quantity <= critical_stock
+}
+
+TABLE(mv_category_tree, "mv_category_tree") {
+  id : INTEGER
+  name : VARCHAR(100)
+  parent_id : INTEGER
+  level : INTEGER
+  path_names : VARCHAR[]
+  path_ids : INTEGER[]
+  depth : INTEGER
+  --
+  <<materialized view>>
+  Hierarchical category structure
+}
+
+TABLE(mv_product_stats, "mv_product_stats") {
+  id : INTEGER
+  name : VARCHAR(255)
+  quantity : INTEGER
+  critical_stock : INTEGER
+  category_name : VARCHAR(100)
+  movement_last_30_days : INTEGER
+  times_accessed_last_30_days : INTEGER
+  last_restock_date : TIMESTAMP
+  last_movement_date : TIMESTAMP
+  --
+  <<materialized view>>
+  Product statistics and analytics
+}
+
+' =====================================================
+' RELACIONES
+' =====================================================
+
+' Auto-relación en categories (jerarquía)
+categories ||--o{ categories : "parent_id -> id"
+
+' Relaciones principales
+users ||--o{ product_movements : "user_id -> id"
+users ||--o{ audit_logs : "user_id -> id"
+
+categories ||--o{ products : "category_id -> id"
+locations ||--o{ products : "location_id -> id"
+suppliers ||--o{ products : "supplier_id -> id"
+
+products ||--o{ product_movements : "product_id -> id"
+
+' =====================================================
+' ÍNDICES PRINCIPALES
+' =====================================================
+
+note top of products
+  **Índices principales:**
+  - idx_products_name_trgm (búsqueda por texto)
+  - idx_products_category_active
+  - idx_products_critical (stock crítico)
+  - idx_products_sku
+end note
+
+note top of categories
+  **Índices principales:**
+  - idx_categories_name_trgm
+  - idx_categories_parent
+  - idx_categories_active
+end note
+
+note top of product_movements
+  **Particionamiento:**
+  - Por RANGE (created_at)
+  - Particiones mensuales (2024-2026)
+  - Índices por product_id y user_id
+end note
+
+note top of audit_logs
+  **Particionamiento:**
+  - Por RANGE (created_at)
+  - Particiones mensuales (2024-2026)
+  - Índices por table_name y user_id
+end note
+
+' =====================================================
+' TRIGGERS Y FUNCIONES
+' =====================================================
+
+note bottom of products
+  **Triggers:**
+  - audit_products_trigger
+  - Actualiza updated_at
+  - Registra en audit_logs
+end note
+
+note bottom of categories
+  **Triggers:**
+  - audit_categories_trigger
+  - Actualiza updated_at
+  - Registra en audit_logs
+end note
+
+note bottom of locations
+  **Triggers:**
+  - audit_locations_trigger
+  - Actualiza updated_at
+  - Registra en audit_logs
+end note
+
+note bottom of suppliers
+  **Triggers:**
+  - audit_suppliers_trigger
+  - Actualiza updated_at
+  - Registra en audit_logs
+end note
+
+' =====================================================
+' FUNCIONES DE MANTENIMIENTO
+' =====================================================
+
+note as N1
+  **Funciones de Mantenimiento:**
+  
+  **refresh_materialized_views()**
+  - Refresca todas las vistas materializadas
+  
+  **create_next_partition()**
+  - Crea nuevas particiones automáticamente
+  
+  **audit_trigger_function()**
+  - Función para triggers de auditoría
+end note
+
+' =====================================================
+' EXTENSIONES Y CONFIGURACIÓN
+' =====================================================
+
+note as N2
+  **Extensiones PostgreSQL:**
+  - btree_gin (índices GIN)
+  - pg_trgm (búsqueda por trigrams)
+  
+  **Optimizaciones:**
+  - Índices parciales para registros activos
+  - Índices compuestos para búsquedas comunes
+  - Índices INCLUDE para consultas eficientes
+end note
+
+@enduml 
