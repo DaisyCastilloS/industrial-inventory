@@ -122,7 +122,7 @@ pnpm run test:e2e     # Tests end-to-end
 pnpm run test         # Todos los tests
 pnpm run test:watch   # Tests en modo watch
 pnpm run test:coverage # Tests con coverage
-pnpm run test:js      # Test exhaustivo (legacy)
+pnpm run test:ts      # Test exhaustivo (legacy)
 ```
 
 ### 🐳 Docker
@@ -265,8 +265,11 @@ pnpm run test:js
 
 ### Test Exhaustivo de Endpoints
 ```bash
-# Test completo de todos los endpoints con diferentes roles
+# Test completo de todos los endpoints con diferentes roles (Jest/TypeScript)
 pnpm run test tests/integration/api/exhaustive-endpoints.test.ts
+
+# Test exhaustivo legacy (TypeScript)
+pnpm run test:ts
 ```
 
 **Características del test exhaustivo:**

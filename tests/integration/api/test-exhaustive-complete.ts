@@ -1,11 +1,96 @@
-const http = require('http');
+import * as http from 'http';
+
+// Interfaces y tipos
+interface TestData {
+  user: {
+    email: string;
+    password: string;
+    name: string;
+    role: string;
+  };
+  product: {
+    name: string;
+    description: string;
+    sku: string;
+    price: number;
+    quantity: number;
+    criticalStock: number;
+    categoryId: number;
+    locationId: number;
+    supplierId: number;
+    isActive: boolean;
+  };
+  category: {
+    name: string;
+    description: string;
+    parentId: number | null;
+    isActive: boolean;
+  };
+  location: {
+    name: string;
+    description: string;
+    code: string;
+    type: string;
+    zone: string;
+    shelf: string | null;
+    capacity: number | null;
+    isActive: boolean;
+  };
+  supplier: {
+    name: string;
+    description: string;
+    email: string;
+    phone: string;
+    address: string | null;
+    contactPerson: string;
+    isActive: boolean;
+  };
+  productMovement: {
+    productId: number;
+    movementType: string;
+    quantity: number;
+    reason: string;
+    notes: string;
+  };
+}
+
+interface HttpResponse {
+  status: number;
+  data: any;
+  headers: http.IncomingHttpHeaders;
+}
+
+interface TestResult {
+  success: boolean;
+  status: number;
+  data?: any;
+  error?: string;
+}
+
+interface CreatedIds {
+  category_id?: number;
+  location_id?: number;
+  supplier_id?: number;
+  product_id?: number;
+}
+
+interface TestResults {
+  [key: string]: TestResult;
+}
+
+interface Issue {
+  role: string;
+  endpoint: string;
+  status: number;
+  error?: string;
+}
 
 const BASE_URL = 'http://localhost:3000';
-const ROLES = ['ADMIN', 'MANAGER', 'SUPERVISOR', 'USER', 'AUDITOR', 'VIEWER'];
+const ROLES: string[] = ['ADMIN', 'MANAGER', 'SUPERVISOR', 'USER', 'AUDITOR', 'VIEWER'];
 const API_PREFIX = '/api';
 
 // Datos de prueba completos para todos los endpoints
-const TEST_DATA = {
+const TEST_DATA: TestData = {
   user: {
     email: 'test_user_${timestamp}@example.com',
     password: 'TestPass123!',
@@ -59,31 +144,31 @@ const TEST_DATA = {
 };
 
 // Función para generar timestamp único
-function getTimestamp() {
+function getTimestamp(): number {
   return Date.now();
 }
 
 // Función para hacer peticiones HTTP
-function makeRequest(options, data = null) {
+function makeRequest(options: http.RequestOptions, data: any = null): Promise<HttpResponse> {
   return new Promise((resolve, reject) => {
-    const req = http.request(options, (res) => {
+    const req = http.request(options, (res: http.IncomingMessage) => {
       let body = '';
       
-      res.on('data', (chunk) => {
-        body += chunk;
+      res.on('data', (chunk: Buffer) => {
+        body += chunk.toString();
       });
       
       res.on('end', () => {
         try {
           const responseData = body ? JSON.parse(body) : null;
           resolve({
-            status: res.statusCode,
+            status: res.statusCode || 0,
             data: responseData,
             headers: res.headers
           });
         } catch (error) {
           resolve({
-            status: res.statusCode,
+            status: res.statusCode || 0,
             data: body,
             headers: res.headers
           });
@@ -91,7 +176,7 @@ function makeRequest(options, data = null) {
       });
     });
 
-    req.on('error', (error) => {
+    req.on('error', (error: Error) => {
       reject(error);
     });
 
@@ -104,7 +189,7 @@ function makeRequest(options, data = null) {
 }
 
 // Función para registrar resultados detallados
-function logResult(role, endpoint, method, status, data = null, error = null) {
+function logResult(role: string, endpoint: string, method: string, status: number, data: any = null, error: string | null = null): void {
   const timestamp = new Date().toISOString();
   
   // Determinar si el error 403 es esperado para roles de solo lectura
@@ -137,13 +222,13 @@ function logResult(role, endpoint, method, status, data = null, error = null) {
 }
 
 // Función para probar un endpoint
-async function testEndpoint(role, endpoint, method = 'GET', data = null, token = null) {
+async function testEndpoint(role: string, endpoint: string, method: string = 'GET', data: any = null, token: string | null = null): Promise<TestResult> {
   try {
     const url = new URL(`${BASE_URL}${endpoint}`);
     
-    const options = {
+    const options: http.RequestOptions = {
       hostname: url.hostname,
-      port: url.port,
+      port: parseInt(url.port),
       path: url.pathname,
       method: method,
       headers: {
@@ -152,6 +237,7 @@ async function testEndpoint(role, endpoint, method = 'GET', data = null, token =
     };
 
     if (token) {
+      options.headers = options.headers || {};
       options.headers['Authorization'] = `Bearer ${token}`;
     }
 
@@ -165,22 +251,23 @@ async function testEndpoint(role, endpoint, method = 'GET', data = null, token =
       data: response.data
     };
   } catch (error) {
-    logResult(role, endpoint, method, 0, null, error.message);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logResult(role, endpoint, method, 0, null, errorMessage);
     
     return {
       success: false,
       status: 0,
-      error: error.message
+      error: errorMessage
     };
   }
 }
 
 // Función para registrar usuario y obtener token
-async function registerAndLogin(role) {
+async function registerAndLogin(role: string): Promise<string | null> {
   const timestamp = getTimestamp();
   const userData = {
     ...TEST_DATA.user,
-    email: TEST_DATA.user.email.replace('${timestamp}', timestamp),
+    email: TEST_DATA.user.email.replace('${timestamp}', timestamp.toString()),
     name: `Test ${role}`,
     role: role
   };
@@ -208,16 +295,16 @@ async function registerAndLogin(role) {
     return null;
   }
 
-  return loginResult.data.data.accessToken;
+  return loginResult.data?.data?.accessToken || null;
 }
 
 // Función para probar TODOS los endpoints exhaustivamente
-async function testAllEndpointsExhaustively(role, token) {
+async function testAllEndpointsExhaustively(role: string, token: string): Promise<TestResults> {
   console.log(`\n🧪 Probando TODOS los endpoints para rol: ${role}`);
-  console.log('=' .repeat(60));
+  console.log('='.repeat(60));
 
-  const results = {};
-  const createdIds = {};
+  const results: TestResults = {};
+  const createdIds: CreatedIds = {};
 
   // 1. Health check (sin token)
   console.log('\n🏥 1. Health Check (sin autenticación)');
@@ -255,7 +342,7 @@ async function testAllEndpointsExhaustively(role, token) {
     };
     const catRes = await testEndpoint(role, API_PREFIX + '/categories', 'POST', categoryData, token);
     results.createCategory = catRes;
-    if (catRes.success && catRes.data && catRes.data.data && catRes.data.data.id) createdIds.category_id = catRes.data.data.id;
+    if (catRes.success && catRes.data?.data?.id) createdIds.category_id = catRes.data.data.id;
 
     // Crear ubicación
     const locationData = {
@@ -267,7 +354,7 @@ async function testAllEndpointsExhaustively(role, token) {
     };
     const locRes = await testEndpoint(role, API_PREFIX + '/locations', 'POST', locationData, token);
     results.createLocation = locRes;
-    if (locRes.success && locRes.data && locRes.data.data && locRes.data.data.id) createdIds.location_id = locRes.data.data.id;
+    if (locRes.success && locRes.data?.data?.id) createdIds.location_id = locRes.data.data.id;
 
     // Crear proveedor
     const supplierData = {
@@ -279,7 +366,7 @@ async function testAllEndpointsExhaustively(role, token) {
     };
     const supRes = await testEndpoint(role, API_PREFIX + '/suppliers', 'POST', supplierData, token);
     results.createSupplier = supRes;
-    if (supRes.success && supRes.data && supRes.data.data && supRes.data.data.id) createdIds.supplier_id = supRes.data.data.id;
+    if (supRes.success && supRes.data?.data?.id) createdIds.supplier_id = supRes.data.data.id;
 
     // Crear producto
     const productData = {
@@ -296,7 +383,7 @@ async function testAllEndpointsExhaustively(role, token) {
     };
     const prodRes = await testEndpoint(role, API_PREFIX + '/products', 'POST', productData, token);
     results.createProduct = prodRes;
-    if (prodRes.success && prodRes.data && prodRes.data.data && prodRes.data.data.id) createdIds.product_id = prodRes.data.data.id;
+    if (prodRes.success && prodRes.data?.data?.id) createdIds.product_id = prodRes.data.data.id;
 
     // Crear movimiento de producto
     const movementData = {
@@ -351,16 +438,16 @@ async function testAllEndpointsExhaustively(role, token) {
 }
 
 // Función principal
-async function runExhaustiveTest() {
+async function runExhaustiveTest(): Promise<void> {
   console.log('🚀 Iniciando test exhaustivo completo de TODOS los endpoints');
-  console.log('=' .repeat(80));
+  console.log('='.repeat(80));
 
-  const allResults = {};
-  const issues = [];
+  const allResults: { [key: string]: TestResults } = {};
+  const issues: Issue[] = [];
 
   for (const role of ROLES) {
     console.log(`\n🎭 Probando rol: ${role}`);
-    console.log('=' .repeat(50));
+    console.log('='.repeat(50));
 
     // Registrar y obtener token
     const token = await registerAndLogin(role);
@@ -389,7 +476,7 @@ async function runExhaustiveTest() {
 
   // Resumen exhaustivo
   console.log('\n📊 RESUMEN EXHAUSTIVO COMPLETO');
-  console.log('=' .repeat(80));
+  console.log('='.repeat(80));
 
   for (const [role, results] of Object.entries(allResults)) {
     console.log(`\n👤 ${role}:`);
@@ -412,9 +499,9 @@ async function runExhaustiveTest() {
 
   // Análisis de problemas
   console.log('\n🔍 ANÁLISIS DE PROBLEMAS DETECTADOS');
-  console.log('=' .repeat(80));
+  console.log('='.repeat(80));
 
-  const problemTypes = {};
+  const problemTypes: { [key: string]: string[] } = {};
   issues.forEach(issue => {
     const key = `${issue.endpoint} (${issue.status})`;
     if (!problemTypes[key]) {
@@ -430,7 +517,7 @@ async function runExhaustiveTest() {
 
   // Recomendaciones
   console.log('\n💡 RECOMENDACIONES PARA PRODUCCIÓN');
-  console.log('=' .repeat(80));
+  console.log('='.repeat(80));
 
   console.log('\n✅ ENDPOINTS LISTOS PARA PRODUCCIÓN:');
   console.log('   - Health Check');
