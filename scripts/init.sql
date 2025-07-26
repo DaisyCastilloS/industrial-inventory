@@ -1,13 +1,18 @@
 -- =====================================================
--- ESQUEMA COMPLETO DE BASE DE DATOS OPTIMIZADO
--- Sistema de Inventario Industrial
+-- SISTEMA DE INVENTARIO INDUSTRIAL - SCRIPT DE INICIALIZACIÓN
+-- =====================================================
+-- Este script inicializa completamente la base de datos
+-- Incluye: esquema, particiones, índices, datos de ejemplo y triggers
 -- =====================================================
 
 -- Extensiones necesarias
 CREATE EXTENSION IF NOT EXISTS btree_gin;
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
--- Eliminar objetos si existen
+-- =====================================================
+-- SECCIÓN 1: LIMPIEZA DE OBJETOS EXISTENTES
+-- =====================================================
+-- Eliminar objetos si existen (orden inverso a dependencias)
 DROP MATERIALIZED VIEW IF EXISTS mv_critical_stock_products;
 DROP MATERIALIZED VIEW IF EXISTS mv_category_tree;
 DROP MATERIALIZED VIEW IF EXISTS mv_product_stats;
@@ -25,6 +30,9 @@ DROP TABLE IF EXISTS locations;
 DROP TABLE IF EXISTS suppliers;
 DROP TABLE IF EXISTS users;
 
+-- =====================================================
+-- SECCIÓN 2: CREACIÓN DE TABLAS BASE
+-- =====================================================
 -- =====================================================
 -- 1. TABLA USUARIOS (Optimizada)
 -- =====================================================

@@ -1,5 +1,12 @@
 import request from 'supertest';
-import app from '../../presentation/expressServer'
+import { afterAll } from '@jest/globals';
+import app from '../../../src/presentation/expressServer';
+
+// Cleanup después de cada test
+afterAll(async () => {
+  // Esperar un poco para que se cierren las conexiones HTTP
+  await new Promise(resolve => setTimeout(resolve, 1000));
+});
 
 const ROLES = ['ADMIN', 'MANAGER', 'SUPERVISOR', 'USER', 'AUDITOR', 'VIEWER'];
 const API_PREFIX = '/api';
@@ -62,7 +69,28 @@ function getTimestamp() {
 }
 
 async function makeRequest(method: string, endpoint: string, data: any = null, token: string | null = null) {
-  let req = request(app)[method.toLowerCase()](endpoint);
+  let req: any;
+  
+  switch (method.toLowerCase()) {
+    case 'get':
+      req = request(app).get(endpoint);
+      break;
+    case 'post':
+      req = request(app).post(endpoint);
+      break;
+    case 'put':
+      req = request(app).put(endpoint);
+      break;
+    case 'delete':
+      req = request(app).delete(endpoint);
+      break;
+    case 'patch':
+      req = request(app).patch(endpoint);
+      break;
+    default:
+      req = request(app).get(endpoint);
+  }
+  
   if (token) req = req.set('Authorization', `Bearer ${token}`);
   if (data) req = req.send(data);
   req = req.set('Content-Type', 'application/json');

@@ -15,18 +15,18 @@ export default {
       useESM: true,
     }],
   },
-  setupFilesAfterEnv: ['<rootDir>/src/tests/setup.ts'],
+  setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
   globals: {
     'ts-jest': {
       useESM: true,
     }
   },
-  roots: ['<rootDir>/src'],
+  roots: ['<rootDir>/src', '<rootDir>/tests'],
   testMatch: ['**/__tests__/**/*.ts', '**/?(*.)+(spec|test).ts'],
   collectCoverageFrom: [
     'src/**/*.ts',
     '!src/**/*.d.ts',
-    '!src/04-presentation/expressServer/index.ts'
+    '!src/presentation/expressServer/index.ts'
   ],
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'html'],
@@ -38,5 +38,5 @@ export default {
       statements: 90
     }
   },
-  setupFiles: ['<rootDir>/src/tests/setup.ts']
+  setupFiles: ['<rootDir>/tests/setup.ts']
 }; 

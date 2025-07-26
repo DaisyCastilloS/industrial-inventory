@@ -4,14 +4,14 @@
  * @version 1.0.0
  */
 
-import { AuditLogRepositoryImpl } from '../../infrastructure/services/AuditLogRepositoryImpl';
-import { AuditLog } from '../../core/domain/entity/AuditLog';
-import { pool } from '../../infrastructure/db/database';
+import { AuditLogRepositoryImpl } from '@infrastructure/services/AuditLogRepositoryImpl';
+import { AuditLog } from '@core/domain/entity/AuditLog';
+import { pool } from '@infrastructure/db/database';
 import { QueryResult } from 'pg';
-import { AuditAction } from '../../shared/constants/RoleTypes';
+import { AuditAction } from '@shared/constants/RoleTypes';
 
 // Mock de la base de datos
-jest.mock('../../infrastructure/db/database', () => ({
+jest.mock('@infrastructure/db/database', () => ({
   pool: {
     query: jest.fn(),
   },

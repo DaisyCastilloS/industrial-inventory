@@ -5,12 +5,12 @@
  */
 
 import { describe, it, expect, beforeEach } from '@jest/globals';
-import { JWTService } from '../../infrastructure/services/JWTService';
-import { TokenPurpose } from '../../shared/constants/TokenPurpose';
+import { JWTService } from '@infrastructure/services/JWTService';
+import { TokenPurpose } from '@shared/constants/TokenPurpose';
 import {
   ApplicationError,
   ErrorCode,
-} from '../../core/application/error/ApplicationError';
+} from '@core/application/error/ApplicationError';
 
 describe('JWTService', () => {
   let jwtService: JWTService;

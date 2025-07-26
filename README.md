@@ -15,25 +15,18 @@
 - [🏦 Descripción General](#-descripción-general)
 - [🏗️ Arquitectura y Estructura del Proyecto](#-arquitectura-y-estructura-del-proyecto)
 - [🛠️ Tecnologías](#-tecnologías)
-- [🚀 Instalación y Despliegue Rápido con Docker Compose](#-instalación-y-despliegue-rápido-con-docker-compose)
-- [📖 Uso y Comandos Principales](#-uso-y-comandos-principales)
+- [🚀 Instalación y Despliegue Rápido](#-instalación-y-despliegue-rápido)
+- [📖 Comandos Principales](#-comandos-principales)
 - [🗄️ Esquema y Datos de Ejemplo](#-esquema-y-datos-de-ejemplo)
 - [🔐 Autenticación y Roles](#-autenticación-y-roles)
 - [🔌 API Endpoints](#-api-endpoints)
-- [🔎 Vistas y Triggers Clave](#-vistas-y-triggers-clave)
-- [📊 Logging y Auditoría](#-logging-y-auditoría)
 - [🧪 Testing](#-testing)
 - [📝 Commits y Estilo de Código](#-commits-y-estilo-de-código)
 - [🔒 Seguridad](#-seguridad)
 - [🐳 Docker Compose](#-docker-compose)
 - [📝 Troubleshooting](#-troubleshooting)
 - [🤝 Contribución](#-contribución)
-- [🛣️ Roadmap](#-roadmap)
-- [🐛 Reportar Bugs](#-reportar-bugs)
 - [📄 Licencia](#-licencia)
-- [👥 Autores](#-autores)
-- [🙏 Agradecimientos](#-agradecimientos)
-- [📚 Documentación](#-documentación)
 
 ---
 
@@ -47,199 +40,144 @@ Este sistema permite gestionar el inventario de productos industriales, movimien
 
 ```
 src/
-├── 00-constants/          # Constantes del sistema
-├── 01-domain/            # Entidades y lógica de negocio
-├── 02-application/       # Casos de uso y DTOs
-├── 03-infrastructure/    # Implementaciones técnicas (DB, servicios)
-└── 04-presentation/      # Controladores y servidor Express
+├── core/
+│   ├── application/     # Casos de uso y DTOs
+│   └── domain/         # Entidades y lógica de negocio
+├── infrastructure/     # Implementaciones técnicas (DB, servicios)
+├── presentation/       # Controladores y servidor Express
+└── shared/            # Utilidades y constantes compartidas
 ```
 
 ---
 
 ## 🛠️ Tecnologías
 
-- TypeScript (ES2020, strict mode)
-- Node.js con Express.js
-- PostgreSQL con pg driver
-- Jest para testing (coverage 90%)
-- Winston para logging estructurado
-- Zod para validación de datos
-- bcrypt para encriptación
-- jsonwebtoken para autenticación
-- Swagger/OpenAPI para documentación
-- Husky + commitlint para Conventional Commits
-- ESLint + Prettier para calidad de código
-- Docker Compose para orquestación
-- pnpm como gestor de paquetes
+- **Backend:** TypeScript, Node.js, Express.js
+- **Base de Datos:** PostgreSQL con pg driver
+- **Testing:** Jest, Supertest
+- **Logging:** Winston para logging estructurado
+- **Validación:** Zod para validación de datos
+- **Seguridad:** bcrypt, jsonwebtoken, helmet, CORS
+- **Documentación:** Swagger/OpenAPI
+- **Calidad:** ESLint, Prettier, Husky, commitlint
+- **Orquestación:** Docker Compose
+- **Gestor de Paquetes:** pnpm
 
 ---
 
-## 🚀 Instalación y Orden de Ejecución
+## 🚀 Instalación y Despliegue Rápido
 
-### Primera vez que inicias el proyecto:
+### 1. Instalación Inicial
 ```bash
-# 1. Instalar dependencias
+# Clonar y instalar dependencias
+git clone <repository-url>
+cd Industrial-Inventory
 pnpm install
 
-# 2. Configurar archivo .env
-DB_USER=postgres
-DB_PASSWORD=postgres
-DB_NAME=inventory_db
-DB_PORT=5433  # Usamos 5433 para evitar conflictos con PostgreSQL local
+# Configurar variables de entorno
+cp .env.example .env
+# Editar .env con tus configuraciones
+```
 
-# 3. Construir e iniciar contenedores
-pnpm run docker:build
+### 2. Iniciar con Docker
+```bash
+# Construir e iniciar contenedores
 pnpm run docker:up
 
-# 4. La base de datos se inicializa automáticamente con:
-# - Tablas y estructura
-# - Índices de optimización
-# - Datos de ejemplo (usuarios, productos, categorías)
-# - Triggers de auditoría
-# - Vistas para reportes
+# Verificar estado
+pnpm run docker:ps
+```
 
-# 5. Iniciar el servidor en modo desarrollo
+### 3. Desarrollo
+```bash
+# Iniciar servidor en modo desarrollo
 pnpm run dev
 ```
 
-### Verificar la instalación:
+### 4. Verificar Instalación
 ```bash
-# Ver estado de los contenedores
-pnpm run docker:ps
+# Health check
+curl http://localhost:3000/health
 
-# Ver logs de la base de datos
-pnpm run docker:logs
-
-# Datos iniciales disponibles:
-# - Usuario admin: admin@industrial.com
-# - Categorías: Sensores, Transmisores, Válvulas, etc.
-# - Ubicaciones: Bodega Central, Bodega Sur, etc.
-# - Proveedores y productos de ejemplo
-```
-
-### Reiniciar la base de datos (si es necesario):
-```bash
-# Esto eliminará todos los datos y volverá a inicializar
-pnpm run docker:db:reset
-```
-
-### Desarrollo diario:
-```bash
-# 1. Levantar los contenedores (si no están corriendo)
-pnpm run docker:up
-
-# 2. Iniciar el servidor en modo desarrollo
-pnpm run dev
-```
-
-### Mantenimiento de la base de datos:
-```bash
-# Resetear completamente la base de datos (borra todo y reinicializa)
-pnpm run docker:db:reset
-```
-
-### Antes de hacer commit:
-```bash
-# 1. Verificar tipos
-pnpm run type-check
-
-# 2. Ejecutar tests
-pnpm run test
-
-# 3. Verificar formato y linting
-pnpm run format:check
-pnpm run lint
-```
-
-### Despliegue en producción:
-```bash
-# 1. Instalar dependencias
-pnpm install
-
-# 2. Construir el proyecto
-pnpm run build
-
-# 3. Levantar contenedores
-pnpm run docker:build
-pnpm run docker:up
-
-# 4. Iniciar en modo producción
-pnpm run start
-```
-
-### Comandos útiles durante el desarrollo:
-```bash
-# Ver logs de los contenedores
-pnpm run docker:logs
-
-# Ver estado de los contenedores
-pnpm run docker:ps
-
-# Reiniciar contenedores
-pnpm run docker:restart
-
-# Detener todo
-pnpm run docker:down
+# Documentación Swagger
+open http://localhost:3000/docs
 ```
 
 ---
 
-## 📖 Uso y Comandos Principales
+## 📖 Comandos Principales
 
-- Consultar productos, crear, actualizar, eliminar, consultar reportes y logs.
-- Ver ejemplos de uso en la sección de endpoints.
+### 🚀 Desarrollo
+```bash
+pnpm run dev          # Servidor de desarrollo
+pnpm run build        # Compilar TypeScript
+pnpm run start        # Servidor de producción
+```
+
+### 🧪 Testing
+```bash
+pnpm run test         # Tests unitarios
+pnpm run test:watch   # Tests en modo watch
+pnpm run test:coverage # Tests con coverage
+```
+
+### 🐳 Docker
+```bash
+pnpm run docker:up    # Levantar contenedores
+pnpm run docker:down  # Detener contenedores
+pnpm run docker:reset # Reset completo
+```
+
+### 🗄️ Base de Datos
+```bash
+pnpm run db:fix       # Aplicar particiones
+pnpm run db:indexes   # Crear índices
+```
+
+### 🎨 Calidad de Código
+```bash
+pnpm run format       # Formatear código
+pnpm run lint         # Lint con auto-fix
+```
 
 ---
 
 ## 🗄️ Esquema y Datos de Ejemplo
 
-### Productos de ejemplo
+### Usuarios de Prueba
+- **Admin:** `admin@industrial.com` / `123456`
+- **Manager:** `manager@industrial.com` / `123456`
+- **User:** `user@industrial.com` / `123456`
 
-| SKU              | Nombre                          | Categoría     | Ubicación        | Proveedor                | Stock | Stock Crítico | Precio   |
-|------------------|---------------------------------|---------------|------------------|--------------------------|-------|---------------|----------|
-| SENS-PRES-001    | Sensor de Presión Industrial    | Sensores      | Bodega Central   | Industrial Supplies Co.  | 15    | 5             | 1250.00  |
-| TRANS-TEMP-002   | Transmisor de Temperatura RTD   | Transmisores  | Bodega Sur       | Mining Equipment Ltd.    | 25    | 3             | 890.00   |
-| VALV-CONT-003    | Válvula de Control Neumática    | Válvulas      | Bodega Central   | Industrial Supplies Co.  | 8     | 2             | 2100.00  |
-| SEG-CASCO-004    | Casco de Seguridad Industrial   | Equipos de Seguridad | Bodega Oeste | Safety Gear Pro         | 100   | 10            | 45.00    |
-| HERR-MULTI-005   | Multímetro Digital Profesional  | Herramientas  | Bodega Sur       | Tech Components Inc.     | 30    | 5             | 180.00   |
+### Productos de Ejemplo
+
+| SKU              | Nombre                          | Categoría     | Stock | Precio   |
+|------------------|---------------------------------|---------------|-------|----------|
+| SENS-PRES-001    | Sensor de Presión Industrial    | Sensores      | 15    | 1250.00  |
+| TRANS-TEMP-002   | Transmisor de Temperatura RTD   | Transmisores  | 25    | 890.00   |
+| VALV-CONT-003    | Válvula de Control Neumática    | Válvulas      | 8     | 2100.00  |
+| SEG-CASCO-004    | Casco de Seguridad Industrial   | Seguridad     | 100   | 45.00    |
+| HERR-MULTI-005   | Multímetro Digital Profesional  | Herramientas  | 30    | 180.00   |
 
 ### Ubicaciones
-
-- **Bodega Central** (Zona Norte, Estante A)
-- **Bodega Sur** (Zona Mina, Estante B)
-- **Bodega Oeste** (Zona Central, Estante C)
-- **Almacén Temporal** (Zona Este, Estante D)
+- Bodega Central, Bodega Sur, Bodega Oeste, Almacén Temporal
 
 ### Proveedores
-
-- **Industrial Supplies Co.** (Juan Pérez)
-- **Mining Equipment Ltd.** (María González)
-- **Safety Gear Pro** (Carlos Rodríguez)
-- **Tech Components Inc.** (Ana Silva)
+- Industrial Supplies Co., Mining Equipment Ltd., Safety Gear Pro, Tech Components Inc.
 
 ---
 
 ## 🔐 Autenticación y Roles
 
-- **Roles soportados:** `ADMIN`, `USER`, `VIEWER`
-- **Registro:** `POST /auth/register`
-- **Login:** `POST /auth/login` (devuelve JWT)
+### Roles Soportados
+- **ADMIN:** Acceso completo a todas las funcionalidades
+- **MANAGER:** Gestión de productos y movimientos
+- **SUPERVISOR:** Supervisión y reportes
+- **USER:** Operaciones básicas de inventario
+- **AUDITOR:** Solo lectura y auditoría
+- **VIEWER:** Solo visualización
 
-### Ejemplo de login
-
-```bash
-curl -X POST http://localhost:3000/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email": "admin@industrial.com", "password": "123456"}'
-```
-
----
-
-## 🔌 API Endpoints
-
-### Autenticación
-
-#### Login
+### Login de Ejemplo
 ```bash
 curl -X POST http://localhost:3000/auth/login \
   -H "Content-Type: application/json" \
@@ -249,186 +187,54 @@ curl -X POST http://localhost:3000/auth/login \
   }'
 ```
 
-**Respuesta exitosa:**
-```json
-{
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "user": {
-    "id": 1,
-    "email": "admin@industrial.com",
-    "name": "Admin User",
-    "role": "ADMIN"
-  }
-}
-```
+---
+
+## 🔌 API Endpoints
+
+### Autenticación
+- `POST /auth/register` - Registro de usuarios
+- `POST /auth/login` - Login y obtención de JWT
 
 ### Productos
+- `GET /api/products` - Listar productos
+- `POST /api/products` - Crear producto
+- `GET /api/products/:id` - Obtener producto
+- `PUT /api/products/:id` - Actualizar producto
+- `DELETE /api/products/:id` - Eliminar producto
 
-#### Listar Productos
-```bash
-curl -H "Authorization: Bearer <TOKEN>" \
-  http://localhost:3000/products?page=1&limit=10
-```
+### Movimientos
+- `GET /api/product-movements` - Listar movimientos
+- `POST /api/product-movements` - Registrar movimiento
+- `GET /api/product-movements/:id` - Obtener movimiento
 
-**Respuesta exitosa:**
-```json
-{
-  "data": [
-    {
-      "id": 1,
-      "sku": "SENS-PRES-001",
-      "name": "Sensor de Presión Industrial",
-      "category": "Sensores",
-      "location": "Bodega Central",
-      "supplier": "Industrial Supplies Co.",
-      "quantity": 15,
-      "critical_stock": 5,
-      "price": 1250.00,
-      "stock_status": "NORMAL"
-    }
-  ],
-  "pagination": {
-    "total": 50,
-    "page": 1,
-    "limit": 10,
-    "pages": 5
-  }
-}
-```
+### Categorías, Ubicaciones, Proveedores
+- Operaciones CRUD completas para cada entidad
 
-#### Crear Producto
-```bash
-curl -X POST http://localhost:3000/products \
-  -H "Authorization: Bearer <TOKEN>" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "sku": "COMP-RELE-006",
-    "name": "Relé de Potencia Industrial",
-    "description": "Relé electromecánico para control de motores",
-    "price": 320.00,
-    "quantity": 12,
-    "critical_stock": 3,
-    "category_id": 6,
-    "location_id": 1,
-    "supplier_id": 4
-  }'
-```
-
-**Respuesta exitosa:**
-```json
-{
-  "message": "Producto creado exitosamente",
-  "data": {
-    "id": 51,
-    "sku": "COMP-RELE-006",
-    "name": "Relé de Potencia Industrial",
-    "price": 320.00,
-    "quantity": 12,
-    "critical_stock": 3,
-    "stock_status": "NORMAL"
-  }
-}
-```
-
-### Movimientos de Inventario
-
-#### Registrar Movimiento
-```bash
-curl -X POST http://localhost:3000/product-movements \
-  -H "Authorization: Bearer <TOKEN>" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "product_id": 1,
-    "type": "OUT",
-    "quantity": 5,
-    "reason": "Entrega a mantenimiento",
-    "notes": "Solicitud #123"
-  }'
-```
-
-**Respuesta exitosa:**
-```json
-{
-  "message": "Movimiento registrado exitosamente",
-  "data": {
-    "id": 156,
-    "product_id": 1,
-    "type": "OUT",
-    "quantity": 5,
-    "previous_stock": 15,
-    "new_stock": 10,
-    "user_id": 1,
-    "created_at": "2024-03-15T10:30:00Z"
-  }
-}
-```
+### Auditoría
+- `GET /api/audit-logs` - Logs de auditoría (solo ADMIN/AUDITOR)
 
 ### Reportes
-
-#### Stock Crítico
-```bash
-curl -H "Authorization: Bearer <TOKEN>" \
-  http://localhost:3000/reports/critical-stock
-```
-
-**Respuesta:**
-```json
-{
-  "data": [
-    {
-      "id": 3,
-      "sku": "VALV-CONT-003",
-      "name": "Válvula de Control Neumática",
-      "quantity": 2,
-      "critical_stock": 2,
-      "units_needed": 0,
-      "category": "Válvulas",
-      "location": "Bodega Central"
-    }
-  ],
-  "total": 1
-}
-```
-
----
-
-## 🔎 Vistas y Triggers Clave
-
-- **Auditoría automática:** Cada cambio en productos, categorías, ubicaciones y proveedores genera un registro en `audit_logs`.
-- **Stock crítico:** Si el stock de un producto cae por debajo de su `critical_stock`, se genera una alerta y se refleja en la vista `critical_stock_products`.
-- **Vistas útiles:**
-  - `products_full_info`: Productos con toda la información relacionada.
-  - `critical_stock_products`: Solo productos en stock crítico.
-  - `recent_movements`: Últimos movimientos de inventario.
-
----
-
-## 📊 Logging y Auditoría
-
-- Logging estructurado con Winston
-- Auditoría automática vía triggers en la base de datos
+- `GET /api/reports/critical-stock` - Productos en stock crítico
 
 ---
 
 ## 🧪 Testing
 
-### Tests Unitarios y de Integración
+### Tests Unitarios
 ```bash
 # Ejecutar todos los tests
 pnpm run test
 
-# Ejecutar tests con coverage
+# Tests con coverage
 pnpm run test:coverage
 
-# Ejecutar tests en modo watch
+# Tests en modo watch
 pnpm run test:watch
 ```
 
 ### Test Exhaustivo de Endpoints
-El proyecto incluye un test exhaustivo que valida todos los endpoints de la API con diferentes roles de usuario:
-
 ```bash
-# Ejecutar test exhaustivo de endpoints
+# Test completo de todos los endpoints con diferentes roles
 pnpm run test src/tests/exhaustive-endpoints.test.ts
 ```
 
@@ -439,28 +245,7 @@ pnpm run test src/tests/exhaustive-endpoints.test.ts
 - ✅ Verifica permisos y autorizaciones por rol
 - ✅ Incluye health checks y endpoints de auditoría
 - ✅ Genera reporte detallado de resultados
-- ✅ Timeout de5nutos por rol para tests completos
-
-**Ejemplo de salida:**
-```
-🚀 Iniciando test exhaustivo completo de TODOS los endpoints
-================================================================================
-
-🎭 Probando rol: ADMIN
-==================================================
-🔐 Registrando usuario ADMIN...
-
-✅ [202403-15:3000DMIN - GET /health (20)
-✅ [202403-15:3000] ADMIN - GET /api/products (20)
-✅ [202403-15:3000 ADMIN - POST /api/categories (201...
-
-📊 RESUMEN EXHAUSTIVO COMPLETO
-================================================================================
-👤 ADMIN:
-   ✅ Exitosos: 25/25 (100)
-👤 MANAGER:
-   ✅ Exitosos:200(100.
-```
+- ✅ Timeout de 5 minutos por rol para tests completos
 
 **Endpoints probados:**
 - Health Check (`/health`)
@@ -477,150 +262,156 @@ pnpm run test src/tests/exhaustive-endpoints.test.ts
 
 ## 📝 Commits y Estilo de Código
 
-- Conventional Commits
-- ESLint + Prettier
-- Husky + commitlint
+### Conventional Commits
+```bash
+feat: agregar nueva funcionalidad
+fix: corregir bug
+docs: actualizar documentación
+style: cambios de formato
+refactor: refactorizar código
+test: agregar tests
+chore: tareas de mantenimiento
+```
+
+### Pre-commit Hooks
+- ESLint con auto-fix
+- Prettier para formateo
+- Tests automáticos
+- Conventional Commits validation
 
 ---
 
 ## 🔒 Seguridad
 
-- JWT para autenticación
-- Helmet, CORS y rate limiting en Express
+### Características de Seguridad
+- **Autenticación:** JWT con expiración configurable
+- **Autorización:** Control de roles granular
+- **Validación:** Zod para validación de entrada
+- **Encriptación:** bcrypt para contraseñas
+- **Headers:** Helmet para headers de seguridad
+- **CORS:** Configuración de CORS
+- **Rate Limiting:** Protección contra ataques
+- **SQL Injection:** Prevención con parámetros preparados
+
+### Variables de Entorno Requeridas
+```env
+# Base de Datos
+DB_HOST=localhost
+DB_PORT=5433
+DB_NAME=inventory_db
+DB_USER=postgres
+DB_PASSWORD=your_password
+
+# JWT
+JWT_SECRET=your_jwt_secret
+JWT_EXPIRES_IN=24h
+
+# Servidor
+PORT=3000
+NODE_ENV=development
+```
 
 ---
 
 ## 🐳 Docker Compose
 
-- Orquestación de base de datos y backend
-- Volúmenes persistentes para datos
+### Servicios
+- **inventory-db:** PostgreSQL 15 con datos iniciales
+- **Backend:** Node.js con TypeScript
+
+### Volúmenes
+- Datos persistentes de PostgreSQL
+- Scripts SQL de inicialización
+
+### Comandos Útiles
+```bash
+# Ver logs
+docker compose logs -f
+
+# Reiniciar servicios
+docker compose restart
+
+# Limpiar todo
+docker compose down -v
+```
 
 ---
 
 ## 📝 Troubleshooting
 
-- **¿No puedes conectarte a la base de datos?**
-  - Verifica que el contenedor `inventory-db` esté corriendo:  `docker ps`
-  - Revisa las variables de entorno en `.env` y en `docker-compose.yml`.
-- **¿El backend no arranca?**
-  - Asegúrate de que la base de datos esté lista antes de iniciar el backend.
-  - Verifica logs con `pnpm run dev` y `docker logs inventory-db`.
-- **¿No ves datos de ejemplo?**
-  - El script `init.sql` se ejecuta automáticamente al crear el contenedor. Si necesitas reiniciar, elimina el volumen de Docker:
-    ```bash
-    docker compose down -v
-    docker compose up -d
-    ```
+### Problemas Comunes
 
----
+#### Error de Conexión a Base de Datos
+```bash
+# Verificar contenedor
+pnpm run docker:ps
 
-## 🚨 Códigos de Error Comunes
+# Ver logs
+docker compose logs inventory-db
+
+# Resetear base de datos
+pnpm run docker:reset
+```
+
+#### Error de Puerto en Uso
+```bash
+# Cambiar puerto en .env
+PORT=3001
+
+# O matar proceso
+lsof -ti:3000 | xargs kill -9
+```
+
+#### Error de Dependencias
+```bash
+# Limpiar e instalar
+rm -rf node_modules pnpm-lock.yaml
+pnpm install
+```
+
+### Códigos de Error
 
 | Código | Descripción | Solución |
 |--------|-------------|----------|
-| `AUTH_ERROR_001` | Token no proporcionado | Incluir el header `Authorization: Bearer <token>` |
-| `AUTH_ERROR_002` | Token inválido o expirado | Hacer login nuevamente para obtener un token válido |
-| `AUTH_ERROR_003` | Permisos insuficientes | Verificar el rol del usuario |
-| `VALIDATION_ERROR_001` | Datos de entrada inválidos | Revisar el formato y valores requeridos |
-| `RESOURCE_ERROR_001` | Recurso no encontrado | Verificar el ID o parámetros de búsqueda |
-| `STOCK_ERROR_001` | Stock insuficiente | Verificar la cantidad disponible antes de la operación |
-| `DB_ERROR_001` | Error de base de datos | Contactar al administrador del sistema |
-
-### Ejemplos de Errores
-
-#### Error de Autenticación
-```json
-{
-  "error": "Token no proporcionado",
-  "code": "AUTH_ERROR_001",
-  "timestamp": "2024-03-15T10:30:00Z"
-}
-```
-
-#### Error de Validación
-```json
-{
-  "error": "Datos de entrada inválidos",
-  "code": "VALIDATION_ERROR_001",
-  "details": [
-    {
-      "field": "quantity",
-      "message": "La cantidad debe ser mayor a 0",
-      "value": "-5"
-    }
-  ],
-  "timestamp": "2024-03-15T10:30:00Z"
-}
-```
-
-#### Error de Stock
-```json
-{
-  "error": "Stock insuficiente",
-  "code": "STOCK_ERROR_001",
-  "details": {
-    "product_id": 1,
-    "requested": 10,
-    "available": 5
-  },
-  "timestamp": "2024-03-15T10:30:00Z"
-}
-```
+| `AUTH_ERROR_001` | Token no proporcionado | Incluir `Authorization: Bearer <token>` |
+| `AUTH_ERROR_002` | Token inválido | Hacer login nuevamente |
+| `AUTH_ERROR_003` | Permisos insuficientes | Verificar rol del usuario |
+| `VALIDATION_ERROR_001` | Datos inválidos | Revisar formato de entrada |
+| `RESOURCE_ERROR_001` | Recurso no encontrado | Verificar ID o parámetros |
+| `STOCK_ERROR_001` | Stock insuficiente | Verificar cantidad disponible |
 
 ---
 
 ## 🤝 Contribución
 
-¡Contribuciones bienvenidas! Abre un issue o pull request.
+### Cómo Contribuir
+1. Fork el proyecto
+2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
+3. Commit tus cambios (`git commit -m 'feat: add amazing feature'`)
+4. Push a la rama (`git push origin feature/AmazingFeature`)
+5. Abre un Pull Request
 
----
-
-## 🛣️ Roadmap
-
-- Mejoras en reportes y dashboards
-- Integración con sistemas externos
-- Notificaciones automáticas
-
----
-
-## 🐛 Reportar Bugs
-
-Abre un issue en GitHub con el mayor detalle posible.
+### Estándares de Código
+- Usar TypeScript strict mode
+- Seguir Clean Architecture
+- Escribir tests para nuevas funcionalidades
+- Usar Conventional Commits
+- Documentar APIs nuevas
 
 ---
 
 ## 📄 Licencia
 
-MIT
+Este proyecto está bajo la Licencia MIT. Ver el archivo [LICENSE](LICENSE) para más detalles.
 
 ---
 
-## 👥 Autores
+## 📚 Documentación Adicional
 
-- [Daisy Castillo Sepulveda](https://github.com/DaisyCastilloS)
-
----
-
-## 🙏 Agradecimientos
-
-- Comunidad Open Source
-- Usuarios y testers
+- **Swagger UI:** [http://localhost:3000/docs](http://localhost:3000/docs)
+- **Scripts SQL:** Ver [scripts/README.md](scripts/README.md)
+- **Estructura de Base de Datos:** Consultar `init.sql`
 
 ---
 
-## 📚 Documentación
-
-- Documentación Swagger: [http://localhost:3000/docs](http://localhost:3000/docs)
-- Consulta las vistas SQL (`products_full_info`, `critical_stock_products`, `recent_movements`) para reportes avanzados.
-
----
-
-¿Dudas? Abre un issue o contactame.
-
-¿Quieres ejemplos más específicos de productos, ubicaciones o movimientos? ¡Dímelo!
-
-¿Listo para usar en producción? Solo necesitas Docker Compose y tu archivo `.env` configurado.
-
----
-
-**¡Bienvenido a la gestión industrial moderna!**
+**¡Bienvenido a la gestión industrial moderna!** 🏭✨

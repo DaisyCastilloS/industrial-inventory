@@ -1,5 +1,5 @@
-import { User } from '../../core/domain/entity/User';
-import { UserRole } from '../../shared/constants/RoleTypes';
+import { User } from '@core/domain/entity/User';
+import { UserRole } from '@shared/constants/RoleTypes';
 
 describe('User Entity', () => {
   describe('constructor', () => {

@@ -4,8 +4,8 @@
  * @version 1.0.0
  */
 
-import { EncryptionService } from '../../infrastructure/services/EncryptionService';
-import { SecurityConfig } from '../../shared/constants/TokenPurpose';
+import { EncryptionService } from '@infrastructure/services/EncryptionService';
+import { SecurityConfig } from '@shared/constants/TokenPurpose';
 import { describe, it, expect, beforeEach } from '@jest/globals';
 
 describe('EncryptionService', () => {
