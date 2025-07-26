@@ -116,9 +116,13 @@ pnpm run start        # Servidor de producción
 
 ### 🧪 Testing
 ```bash
-pnpm run test         # Tests unitarios
+pnpm run test:unit    # Tests unitarios
+pnpm run test:integration # Tests de integración
+pnpm run test:e2e     # Tests end-to-end
+pnpm run test         # Todos los tests
 pnpm run test:watch   # Tests en modo watch
 pnpm run test:coverage # Tests con coverage
+pnpm run test:js      # Test exhaustivo (legacy)
 ```
 
 ### 🐳 Docker
@@ -132,6 +136,7 @@ pnpm run docker:reset # Reset completo
 ```bash
 pnpm run db:fix       # Aplicar particiones
 pnpm run db:indexes   # Crear índices
+pnpm run docker:reset # Reset completo de DB
 ```
 
 ### 🎨 Calidad de Código
@@ -220,9 +225,32 @@ curl -X POST http://localhost:3000/auth/login \
 
 ## 🧪 Testing
 
-### Tests Unitarios
+### Estructura de Tests (Clean Architecture)
+```
+tests/
+├── unit/              # Tests unitarios por capa
+│   ├── domain/        # Entidades y lógica de negocio
+│   ├── application/   # Casos de uso
+│   ├── infrastructure/ # Servicios y repositorios
+│   └── presentation/  # Controladores
+├── integration/       # Tests de integración
+│   ├── api/          # Tests de endpoints
+│   └── database/     # Tests de base de datos
+└── e2e/              # Tests end-to-end
+```
+
+### Comandos de Testing
 ```bash
-# Ejecutar todos los tests
+# Tests unitarios
+pnpm run test:unit
+
+# Tests de integración
+pnpm run test:integration
+
+# Tests end-to-end
+pnpm run test:e2e
+
+# Todos los tests
 pnpm run test
 
 # Tests con coverage
@@ -230,12 +258,15 @@ pnpm run test:coverage
 
 # Tests en modo watch
 pnpm run test:watch
+
+# Test exhaustivo de endpoints (legacy)
+pnpm run test:js
 ```
 
 ### Test Exhaustivo de Endpoints
 ```bash
 # Test completo de todos los endpoints con diferentes roles
-pnpm run test src/tests/exhaustive-endpoints.test.ts
+pnpm run test tests/integration/api/exhaustive-endpoints.test.ts
 ```
 
 **Características del test exhaustivo:**
@@ -410,7 +441,8 @@ Este proyecto está bajo la Licencia MIT. Ver el archivo [LICENSE](LICENSE) para
 
 - **Swagger UI:** [http://localhost:3000/docs](http://localhost:3000/docs)
 - **Scripts SQL:** Ver [scripts/README.md](scripts/README.md)
-- **Estructura de Base de Datos:** Consultar `init.sql`
+- **Estructura de Base de Datos:** Consultar `scripts/init.sql`
+- **Estructura de Tests:** Ver directorio `tests/` organizado por Clean Architecture
 
 ---
 
